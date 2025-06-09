@@ -2,3 +2,6 @@ kubernetes-shiftx-control-01.yaml
 kubernetes-shiftx-control-02.yaml
 kubernetes-shiftx-control-03.yaml
 talosconfig
+kubernetes-control-01.yaml
+kubernetes-control-02.yaml
+kubernetes-control-03.yaml
