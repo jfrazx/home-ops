@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+  - name: minio-user-policies
+    namespace: storage
+    files:
+      - backup-operator.json
+      - developer.json
+      - monitoring.json
+      - read-only-auditor.json
