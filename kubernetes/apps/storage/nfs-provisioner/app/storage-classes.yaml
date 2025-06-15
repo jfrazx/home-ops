@@ -1,0 +1,33 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-dynamic-backups
+provisioner: nfs-dynamic
+parameters:
+  pathPattern: "${.PVC.namespace}/${.PVC.annotations.appName}/backups/${.PVC.name}"
+  onDelete: "retain"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-dynamic-media
+provisioner: nfs-dynamic
+parameters:
+  pathPattern: "media/${.PVC.annotations.mediaType}/${.PVC.namespace}/${.PVC.name}"
+  onDelete: "retain"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-dynamic-apps
+provisioner: nfs-dynamic
+parameters:
+  pathPattern: "apps/${.PVC.namespace}/${.PVC.annotations.appName}/${.PVC.name}"
+  onDelete: "retain"
+reclaimPolicy: Retain
+allowVolumeExpansion: true
