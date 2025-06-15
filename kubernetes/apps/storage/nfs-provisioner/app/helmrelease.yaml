@@ -31,8 +31,8 @@ spec:
       retries: 3
   values:
     nfs:
-      server: "10.168.2.10"  # Your NFS server IP
-      path: "/volume1/kubernetes/dynamic"  # Base path for dynamic volumes
+      server: "${SECRET_NFS_SERVER}"
+      path: "${SECRET_NFS_SHARE}/dynamic"
 
     storageClass:
       create: true
