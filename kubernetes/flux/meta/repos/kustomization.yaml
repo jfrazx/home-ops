@@ -7,4 +7,5 @@ resources:
   - ./minio-operator.yaml
   - ./csi-driver-nfs.yaml
   - ./nfs-subdir-external-provisioner.yaml
+  - ./bjw-s.yaml
   # - ./velero.yaml
