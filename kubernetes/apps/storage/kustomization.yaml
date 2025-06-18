@@ -10,4 +10,4 @@ resources:
   - ./minio/tenant/ks.yaml
   - ./nfs-csi/ks.yaml
   - ./nfs-volumes/ks.yaml
-  - ./nfs-provisioner/ks.yaml
+  - ./democratic-csi/ks.yaml

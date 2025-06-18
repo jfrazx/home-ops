@@ -1,0 +1,264 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: democratic-csi-nfs
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: democratic-csi
+      version: 0.14.6
+      sourceRef:
+        kind: HelmRepository
+        name: democratic-csi
+        namespace: flux-system
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    csiDriver:
+      name: org.democratic-csi.truenas-nfs
+
+    controller:
+      enabled: true
+      strategy: deployment
+      externalProvisioner:
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+          - --enable-capacity=true
+          - --capacity-poll-interval=30s
+      externalResizer:
+        enabled: true
+      externalSnapshotter:
+        enabled: true
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+
+      driver:
+        image: democraticcsi/democratic-csi:v1.9.3
+
+    node:
+      enabled: true
+      hostPID: false
+      driver:
+        image: democraticcsi/democratic-csi:v1.9.3
+
+    storageClasses:
+    - name: truenas-nfs
+      defaultClass: false
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+      parameters:
+        fsType: nfs
+
+      mountOptions:
+        - nfsvers=4.1
+        - hard
+        - timeo=600
+        - retrans=2
+        - noresvport
+        - rsize=1048576
+        - wsize=1048576
+
+      secrets:
+        provisioner-secret:
+        controller-publish-secret:
+        node-stage-secret:
+        node-publish-secret:
+        controller-expand-secret:
+
+    volumeSnapshotClasses:
+    - name: truenas-nfs-snapshots
+      parameters:
+        snapshotPrefix: "snapshot-"
+      secrets:
+        snapshotter-secret:
+
+    driver:
+      existingConfigSecret: democratic-csi-nfs-secret
+      config:
+        driver: freenas-api-nfs
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: democratic-csi-smb
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: democratic-csi
+      version: 0.14.6
+      sourceRef:
+        kind: HelmRepository
+        name: democratic-csi
+        namespace: flux-system
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    csiDriver:
+      name: org.democratic-csi.truenas-smb
+
+    controller:
+      enabled: true
+      strategy: deployment
+      externalProvisioner:
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+          - --enable-capacity=true
+          - --capacity-poll-interval=30s
+      externalResizer:
+        enabled: true
+      externalSnapshotter:
+        enabled: true
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+
+      driver:
+        image: democraticcsi/democratic-csi:v1.9.3
+
+    node:
+      enabled: true
+      hostPID: false  # Not needed for SMB
+      driver:
+        image: democraticcsi/democratic-csi:v1.9.3
+
+    storageClasses:
+    - name: truenas-smb
+      defaultClass: false
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+      parameters:
+        fsType: cifs
+
+      mountOptions:
+        - dir_mode=0777
+        - file_mode=0777
+        - uid=1001
+        - gid=1001
+        - iocharset=utf8
+        - nobrl  # Disable byte range locks
+
+      secrets:
+        provisioner-secret:
+        controller-publish-secret:
+        node-stage-secret:
+        node-publish-secret:
+        controller-expand-secret:
+
+    volumeSnapshotClasses:
+    - name: truenas-smb-snapshots
+      parameters:
+        snapshotPrefix: "snapshot-"
+      secrets:
+        snapshotter-secret:
+
+    driver:
+      existingConfigSecret: democratic-csi-smb-secret
+      config:
+        driver: freenas-api-smb
+# ---
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+# apiVersion: helm.toolkit.fluxcd.io/v2
+# kind: HelmRelease
+# metadata:
+#   name: democratic-csi-iscsi
+# spec:
+#   interval: 1h
+#   chart:
+#     spec:
+#       chart: democratic-csi
+#       version: 0.14.6
+#       sourceRef:
+#         kind: HelmRepository
+#         name: democratic-csi
+#         namespace: flux-system
+#   install:
+#     remediation:
+#       retries: -1
+#   upgrade:
+#     cleanupOnFail: true
+#     remediation:
+#       retries: 3
+#   values:
+#     csiDriver:
+#       name: org.democratic-csi.truenas-iscsi
+
+#     controller:
+#       enabled: true
+#       strategy: deployment
+#       externalProvisioner:
+#         extraArgs:
+#           - --leader-election=false
+#           - --node-deployment=false
+#           - --enable-capacity=true
+#           - --capacity-poll-interval=30s
+#       externalResizer:
+#         enabled: true
+#       externalSnapshotter:
+#         enabled: true
+#         extraArgs:
+#           - --leader-election=false
+#           - --node-deployment=false
+
+#       driver:
+#         image: democraticcsi/democratic-csi:v1.9.3
+
+#     node:
+#       enabled: true
+#       hostPID: true  # Required for iSCSI
+#       driver:
+#         image: democraticcsi/democratic-csi:v1.9.3
+#         extraEnv:
+#           - name: ISCSIADM_HOST_STRATEGY
+#             value: nsenter
+#           - name: ISCSIADM_HOST_PATH
+#             value: /usr/local/sbin/iscsiadm
+#         iscsiDirHostPath: /usr/local/etc/iscsi
+#         iscsiDirHostPathType: ""
+
+#     storageClasses:
+#     - name: truenas-iscsi
+#       defaultClass: false
+#       reclaimPolicy: Retain
+#       volumeBindingMode: Immediate
+#       allowVolumeExpansion: true
+#       parameters:
+#         fsType: ext4
+
+#       secrets:
+#         provisioner-secret:
+#         controller-publish-secret:
+#         node-stage-secret:
+#         node-publish-secret:
+#         controller-expand-secret:
+
+#     volumeSnapshotClasses:
+#     - name: truenas-iscsi-snapshots
+#       parameters:
+#         snapshotPrefix: "snapshot-"
+#       secrets:
+#         snapshotter-secret:
+
+#     driver:
+#       existingConfigSecret: democratic-csi-iscsi-secret
+#       config:
+#         driver: freenas-api-iscsi
