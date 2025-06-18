@@ -19,7 +19,7 @@ cniConfig:
   name: none
 
 nodes:
-  - hostname: "${SECRET_DOMAIN}ntrol-01"
+  - hostname: "shiftx-control-01"
     ipAddress: "10.168.2.91"
     installDiskSelector:
       serial: "S77NNG0WC90249"
@@ -39,7 +39,7 @@ nodes:
         mtu: 1500
         vip:
           ip: "10.168.2.100"
-  - hostname: "${SECRET_DOMAIN}ntrol-02"
+  - hostname: "shiftx-control-02"
     ipAddress: "10.168.2.92"
     installDiskSelector:
       serial: "S77NNG0WC30967"
@@ -59,7 +59,7 @@ nodes:
         mtu: 1500
         vip:
           ip: "10.168.2.100"
-  - hostname: "${SECRET_DOMAIN}ntrol-03"
+  - hostname: "shiftx-control-03"
     ipAddress: "10.168.2.93"
     installDisk: "/dev/sda"
     machineSpec:
@@ -87,6 +87,7 @@ patches:
   - "@./patches/global/machine-sysctls.yaml"
   - "@./patches/global/machine-time.yaml"
   - "@./patches/global/machine-kernel-modules.yaml"
+  - "@./patches/global/machine-api.yaml"
 
 # Controller patches
 controlPlane:
