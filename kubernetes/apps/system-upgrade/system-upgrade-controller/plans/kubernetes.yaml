@@ -4,12 +4,9 @@ apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
   name: kubernetes
-  namespace: system-upgrade
 spec:
-  # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
   version: v1.33.1
   concurrency: 1
-  postCompleteDelay: 30s
   exclusive: true
   serviceAccountName: system-upgrade-controller
   secrets:
@@ -20,11 +17,8 @@ spec:
     matchExpressions:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
-  tolerations:
-    - {key: node-role.kubernetes.io/control-plane, effect: NoSchedule, operator: Exists}
   upgrade:
-    # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-    image: ghcr.io/siderolabs/talosctl:v1.10.3
+    image: ghcr.io/siderolabs/talosctl:${TALOS_VERSION}
     args:
       - --nodes=$(SYSTEM_UPGRADE_NODE_NAME)
       - upgrade-k8s
