@@ -4,7 +4,9 @@ apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
   name: talos
+  namespace: system-upgrade
 spec:
+  # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
   version: v1.10.3
   concurrency: 1
   postCompleteDelay: 2m
@@ -18,6 +20,8 @@ spec:
     matchExpressions:
       - key: kubernetes.io/hostname
         operator: Exists
+  tolerations:
+    - {key: node-role.kubernetes.io/control-plane, effect: NoSchedule, operator: Exists}
   upgrade:
     image: ghcr.io/jfroy/tnu:0.4.3
     args:
