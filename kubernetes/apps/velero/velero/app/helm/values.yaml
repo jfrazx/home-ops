@@ -1,4 +1,3 @@
----
 deployNodeAgent: true
 installCRDs: true
 cleanUpCRDs: false
@@ -23,12 +22,7 @@ credentials:
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.11.0
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
-  - name: velero-plugin-for-csi
-    image: velero/velero-plugin-for-csi:0.8.0
+    image: velero/velero-plugin-for-aws:v1.12.1
     volumeMounts:
       - mountPath: /target
         name: plugins
