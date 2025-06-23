@@ -1,12 +1,10 @@
 ---
-# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# kubernetes/apps/velero/velero/app/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./secret.sops.yaml
-  - ./backupstoragelocation.yaml
-  - ./volumesnapshotlocation.yaml
 configMapGenerator:
   - name: velero-values
     files:
