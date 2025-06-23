@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/schedule_v1.json
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-databases
+spec:
+  schedule: "0 3 * * *"  # 3 AM daily
+  template:
+    storageLocation: minio
+    volumeSnapshotLocations:
+      - ceph-csi
+    ttl: 720h0m0s  # 30 days
+    labelSelector:
+      matchLabels:
+        backup/database: "true"
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false
+    hooks:
+      resources:
+        - name: database-freeze
+          includedNamespaces:
+            - "*"
+          labelSelector:
+            matchLabels:
+              backup/database: "true"
+          pre:
+            - exec:
+                container: postgres
+                command:
+                  - /bin/sh
+                  - -c
+                  - "pg_dumpall > /backup/pre-backup.sql"
+                onError: Fail
+                timeout: 10m

@@ -2,10 +2,8 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: velero
+components:
+  - ../../components/common
 resources:
-  - ./external-dns.yaml
-  - ./minio-operator.yaml
-  - ./democratic-csi.yaml
-  - ./bjw-s.yaml
-  - ./csi-driver-nfs.yaml
-  - ./velero.yaml
+  - ./velero/ks.yaml

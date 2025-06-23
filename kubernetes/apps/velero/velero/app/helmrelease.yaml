@@ -1,0 +1,148 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: velero
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: velero
+      version: 10.0.6
+      sourceRef:
+        kind: HelmRepository
+        name: velero
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    deployNodeAgent: true
+
+    initContainers:
+      # CSI plugin is required for volume snapshots
+      - name: velero-plugin-for-csi
+        image: velero/velero-plugin-for-csi:v0.9.0
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
+      # AWS plugin for S3 backup storage
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.10.0
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
+
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+
+    configuration:
+      # Backup storage location using MinIO
+      backupStorageLocation:
+        - name: default
+          provider: aws
+          bucket: velero-backups
+          config:
+            region: us-east-1
+            s3ForcePathStyle: "true"
+            s3Url: http://minio.storage.svc.cluster.local:9000
+            publicUrl: https://s3.${SECRET_DOMAIN}
+          credential:
+            name: velero-s3-secret
+            key: cloud
+
+      # Volume snapshot locations for democratic-csi
+      volumeSnapshotLocation:
+        # For NFS volumes (democratic-csi-nfs)
+        - name: truenas-nfs-snapshots
+          provider: csi
+          config:
+            # These match your VolumeSnapshotClass names
+            driver: org.democratic-csi.truenas-nfs
+            # Optional: snapshot prefix if you want to override
+            # snapshotPrefix: "velero-"
+
+        # For SMB volumes (democratic-csi-smb)
+        - name: truenas-smb-snapshots
+          provider: csi
+          config:
+            driver: org.democratic-csi.truenas-smb
+
+        # For iSCSI volumes if you enable them later
+        # - name: truenas-iscsi-snapshots
+        #   provider: csi
+        #   config:
+        #     driver: org.democratic-csi.truenas-iscsi
+
+      # Default snapshot location
+      defaultVolumeSnapshotLocations:
+        - truenas-nfs-snapshots
+
+      # Features for CSI snapshots
+      features: "EnableCSI"
+
+      # Optional: set snapshot timeout (default is 10m)
+      csiSnapshotTimeout: 5m
+
+    # Velero server configuration
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+    # Node agent configuration
+    nodeAgent:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 1Gi
+
+      # Important for CSI snapshots
+      privileged: true
+
+      # Volume mounts for CSI
+      extraVolumes:
+        - name: snapshotter-socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/org.democratic-csi.truenas-nfs
+            type: DirectoryOrCreate
+
+      extraVolumeMounts:
+        - name: snapshotter-socket-dir
+          mountPath: /var/lib/kubelet/plugins/org.democratic-csi.truenas-nfs
+          mountPropagation: None
+
+    # Backup settings
+    backupsEnabled: true
+    snapshotsEnabled: true
+
+    # Schedule automatic backups
+    schedules:
+      daily-backup:
+        disabled: false
+        schedule: "0 2 * * *"  # 2 AM daily
+        useOwnerReferencesInBackup: true
+        template:
+          ttl: "168h"  # 7 days
+          includedNamespaces:
+            - "*"
+          excludedNamespaces:
+            - kube-system
+            - flux-system
+          includeClusterResources: true
+          snapshotVolumes: true  # Enable volume snapshots
+          volumeSnapshotLocations:
+            - truenas-nfs-snapshots
+          storageLocation: default

@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/volumesnapshotlocation_v1.json
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: ceph-csi
+spec:
+  provider: csi
+  config:
+    # This should match your existing VolumeSnapshotClass for Rook-Ceph
+    snapshotClass: csi-ceph-blockpool
