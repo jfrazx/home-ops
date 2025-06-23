@@ -5,8 +5,6 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./secret.sops.yaml
-  - ./backupstoragelocation.yaml
-  - ./volumesnapshotlocation.yaml
 configMapGenerator:
   - name: velero-values
     files:
