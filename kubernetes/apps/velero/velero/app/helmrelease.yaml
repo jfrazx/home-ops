@@ -26,15 +26,8 @@ spec:
     deployNodeAgent: true
 
     initContainers:
-      # CSI plugin is required for volume snapshots
-      - name: velero-plugin-for-csi
-        image: velero/velero-plugin-for-csi:v0.9.0
-        volumeMounts:
-          - mountPath: /target
-            name: plugins
-      # AWS plugin for S3 backup storage
       - name: velero-plugin-for-aws
-        image: velero/velero-plugin-for-aws:v1.10.0
+        image: velero/velero-plugin-for-aws:v1.12.1
         volumeMounts:
           - mountPath: /target
             name: plugins
@@ -61,38 +54,30 @@ spec:
 
       # Volume snapshot locations for democratic-csi
       volumeSnapshotLocation:
-        # For NFS volumes (democratic-csi-nfs)
         - name: truenas-nfs-snapshots
           provider: csi
           config:
-            # These match your VolumeSnapshotClass names
             driver: org.democratic-csi.truenas-nfs
             # Optional: snapshot prefix if you want to override
             # snapshotPrefix: "velero-"
 
-        # For SMB volumes (democratic-csi-smb)
         - name: truenas-smb-snapshots
           provider: csi
           config:
             driver: org.democratic-csi.truenas-smb
 
-        # For iSCSI volumes if you enable them later
         # - name: truenas-iscsi-snapshots
         #   provider: csi
         #   config:
         #     driver: org.democratic-csi.truenas-iscsi
 
-      # Default snapshot location
       defaultVolumeSnapshotLocations:
         - truenas-nfs-snapshots
 
-      # Features for CSI snapshots
       features: "EnableCSI"
 
-      # Optional: set snapshot timeout (default is 10m)
       csiSnapshotTimeout: 5m
 
-    # Velero server configuration
     resources:
       requests:
         cpu: 100m
@@ -100,7 +85,6 @@ spec:
       limits:
         memory: 512Mi
 
-    # Node agent configuration
     nodeAgent:
       resources:
         requests:
@@ -109,10 +93,8 @@ spec:
         limits:
           memory: 1Gi
 
-      # Important for CSI snapshots
       privileged: true
 
-      # Volume mounts for CSI
       extraVolumes:
         - name: snapshotter-socket-dir
           hostPath:
@@ -124,11 +106,9 @@ spec:
           mountPath: /var/lib/kubelet/plugins/org.democratic-csi.truenas-nfs
           mountPropagation: None
 
-    # Backup settings
     backupsEnabled: true
     snapshotsEnabled: true
 
-    # Schedule automatic backups
     schedules:
       daily-backup:
         disabled: false
@@ -142,7 +122,7 @@ spec:
             - kube-system
             - flux-system
           includeClusterResources: true
-          snapshotVolumes: true  # Enable volume snapshots
+          snapshotVolumes: true
           volumeSnapshotLocations:
             - truenas-nfs-snapshots
           storageLocation: default
