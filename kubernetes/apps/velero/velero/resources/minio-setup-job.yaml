@@ -1,0 +1,46 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: velero-minio-setup
+  namespace: velero
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: mc
+        image: minio/mc:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Configure MinIO client
+          mc alias set minio http://minio.storage.svc.cluster.local:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+
+          # Create bucket if it doesn't exist
+          mc mb --ignore-existing minio/velero
+
+          # Create user if not exists
+          mc admin user add minio velero-user $VELERO_PASSWORD || true
+
+          # Apply Velero policy
+          mc admin policy attach minio velero --user velero-user || true
+
+          echo "MinIO setup completed"
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-credentials
+              key: MINIO_ROOT_USER
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-credentials
+              key: MINIO_ROOT_PASSWORD
+        - name: VELERO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: velero-minio-credentials
+              key: VELERO_PASSWORD

@@ -3,6 +3,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: velero
+  namespace: velero
 spec:
   interval: 1h
   chart:
@@ -71,12 +72,13 @@ spec:
         #   config:
         #     driver: org.democratic-csi.truenas-iscsi
 
+      defaultBackupStorageLocation: minio
       defaultVolumeSnapshotLocations:
         - truenas-nfs-snapshots
 
       features: "EnableCSI"
 
-      csiSnapshotTimeout: 5m
+      csiSnapshotTimeout: 10m
 
     resources:
       requests:
