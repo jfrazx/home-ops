@@ -36,9 +36,10 @@ spec:
       enabled: true
       serviceMonitor:
         enabled: true
+      nodeAgentPodMonitor:
+        enabled: true
 
     configuration:
-      # Backup storage location using MinIO
       backupStorageLocation:
         - name: default
           provider: aws
@@ -49,16 +50,15 @@ spec:
             s3Url: http://minio.storage.svc.cluster.local:9000
             publicUrl: https://s3.${SECRET_DOMAIN}
           credential:
-            name: velero-s3-secret
+            name: velero-minio-credentials
             key: cloud
 
-      # Volume snapshot locations for democratic-csi
       volumeSnapshotLocation:
         - name: truenas-nfs-snapshots
           provider: csi
           config:
             driver: org.democratic-csi.truenas-nfs
-            # Optional: snapshot prefix if you want to override
+            # Optional: snapshot prefix to override
             # snapshotPrefix: "velero-"
 
         - name: truenas-smb-snapshots
