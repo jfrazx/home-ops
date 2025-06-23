@@ -3,9 +3,6 @@
 apiVersion: velero.io/v1
 kind: VolumeSnapshotLocation
 metadata:
-  name: ceph-csi
+  name: truenas-snapshots
 spec:
   provider: csi
-  config:
-    # This should match your existing VolumeSnapshotClass for Rook-Ceph
-    snapshotClass: csi-ceph-blockpool
