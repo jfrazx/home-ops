@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/backupstoragelocation_v1.json
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: minio
+spec:
+  provider: aws
+  objectStorage:
+    bucket: velero
+  config:
+    region: us-east-1
+    s3ForcePathStyle: "true"
+    s3Url: http://minio.storage.svc.cluster.local:9000
+  credential:
+    name: velero-minio-credentials
+    key: cloud
+  default: true

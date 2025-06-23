@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/schedule_v1.json
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: weekly-cluster
+spec:
+  schedule: "0 4 * * 0"  # 4 AM every Sunday
+  template:
+    storageLocation: minio
+    volumeSnapshotLocations:
+      - ceph-csi
+    ttl: 720h0m0s  # 30 days
+    excludedNamespaces:
+      - velero
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false

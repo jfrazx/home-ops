@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/schedule_v1.json
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-apps
+spec:
+  schedule: "0 2 * * *"  # 2 AM daily
+  template:
+    storageLocation: minio
+    volumeSnapshotLocations:
+      - ceph-csi
+    ttl: 168h0m0s  # 7 days
+    includedNamespaces:
+      - default
+      - network
+      - flux-system
+      - cert-manager
+    excludedNamespaces:
+      - velero
+      - kube-system
+      - kube-public
+      - kube-node-lease
+    excludedResources:
+      - events
+      - events.events.k8s.io
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false
