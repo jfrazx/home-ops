@@ -3,6 +3,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: velero
+  namespace: velero
 spec:
   interval: 1h
   chart:
@@ -40,43 +41,14 @@ spec:
         enabled: true
 
     configuration:
-      backupStorageLocation:
-        - name: default
-          provider: aws
-          bucket: velero-backups
-          config:
-            region: us-east-1
-            s3ForcePathStyle: "true"
-            s3Url: http://minio.storage.svc.cluster.local:9000
-            publicUrl: https://s3.${SECRET_DOMAIN}
-          credential:
-            name: velero-minio-credentials
-            key: cloud
-
-      volumeSnapshotLocation:
-        - name: truenas-nfs-snapshots
-          provider: csi
-          config:
-            driver: org.democratic-csi.truenas-nfs
-            # Optional: snapshot prefix to override
-            # snapshotPrefix: "velero-"
-
-        - name: truenas-smb-snapshots
-          provider: csi
-          config:
-            driver: org.democratic-csi.truenas-smb
-
-        # - name: truenas-iscsi-snapshots
-        #   provider: csi
-        #   config:
-        #     driver: org.democratic-csi.truenas-iscsi
-
-      defaultVolumeSnapshotLocations:
-        - truenas-nfs-snapshots
-
+      # Don't configure BSL/VSL here - use separate resources
       features: "EnableCSI"
+      defaultBackupStorageLocation: minio
+      defaultVolumeSnapshotLocations:
+        - truenas-snapshots
 
-      csiSnapshotTimeout: 5m
+    credentials:
+      existingSecret: velero-minio-credentials
 
     resources:
       requests:
@@ -92,37 +64,4 @@ spec:
           memory: 128Mi
         limits:
           memory: 1Gi
-
       privileged: true
-
-      extraVolumes:
-        - name: snapshotter-socket-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins/org.democratic-csi.truenas-nfs
-            type: DirectoryOrCreate
-
-      extraVolumeMounts:
-        - name: snapshotter-socket-dir
-          mountPath: /var/lib/kubelet/plugins/org.democratic-csi.truenas-nfs
-          mountPropagation: None
-
-    backupsEnabled: true
-    snapshotsEnabled: true
-
-    schedules:
-      daily-backup:
-        disabled: false
-        schedule: "0 2 * * *"  # 2 AM daily
-        useOwnerReferencesInBackup: true
-        template:
-          ttl: "168h"  # 7 days
-          includedNamespaces:
-            - "*"
-          excludedNamespaces:
-            - kube-system
-            - flux-system
-          includeClusterResources: true
-          snapshotVolumes: true
-          volumeSnapshotLocations:
-            - truenas-nfs-snapshots
-          storageLocation: default
