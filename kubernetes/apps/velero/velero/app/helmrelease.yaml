@@ -74,7 +74,7 @@ spec:
         #     driver: org.democratic-csi.truenas-iscsi
 
       defaultBackupStorageLocation: minio
-      defaultVolumeSnapshotLocations: truenas-nfs-snapshots
+      defaultVolumeSnapshotLocations: csi:truenas-nfs-snapshots
 
       features: "EnableCSI"
 
