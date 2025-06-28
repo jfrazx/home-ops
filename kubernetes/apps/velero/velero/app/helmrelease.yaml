@@ -41,20 +41,6 @@ spec:
         enabled: true
 
     configuration:
-      backupStorageLocation:
-        - name: default
-          provider: aws
-          bucket: velero-backups
-          config:
-            region: us-east-1
-            s3ForcePathStyle: "true"
-            s3Url: http://minio.storage.svc.cluster.local:9000
-            publicUrl: https://s3.${SECRET_DOMAIN}
-            insecureSkipTLSVerify: "true"
-          credential:
-            name: velero-minio-credentials
-            key: cloud
-
       volumeSnapshotLocation:
         - name: truenas-nfs-snapshots
           provider: csi
@@ -110,21 +96,3 @@ spec:
 
     backupsEnabled: true
     snapshotsEnabled: true
-
-    schedules:
-      daily-backup:
-        disabled: false
-        schedule: "0 2 * * *"  # 2 AM daily
-        useOwnerReferencesInBackup: true
-        template:
-          ttl: "168h"  # 7 days
-          includedNamespaces:
-            - "*"
-          excludedNamespaces:
-            - kube-system
-            - flux-system
-          includeClusterResources: true
-          snapshotVolumes: true
-          volumeSnapshotLocations:
-            - truenas-nfs-snapshots
-          storageLocation: default
