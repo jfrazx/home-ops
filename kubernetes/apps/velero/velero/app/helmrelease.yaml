@@ -96,21 +96,3 @@ spec:
 
     backupsEnabled: true
     snapshotsEnabled: true
-
-    schedules:
-      daily-backup:
-        disabled: false
-        schedule: "0 2 * * *"  # 2 AM daily
-        useOwnerReferencesInBackup: true
-        template:
-          ttl: "168h"  # 7 days
-          includedNamespaces:
-            - "*"
-          excludedNamespaces:
-            - kube-system
-            - flux-system
-          includeClusterResources: true
-          snapshotVolumes: true
-          volumeSnapshotLocations:
-            - truenas-nfs-snapshots
-          storageLocation: default
