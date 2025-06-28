@@ -43,13 +43,19 @@ spec:
           - --node-deployment=false
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: v1.9.3
 
     node:
       enabled: true
       hostPID: false
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: v1.9.3
 
     storageClasses:
     - name: truenas-nfs
@@ -132,13 +138,19 @@ spec:
           - --node-deployment=false
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: v1.9.3
 
     node:
       enabled: true
       hostPID: false  # Not needed for SMB
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: v1.9.3
 
     storageClasses:
     - name: truenas-smb
@@ -220,13 +232,19 @@ spec:
 #           - --node-deployment=false
 
 #       driver:
-#         image: democraticcsi/democratic-csi:v1.9.3
+#         image:
+#           registry: docker.io
+#           repository: democraticcsi/democratic-csi
+#           tag: v1.9.3
 
 #     node:
 #       enabled: true
 #       hostPID: true  # Required for iSCSI
 #       driver:
-#         image: democraticcsi/democratic-csi:v1.9.3
+#         image:
+#           registry: docker.io
+#           repository: democraticcsi/democratic-csi
+#           tag: v1.9.3
 #         extraEnv:
 #           - name: ISCSIADM_HOST_STRATEGY
 #             value: nsenter
