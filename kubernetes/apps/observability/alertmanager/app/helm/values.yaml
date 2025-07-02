@@ -1,0 +1,56 @@
+---
+replicaCount: 1
+
+persistence:
+  enabled: true
+  storageClass: ceph-block
+  size: 10Gi
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 50Mi
+  limits:
+    memory: 200Mi
+
+serviceMonitor:
+  enabled: true
+
+podSecurityContext:
+  runAsUser: 65534
+  runAsGroup: 65534
+  fsGroup: 65534
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534
+  capabilities:
+    drop:
+      - ALL
+
+config:
+  global:
+    resolve_timeout: 5m
+  route:
+    group_by: ["alertname", "cluster", "service"]
+    group_wait: 10s
+    group_interval: 5m
+    repeat_interval: 6h
+    receiver: "null"
+    routes:
+      - receiver: "null"
+        matchers:
+          - alertname =~ "InfoInhibitor|Watchdog"
+      - receiver: "null"
+        matchers:
+          - severity = "none"
+  receivers:
+    - name: "null"
+  inhibit_rules:
+    - source_matchers:
+        - severity = "critical"
+      target_matchers:
+        - severity = "warning"
+      equal: ["alertname", "cluster", "service"]

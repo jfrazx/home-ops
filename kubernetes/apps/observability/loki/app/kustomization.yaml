@@ -6,8 +6,9 @@ resources:
   - ./helmrelease.yaml
   - ./httproute.yaml
   - ./secret.sops.yaml
+  - ./minio-setup-job.yaml
 configMapGenerator:
-  - name: kube-prometheus-stack-values
+  - name: loki-values
     files:
       - values.yaml=./helm/values.yaml
 configurations:
