@@ -27,14 +27,6 @@ server:
       secretName: minio-metrics-auth
       readOnly: true
 
-  global:
-    scrape_interval: 15s
-    scrape_timeout: 10s
-    evaluation_interval: 15s
-    external_labels:
-      cluster: kubernetes
-      __replica__: prometheus
-
   extraFlags:
     - web.enable-lifecycle
     - web.enable-admin-api
