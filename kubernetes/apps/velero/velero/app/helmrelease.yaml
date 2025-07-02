@@ -41,30 +41,17 @@ spec:
         enabled: true
 
     configuration:
-      volumeSnapshotLocation:
-        - name: truenas-nfs-snapshots
-          provider: csi
-          config:
-            driver: org.democratic-csi.truenas-nfs
-            # Optional: snapshot prefix to override
-            # snapshotPrefix: "velero-"
-
-        - name: truenas-smb-snapshots
-          provider: csi
-          config:
-            driver: org.democratic-csi.truenas-smb
-
-        # - name: truenas-iscsi-snapshots
-        #   provider: csi
-        #   config:
-        #     driver: org.democratic-csi.truenas-iscsi
-
       defaultBackupStorageLocation: minio
       defaultVolumeSnapshotLocations: csi:truenas-nfs-snapshots
 
       features: "EnableCSI"
 
       csiSnapshotTimeout: 10m
+
+      backupRetentionPeriod: 720h0m0s
+
+    backupStorageLocation:
+      create: false
 
     resources:
       requests:
@@ -93,6 +80,11 @@ spec:
         - name: snapshotter-socket-dir
           mountPath: /var/lib/kubelet/plugins/org.democratic-csi.truenas-nfs
           mountPropagation: None
+
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
 
     backupsEnabled: true
     snapshotsEnabled: true
