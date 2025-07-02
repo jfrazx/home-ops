@@ -50,6 +50,9 @@ spec:
 
       backupRetentionPeriod: 720h0m0s
 
+    backupStorageLocation:
+      create: false
+
     resources:
       requests:
         cpu: 100m

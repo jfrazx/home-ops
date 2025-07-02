@@ -9,7 +9,7 @@ spec:
   template:
     storageLocation: minio
     volumeSnapshotLocations:
-      - ceph-csi
+      - truenas-nfs-snapshots
     ttl: 720h0m0s  # 30 days
     excludedNamespaces:
       - velero
