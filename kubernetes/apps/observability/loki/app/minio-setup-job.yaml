@@ -34,13 +34,13 @@ spec:
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:
-              name: minio-root-credentials
-              key: MINIO_ROOT_USER
+              name: minio-metrics-auth
+              key: username
         - name: MINIO_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: minio-root-credentials
-              key: MINIO_ROOT_PASSWORD
+              name: minio-metrics-auth
+              key: password
         - name: LOKI_PASSWORD
           valueFrom:
             secretKeyRef:
