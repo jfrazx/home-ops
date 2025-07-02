@@ -1,0 +1,48 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loki-minio-setup
+  namespace: observability
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: mc
+        image: minio/mc:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Configure MinIO client
+          mc alias set minio http://primary-hl.storage.svc.cluster.local:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+
+          # Create buckets if they don't exist
+          mc mb --ignore-existing minio/loki-chunks
+          mc mb --ignore-existing minio/loki-ruler
+          mc mb --ignore-existing minio/loki-admin
+
+          # Create user if not exists
+          mc admin user add minio loki-user $LOKI_PASSWORD || true
+
+          # Apply Loki policy
+          mc admin policy attach minio loki --user loki-user || true
+
+          echo "Loki MinIO setup completed"
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-credentials
+              key: MINIO_ROOT_USER
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-credentials
+              key: MINIO_ROOT_PASSWORD
+        - name: LOKI_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: loki-minio-credentials
+              key: LOKI_PASSWORD

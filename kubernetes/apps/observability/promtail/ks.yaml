@@ -3,35 +3,22 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app kube-prometheus-stack
+  name: &app promtail
   namespace: &namespace observability
 spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
+  dependsOn:
+    - name: loki
+      namespace: observability
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       name: *app
       namespace: *namespace
-    - apiVersion: v1
-      kind: Service
-      name: kube-prometheus-stack-prometheus
-      namespace: *namespace
-    - apiVersion: v1
-      kind: Service
-      name: kube-prometheus-stack-alertmanager
-      namespace: *namespace
-    - apiVersion: v1
-      kind: Service
-      name: kube-prometheus-stack-grafana
-      namespace: *namespace
   interval: 1h
-  path: ./kubernetes/apps/observability/kube-prometheus-stack/app
+  path: ./kubernetes/apps/observability/promtail/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
@@ -43,4 +30,4 @@ spec:
     name: flux-system
     namespace: flux-system
   targetNamespace: *namespace
-  timeout: 10m
+  timeout: 5m
