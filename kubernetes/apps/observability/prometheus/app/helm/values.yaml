@@ -35,10 +35,10 @@ server:
       cluster: kubernetes
       __replica__: prometheus
 
-  extraArgs:
-    web.enable-lifecycle: true
-    web.enable-admin-api: true
-    storage.tsdb.wal-compression: true
+  extraFlags:
+    - web.enable-lifecycle
+    - web.enable-admin-api
+    - storage.tsdb.wal-compression
 
 alertmanager:
   enabled: false
