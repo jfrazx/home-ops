@@ -50,12 +50,6 @@ spec:
 
       backupRetentionPeriod: 720h0m0s
 
-    backupStorageLocation:
-      create: false
-
-    volumeSnapshotLocation:
-      create: false
-
     credentials:
       existingSecret: velero-minio-credentials
 
@@ -92,5 +86,5 @@ spec:
           operator: Exists
           effect: NoSchedule
 
-    backupsEnabled: true
-    snapshotsEnabled: true
+    backupsEnabled: false
+    snapshotsEnabled: false
