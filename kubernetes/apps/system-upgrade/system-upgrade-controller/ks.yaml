@@ -1,10 +1,43 @@
 ---
-# yaml-language-server: $schema=https://json.schemastore.org/kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
+apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
   name: &app system-upgrade-controller
   namespace: &namespace flux-system
-resources:
-  - ./app/kustomization.yaml
-  - ./plans/kustomization.yaml
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  interval: 1h
+  path: ./kubernetes/apps/system-upgrade/system-upgrade-controller/app
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: system-upgrade
+  timeout: 5m
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app system-upgrade-plans
+  namespace: &namespace flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: system-upgrade-controller
+      namespace: *namespace
+  interval: 1h
+  path: ./kubernetes/apps/system-upgrade/system-upgrade-controller/plans
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: system-upgrade
+  timeout: 5m
