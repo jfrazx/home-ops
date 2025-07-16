@@ -73,13 +73,13 @@ spec:
         useAllDevices: false
         deviceFilter: "^nvme"
         nodes:
-          - name: "${SECRET_DOMAIN}ntrol-01"
+          - name: "shiftx-control-01"
             devices:
               - name: "nvme1n1"
-          - name: "${SECRET_DOMAIN}ntrol-02"
+          - name: "shiftx-control-02"
             devices:
               - name: "nvme0n1"
-          - name: "${SECRET_DOMAIN}ntrol-03"
+          - name: "shiftx-control-03"
             devices:
               - name: "nvme0n1"
         config:
