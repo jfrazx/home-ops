@@ -30,7 +30,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: system-upgrade-controller
-      namespace: *namespace
+      namespace: system-upgrade
   interval: 1h
   path: ./kubernetes/apps/system-upgrade/system-upgrade-controller/plans
   prune: true
