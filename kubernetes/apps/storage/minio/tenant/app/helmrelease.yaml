@@ -35,7 +35,7 @@ spec:
           servers: 3
           volumesPerServer: 2
           size: 100Gi
-          storageClassName: ceph-block
+          storageClassName: truenas-nfs
 
       features:
         bucketDNS: false
