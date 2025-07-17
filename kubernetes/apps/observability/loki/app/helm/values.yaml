@@ -14,7 +14,7 @@ loki:
       ruler: loki-ruler
       admin: loki-admin
     s3:
-      endpoint: http://primary-hl.storage.svc.cluster.local:9000
+      endpoint: http://minio.storage.svc.cluster.local:9000
       region: us-east-1
       s3ForcePathStyle: true
       insecure: true

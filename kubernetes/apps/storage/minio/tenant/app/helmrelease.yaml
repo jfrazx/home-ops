@@ -22,7 +22,7 @@ spec:
       retries: 3
   values:
     tenant:
-      name: primary
+      name: minio
 
       configuration:
         name: minio-root-credentials

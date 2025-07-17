@@ -185,7 +185,7 @@ server:
         username_file: /etc/prometheus/secrets/minio-metrics-auth/username
         password_file: /etc/prometheus/secrets/minio-metrics-auth/password
       static_configs:
-        - targets: ["primary-hl.storage.svc.cluster.local:9000"]
+        - targets: ["minio.storage.svc.cluster.local:9000"]
 
     - job_name: node-exporter
       static_configs:

@@ -16,7 +16,7 @@ spec:
         - -c
         - |
           # Configure MinIO client
-          mc alias set minio http://primary-hl.storage.svc.cluster.local:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+          mc alias set minio http://minio.storage.svc.cluster.local:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
 
           # Create bucket if it doesn't exist
           mc mb --ignore-existing minio/velero
