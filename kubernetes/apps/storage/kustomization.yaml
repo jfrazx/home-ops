@@ -9,3 +9,4 @@ resources:
   - ./nfs-csi/ks.yaml
   - ./nfs-volumes/ks.yaml
   - ./democratic-csi/ks.yaml
+  - ./minio/ks.yaml
