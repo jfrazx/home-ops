@@ -14,7 +14,7 @@ spec:
     secretRef:
       name: sops-age
   dependsOn:
-    - name: minio-tenant
+    - name: minio
       namespace: storage
   interval: 1h
   path: ./kubernetes/apps/velero/velero/resources
