@@ -118,52 +118,6 @@ spec:
       isDefault: false
       deletionPolicy: Delete
 
-    # CephFS configuration
-    cephFileSystems:
-      - name: ceph-filesystem
-        spec:
-          metadataPool:
-            replicated:
-              size: 3
-              requireSafeReplicaSize: true
-            failureDomain: host
-          dataPools:
-            - name: data0
-              replicated:
-                size: 3
-                requireSafeReplicaSize: true
-              failureDomain: host
-          metadataServer:
-            activeCount: 1
-            activeStandby: true
-            resources:
-              requests:
-                cpu: 100m
-                memory: 512Mi
-              limits:
-                memory: 1Gi
-        storageClass:
-          enabled: true
-          name: ceph-filesystem
-          reclaimPolicy: Delete
-          allowVolumeExpansion: true
-          mountOptions:
-            - noatime
-          parameters:
-            clusterID: rook-ceph
-            fsName: ceph-filesystem
-            pool: data0
-            csi.storage.k8s.io/provisioner-secret-name: rook-ceph-csi-cephfs-provisioner
-            csi.storage.k8s.io/provisioner-secret-namespace: "{{ .Release.Namespace }}"
-            csi.storage.k8s.io/controller-expand-secret-name: rook-ceph-csi-cephfs-provisioner
-            csi.storage.k8s.io/controller-expand-secret-namespace: "{{ .Release.Namespace }}"
-            csi.storage.k8s.io/node-stage-secret-name: rook-ceph-csi-cephfs-node
-            csi.storage.k8s.io/node-stage-secret-namespace: "{{ .Release.Namespace }}"
-
-    cephFilesystemVolumeSnapshotClass:
-      enabled: true
-      name: csi-cephfs-filesystem
-      isDefault: false
-      deletionPolicy: Delete
-
+    # Keep CephFS management separate - do not define here
+    cephFileSystems: []
     cephObjectStores: []
