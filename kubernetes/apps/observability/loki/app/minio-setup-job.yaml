@@ -15,21 +15,103 @@ spec:
         - /bin/sh
         - -c
         - |
-          # Configure MinIO client
-          mc alias set minio http://minio.storage.svc.cluster.local:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+          set -e
 
+          echo "Starting Loki MinIO setup..."
+
+          # Function to wait for MinIO to be ready
+          wait_for_minio() {
+            local max_attempts=30
+            local attempt=1
+
+            while [ $attempt -le $max_attempts ]; do
+              echo "Attempting to connect to MinIO (attempt $attempt/$max_attempts)..."
+
+              if mc alias set minio http://minio.storage.svc.cluster.local:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; then
+                echo "Successfully connected to MinIO!"
+                return 0
+              fi
+
+              echo "Failed to connect, waiting 10 seconds before retry..."
+              sleep 10
+              attempt=$((attempt + 1))
+            done
+
+            echo "Failed to connect to MinIO after $max_attempts attempts"
+            return 1
+          }
+
+          # Wait for MinIO to be ready
+          if ! wait_for_minio; then
+            echo "ERROR: Unable to connect to MinIO"
+            exit 1
+          fi
+
+          # Verify connection is working
+          echo "Verifying MinIO connection..."
+          mc admin info minio
+
+          echo "Creating buckets..."
           # Create buckets if they don't exist
           mc mb --ignore-existing minio/loki-chunks
           mc mb --ignore-existing minio/loki-ruler
           mc mb --ignore-existing minio/loki-admin
 
-          # Create user if not exists
-          mc admin user add minio loki-user $LOKI_PASSWORD || true
+          echo "Setting up Loki user..."
+          # Create user for Loki if not exists
+          if ! mc admin user info minio loki-user >/dev/null 2>&1; then
+            echo "Creating loki-user..."
+            mc admin user add minio loki-user $LOKI_PASSWORD
+          else
+            echo "loki-user already exists"
+          fi
 
-          # Apply Loki policy
-          mc admin policy attach minio loki --user loki-user || true
+          # Check if loki policy exists, create if not
+          echo "Setting up Loki policy..."
+          if ! mc admin policy info minio loki >/dev/null 2>&1; then
+            echo "Creating loki policy..."
+            cat > /tmp/loki-policy.json << 'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:ListBucket",
+                  "s3:GetBucketLocation"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::loki-*"
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:PutObject",
+                  "s3:GetObject",
+                  "s3:DeleteObject"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::loki-*/*"
+                ]
+              }
+            ]
+          }
+          EOF
 
-          echo "Loki MinIO setup completed"
+            mc admin policy create minio loki /tmp/loki-policy.json
+          else
+            echo "loki policy already exists"
+          fi
+
+          # Attach policy to user
+          echo "Attaching policy to user..."
+          mc admin policy attach minio loki --user loki-user
+
+          echo "Verifying setup..."
+          mc admin user info minio loki-user
+
+          echo "Loki MinIO setup completed successfully!"
         env:
         - name: MINIO_ROOT_USER
           valueFrom:

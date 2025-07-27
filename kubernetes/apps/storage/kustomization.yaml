@@ -6,8 +6,6 @@ namespace: storage
 components:
   - ../../components/common
 resources:
-  - ./minio/operator/ks.yaml
-  - ./minio/tenant/ks.yaml
   - ./nfs-csi/ks.yaml
   - ./nfs-volumes/ks.yaml
   - ./democratic-csi/ks.yaml
