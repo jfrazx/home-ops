@@ -102,7 +102,7 @@ spec:
         nodes:
           - name: "shiftx-control-01"
             devices:
-              - name: "nvme1n1"
+              - name: "nvme0n1"
                 config:
                   osdsPerDevice: "1"
                   deviceClass: "ssd"  # Explicitly set device class
