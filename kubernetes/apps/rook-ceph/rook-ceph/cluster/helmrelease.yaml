@@ -17,7 +17,8 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: rook-ceph-cluster
+  name: &name rook-ceph-cluster
+  namespace: &namespace rook-ceph
 spec:
   interval: 1h
   timeout: 15m
@@ -199,11 +200,6 @@ spec:
       name: csi-ceph-filesystem
       isDefault: false
       deletionPolicy: Delete
-      parameters:
-        clusterID: rook-ceph
-        csi.storage.k8s.io/snapshotter-secret-name: rook-ceph-csi-cephfs-provisioner
-        csi.storage.k8s.io/snapshotter-secret-namespace: rook-ceph
-
 
     cephObjectStores:
       - name: ceph-objectstore
