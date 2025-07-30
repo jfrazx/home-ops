@@ -152,3 +152,29 @@ mountOptions:
   - noresvport
   - rsize=1048576
   - wsize=1048576
+
+---
+# Custom NFS storage class optimized for Minio
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-nfs-minio
+  annotations:
+    description: "NFS storage optimized for Minio object storage"
+provisioner: org.democratic-csi.truenas-nfs
+parameters:
+  fsType: nfs
+  # Minio handles its own data integrity, so we can optimize for performance
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+mountOptions:
+  - nfsvers=4.1
+  - hard
+  - timeo=600
+  - retrans=2
+  - noresvport
+  - rsize=1048576
+  - wsize=1048576
+  - async  # Async writes for better performance (Minio handles consistency)
+  - noatime  # Don't update access times for better performance

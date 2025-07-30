@@ -35,6 +35,9 @@ spec:
               MINIO_PROMETHEUS_JOB_ID: minio
               MINIO_PROMETHEUS_URL: https://prometheus.${SECRET_DOMAIN}
               MINIO_SERVER_URL: https://s3.${SECRET_DOMAIN}
+            envFrom:
+              - secretRef:
+                  name: minio-root-credentials
             args:
               - server
               - /data
@@ -98,8 +101,8 @@ spec:
     persistence:
       data:
         type: persistentVolumeClaim
-        storageClass: ceph-filesystem
+        storageClass: truenas-nfs-minio
         accessMode: ReadWriteMany
-        size: 1Ti
+        size: 2Ti
         globalMounts:
           - path: /data
