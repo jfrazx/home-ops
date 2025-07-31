@@ -164,6 +164,7 @@ metadata:
 provisioner: org.democratic-csi.truenas-nfs
 parameters:
   fsType: nfs
+  # "csi.storage.k8s.io/compression": "off"
   # Minio handles its own data integrity, so we can optimize for performance
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
@@ -177,4 +178,4 @@ mountOptions:
   - rsize=1048576
   - wsize=1048576
   - async  # Async writes for better performance (Minio handles consistency)
-  - noatime  # Don't update access times for better performance
+  - noatime
