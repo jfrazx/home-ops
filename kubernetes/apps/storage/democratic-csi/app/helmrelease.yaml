@@ -5,6 +5,8 @@ kind: HelmRelease
 metadata:
   name: democratic-csi-nfs
   namespace: storage
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
 spec:
   interval: 1h
   chart:
