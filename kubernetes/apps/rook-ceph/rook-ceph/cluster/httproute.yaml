@@ -17,4 +17,8 @@ spec:
     - backendRefs:
         - name: rook-ceph-mgr-dashboard
           namespace: rook-ceph
-          port: 7000
+          port: 8443
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

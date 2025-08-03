@@ -55,8 +55,8 @@ spec:
       dashboard:
         enabled: true
         urlPrefix: /
-        ssl: false
-        prometheusEndpoint: http://prometheus-operated.monitoring.svc.cluster.local:9090
+        ssl: true
+        prometheusEndpoint: http://prometheus-operated.observability.svc.cluster.local:9090
       mgr:
         modules:
           - name: diskprediction_local
