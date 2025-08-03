@@ -47,37 +47,37 @@ mountOptions:
 
 ---
 # # iSCSI Storage Classes
-# ---
-# # General purpose iSCSI (block storage)
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: truenas-iscsi
-#   annotations:
-#     description: "Block storage for databases and high-performance workloads"
-# provisioner: org.democratic-csi.truenas-iscsi
-# parameters:
-#   fsType: ext4
-# reclaimPolicy: Retain
-# volumeBindingMode: Immediate
-# allowVolumeExpansion: true
+---
+# General purpose iSCSI (block storage)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-iscsi
+  annotations:
+    description: "Block storage for databases and high-performance workloads"
+provisioner: org.democratic-csi.truenas-iscsi
+parameters:
+  fsType: ext4
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
 
-# ---
-# # iSCSI optimized for databases
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: truenas-iscsi-db
-#   annotations:
-#     description: "Optimized for database workloads"
-# provisioner: org.democratic-csi.truenas-iscsi
-# parameters:
-#   fsType: ext4
-#   # 8K blocksize for PostgreSQL, 16K for MySQL
-#   # volblocksize: "8k"  # Set via PVC annotation
-# reclaimPolicy: Retain
-# volumeBindingMode: WaitForFirstConsumer  # Better for databases
-# allowVolumeExpansion: true
+---
+# iSCSI optimized for databases
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-iscsi-db
+  annotations:
+    description: "Optimized for database workloads"
+provisioner: org.democratic-csi.truenas-iscsi
+parameters:
+  fsType: ext4
+  # 8K blocksize for PostgreSQL, 16K for MySQL
+  # volblocksize: "8k"  # Set via PVC annotation
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer  # Better for databases
+allowVolumeExpansion: true
 
 ---
 # SMB Storage Classes
