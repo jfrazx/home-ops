@@ -5,8 +5,6 @@ kind: HelmRelease
 metadata:
   name: democratic-csi-nfs
   namespace: storage
-  labels:
-    pod-security.kubernetes.io/enforce: privileged
 spec:
   interval: 1h
   chart:
@@ -28,6 +26,8 @@ spec:
     csiDriver:
       name: org.democratic-csi.truenas-nfs
       attachRequired: false
+      storageCapacity: true
+      fsGroupPolicy: File
 
     controller:
       enabled: true
@@ -50,12 +50,57 @@ spec:
 
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+          privileged: true
 
     node:
       enabled: true
-      hostPID: false
+      hostPID: true
+      # hostNetwork: true  # May help with NFS connectivity
+
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+              - SYS_RESOURCE
+              - SYS_PTRACE
+              - DAC_READ_SEARCH
+              - DAC_OVERRIDE
+          privileged: true
+
+        # Mount host directories needed for NFS
+        extraVolumeMounts:
+          - name: host-usr-local-bin
+            mountPath: /host/usr/local/bin
+            mountPropagation: Bidirectional
+          - name: host-usr-local-sbin
+            mountPath: /host/usr/local/sbin
+            mountPropagation: Bidirectional
+
+        extraEnv:
+          - name: NODE_EXTRA_CREATE_METADATA
+            value: "true"
+
+      extraVolumes:
+        - name: host-usr-local-bin
+          hostPath:
+            path: /usr/local/bin
+            type: Directory
+        - name: host-usr-local-sbin
+          hostPath:
+            path: /usr/local/sbin
+            type: Directory
+
+      tolerations:
+        - operator: Exists
 
     storageClasses:
     - name: truenas-nfs
@@ -71,7 +116,6 @@ spec:
         - hard
         - timeo=600
         - retrans=2
-        - noresvport
         - rsize=1048576
         - wsize=1048576
 
@@ -90,7 +134,6 @@ spec:
         snapshotter-secret:
 
     driver:
-      # existingConfigSecret: democratic-csi-secret
       config:
         driver: freenas-api-nfs
         instance_id: "truenas-nfs"
@@ -212,7 +255,6 @@ spec:
         snapshotter-secret:
 
     driver:
-      # existingConfigSecret: democratic-csi-secret
       config:
         driver: freenas-api-smb
         instance_id: "truenas-smb"
@@ -388,4 +430,3 @@ spec:
 #           extentBlocksize: 512
 #           extentRpm: "SSD"
 #           extentAvailThreshold: 0
-

@@ -10,3 +10,12 @@ resources:
   - ./nfs-volumes/ks.yaml
   - ./democratic-csi/ks.yaml
   - ./minio/ks.yaml
+patches:
+  - target:
+      kind: Namespace
+      name: storage
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: privileged

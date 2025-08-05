@@ -13,7 +13,7 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
@@ -37,7 +37,7 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
@@ -120,7 +120,7 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - soft  # Soft mount for better performance
   - timeo=600
   - retrans=2
@@ -145,7 +145,7 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
@@ -164,13 +164,11 @@ metadata:
 provisioner: org.democratic-csi.truenas-nfs
 parameters:
   fsType: nfs
-  # "csi.storage.k8s.io/compression": "off"
-  # Minio handles its own data integrity, so we can optimize for performance
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
