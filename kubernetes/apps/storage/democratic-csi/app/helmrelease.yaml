@@ -92,6 +92,36 @@ spec:
       existingConfigSecret: democratic-csi-nfs-secret
       config:
         driver: freenas-api-nfs
+        instance_id: "truenas-nfs"
+
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
+
+        zfs:
+          datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+          datasetParentName: "${SECRET_NFS_SHARE}/nfs/volumes"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/nfs/snapshots"
+
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+          datasetPermissionsMode: "0777"
+          datasetPermissionsUser: 0
+          datasetPermissionsGroup: 0
+
+        nfs:
+          shareHost: "${SECRET_NFS_SERVER}"
+          shareAlldirs: false
+          shareAllowedHosts: []
+          shareAllowedNetworks: []
+          shareMaprootUser: root
+          shareMaprootGroup: root
+          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -183,6 +213,51 @@ spec:
       existingConfigSecret: democratic-csi-smb-secret
       config:
         driver: freenas-api-smb
+        instance_id: "truenas-smb"
+
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
+
+        zfs:
+          datasetParentName: "${SECRET_NFS_SHARE}/smb/volumes"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/smb/snapshots"
+
+          datasetProperties:
+            # SMB specific properties
+            aclmode: restricted
+            aclinherit: passthrough
+
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+          datasetPermissionsMode: "0770"
+          datasetPermissionsUser: 0
+          datasetPermissionsGroup: 0
+
+        smb:
+          shareHost: "${SECRET_NFS_SERVER}"
+
+          # SMB/CIFS share properties
+          shareAuxiliaryConfiguration: |
+            vfs objects = catia fruit streams_xattr
+            fruit:metadata = stream
+            fruit:model = MacStor
+            fruit:veto_appledouble = no
+            fruit:posix_rename = yes
+            fruit:zero_file_id = yes
+            fruit:wipe_intentionally_left_blank_rfork = yes
+            fruit:delete_empty_adfiles = yes
+
+          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+          shareEnabled: true
+          shareAllowedHosts: []
+          shareAllowedNetworks: []
+          shareMaprootUser: root
+          shareMaprootGroup: root
 # ---
 # # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
 # apiVersion: helm.toolkit.fluxcd.io/v2
@@ -275,4 +350,40 @@ spec:
 #       existingConfigSecret: democratic-csi-iscsi-secret
 #       config:
 #         driver: freenas-api-iscsi
+#         instance_id: "truenas-iscsi"
+#         httpConnection:
+#           protocol: https
+#           host: "${SECRET_NFS_SERVER}"
+#           port: 443
+#           # Same API key as NFS
+#           apiKey: "${SECRET_NAS_API_KEY}"
+#           allowInsecure: true
+#           apiVersion: 2
+#         zfs:
+#           datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
+#           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
+
+#           datasetEnableQuotas: true
+#           datasetEnableReservation: false
+#         iscsi:
+#           # TrueNAS iSCSI portal configuration
+#           targetPortal: "${SECRET_NFS_SERVER}:3260"
+#           interface: "enp129s0f1"
+#           # iSCSI target naming
+#           namePrefix: csi-
+#           nameSuffix: ""
+#           # IMPORTANT: Configure these in TrueNAS first
+#           # Sharing -> Block (iSCSI) -> Portals -> Add Portal (if not exists)
+#           # Sharing -> Block (iSCSI) -> Initiators -> Add Initiator Group
+#           targetGroups:
+#             - targetGroupPortalGroup: 1  # Default portal group
+#               targetGroupInitiatorGroup: 1  # Create initiator group for your nodes
+#               targetGroupAuthType: None
+#               # targetGroupAuthGroup: # For CHAP authentication if needed
+#           extentInsecureTpc: true
+#           extentXenCompat: false
+#           extentDisablePhysicalBlocksize: true
+#           extentBlocksize: 512
+#           extentRpm: "SSD"
+#           extentAvailThreshold: 0
 
