@@ -89,7 +89,7 @@ spec:
         snapshotter-secret:
 
     driver:
-      existingConfigSecret: democratic-csi-nfs-secret
+      # existingConfigSecret: democratic-csi-secret
       config:
         driver: freenas-api-nfs
         instance_id: "truenas-nfs"
@@ -210,7 +210,7 @@ spec:
         snapshotter-secret:
 
     driver:
-      existingConfigSecret: democratic-csi-smb-secret
+      # existingConfigSecret: democratic-csi-secret
       config:
         driver: freenas-api-smb
         instance_id: "truenas-smb"
@@ -347,7 +347,7 @@ spec:
 #         snapshotter-secret:
 
 #     driver:
-#       existingConfigSecret: democratic-csi-iscsi-secret
+#       existingConfigSecret: democratic-csi-secret
 #       config:
 #         driver: freenas-api-iscsi
 #         instance_id: "truenas-iscsi"
