@@ -27,6 +27,7 @@ spec:
   values:
     csiDriver:
       name: org.democratic-csi.truenas-nfs
+      attachRequired: false
 
     controller:
       enabled: true
@@ -149,6 +150,7 @@ spec:
   values:
     csiDriver:
       name: org.democratic-csi.truenas-smb
+      attachRequired: false
 
     controller:
       enabled: true
