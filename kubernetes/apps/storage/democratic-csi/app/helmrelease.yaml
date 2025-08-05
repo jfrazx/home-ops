@@ -31,6 +31,8 @@ spec:
     controller:
       enabled: true
       strategy: deployment
+      externalAttacher:
+        enabled: false
       externalProvisioner:
         extraArgs:
           - --leader-election=false
@@ -121,6 +123,8 @@ spec:
     controller:
       enabled: true
       strategy: deployment
+      externalAttacher:
+        enabled: false
       externalProvisioner:
         extraArgs:
           - --leader-election=false
@@ -210,6 +214,10 @@ spec:
 #     controller:
 #       enabled: true
 #       strategy: deployment
+#       externalAttacher:
+#         enabled: true
+#         extraArgs:
+#           - --driver=org.democratic-csi.truenas-iscsi
 #       externalProvisioner:
 #         extraArgs:
 #           - --leader-election=false
@@ -267,3 +275,4 @@ spec:
 #       existingConfigSecret: democratic-csi-iscsi-secret
 #       config:
 #         driver: freenas-api-iscsi
+
