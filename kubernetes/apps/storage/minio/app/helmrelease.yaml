@@ -28,7 +28,7 @@ spec:
           app:
             image:
               repository: quay.io/minio/minio
-              tag: RELEASE.2025-04-22T22-12-26Z
+              tag: RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
             env:
               MINIO_API_CORS_ALLOW_ORIGIN: https://s3.${SECRET_DOMAIN},https://minio.${SECRET_DOMAIN}
               MINIO_BROWSER_REDIRECT_URL: https://minio.${SECRET_DOMAIN}
@@ -63,9 +63,9 @@ spec:
         controller: minio
         ports:
           http:
-            port: 9001
+            port: &http 9001
           s3:
-            port: 9000
+            port: &s3 9000
     route:
           app:
             hostnames: ["minio.${SECRET_DOMAIN}"]
@@ -76,7 +76,7 @@ spec:
             rules:
               - backendRefs:
                   - identifier: app
-                    port: http
+                    port: *http
           s3:
             hostnames: ["s3.${SECRET_DOMAIN}"]
             parentRefs:
@@ -86,7 +86,7 @@ spec:
             rules:
               - backendRefs:
                   - identifier: app
-                    port: s3
+                    port: *s3
     persistence:
       data:
         type: persistentVolumeClaim
