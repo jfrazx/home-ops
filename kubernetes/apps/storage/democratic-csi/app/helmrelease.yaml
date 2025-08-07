@@ -268,12 +268,11 @@ spec:
           apiVersion: 2
 
         zfs:
-          datasetProperties:
-            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
           datasetParentName: "${SECRET_NFS_SHARE}/smb/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/smb/snapshots"
 
           datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
             # SMB specific properties
             aclmode: restricted
             aclinherit: passthrough
