@@ -172,7 +172,6 @@ mountOptions:
   - hard
   - timeo=600
   - retrans=2
-  - noresvport
   - rsize=1048576
   - wsize=1048576
   - async  # Async writes for better performance (Minio handles consistency)
