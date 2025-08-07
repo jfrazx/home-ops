@@ -109,7 +109,7 @@ spec:
       volumeBindingMode: Immediate
       allowVolumeExpansion: true
       parameters:
-        fsType: nfs
+        csi.storage.k8s.io/fstype: nfs
 
       mountOptions:
         - nfsvers=4.1
@@ -230,7 +230,7 @@ spec:
       volumeBindingMode: Immediate
       allowVolumeExpansion: true
       parameters:
-        fsType: cifs
+        csi.storage.k8s.io/fstype: cifs
 
       mountOptions:
         - dir_mode=0777
@@ -374,7 +374,7 @@ spec:
 #       volumeBindingMode: Immediate
 #       allowVolumeExpansion: true
 #       parameters:
-#         fsType: ext4
+#         csi.storage.k8s.io/fstype: ext4
 
 #       secrets:
 #         provisioner-secret:
