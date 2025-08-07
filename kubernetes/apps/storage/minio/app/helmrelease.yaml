@@ -66,38 +66,27 @@ spec:
             port: 9001
           s3:
             port: 9000
-    ingress:
-      app:
-        className: internal
-        annotations:
-          gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Storage
-          gethomepage.dev/icon: minio.png
-          gethomepage.dev/name: Minio
-          gethomepage.dev/widget.type: minio
-          gethomepage.dev/widget.url: http://minio.storage
-        hosts:
-          - host: &host minio.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-        tls:
-          - hosts:
-              - *host
-      s3:
-        className: internal
-        hosts:
-          - host: &s3Host s3.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: s3
-        tls:
-          - hosts:
-              - *s3Host
+    route:
+          app:
+            hostnames: ["minio.${SECRET_DOMAIN}"]
+            parentRefs:
+              - name: internal
+                namespace: kube-system
+                sectionName: https
+            rules:
+              - backendRefs:
+                  - identifier: app
+                    port: http
+          s3:
+            hostnames: ["s3.${SECRET_DOMAIN}"]
+            parentRefs:
+              - name: internal
+                namespace: kube-system
+                sectionName: https
+            rules:
+              - backendRefs:
+                  - identifier: app
+                    port: s3
     persistence:
       data:
         type: persistentVolumeClaim
