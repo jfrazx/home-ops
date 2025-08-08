@@ -49,6 +49,7 @@ spec:
           setNodeId: true
           config: |
             ui = true
+            disable_mlock = true
 
             listener "tcp" {
               tls_disable = 0
@@ -64,7 +65,7 @@ spec:
             }
 
             storage "raft" {
-              path = "/openbao/data"
+              path = "/vault/data"
             }
 
             service_registration "kubernetes" {}
