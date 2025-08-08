@@ -57,4 +57,4 @@ spec:
 
     metrics:
       service:
-        enabled: true
+        enabled: false
