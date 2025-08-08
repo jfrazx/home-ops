@@ -8,6 +8,10 @@ components:
 resources:
   - ./prometheus/ks.yaml
   - ./grafana/ks.yaml
+  - ./alloy/ks.yaml
   - ./alertmanager/ks.yaml
   - ./loki/ks.yaml
   - ./promtail/ks.yaml
+  - ./kube-state-metrics/ks.yaml
+  - ./node-exporter/ks.yaml
+  - ./smartctl-exporter/ks.yaml
