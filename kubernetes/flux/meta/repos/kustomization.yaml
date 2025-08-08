@@ -7,8 +7,10 @@ resources:
   - ./csi-driver-nfs.yaml
   - ./democratic-csi.yaml
   - ./external-dns.yaml
+  - ./external-secrets.yaml
   - ./grafana.yaml
   - ./minio-operator.yaml
+  - ./openbao.yaml
   - ./piraeus-charts.yaml
   - ./prometheus.yaml
   - ./velero.yaml
