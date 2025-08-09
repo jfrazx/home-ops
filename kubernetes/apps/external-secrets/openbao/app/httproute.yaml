@@ -16,6 +16,7 @@ spec:
     - backendRefs:
         - name: openbao
           port: 8200
+          weight: 100
       matches:
         - path:
             type: PathPrefix
