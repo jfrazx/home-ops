@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: openbao
-      version: 0.3.0
+      version: 0.16.2
       sourceRef:
         kind: HelmRepository
         name: openbao
@@ -55,8 +55,8 @@ spec:
               tls_disable = 0
               address = "[::]:8200"
               cluster_address = "[::]:8201"
-              tls_cert_file = "/vault/userconfig/openbao-tls/tls.crt"
-              tls_key_file = "/vault/userconfig/openbao-tls/tls.key"
+              tls_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
+              tls_key_file = "/openbao/userconfig/openbao-tls/tls.key"
               tls_min_version = "tls12"
 
               telemetry {
@@ -65,7 +65,7 @@ spec:
             }
 
             storage "raft" {
-              path = "/vault/data"
+              path = "/openbao/data"
             }
 
             service_registration "kubernetes" {}
@@ -104,7 +104,7 @@ spec:
       extraVolumes:
         - type: secret
           name: openbao-tls
-          mountPath: "/vault/userconfig/openbao-tls"
+          mountPath: "/openbao/userconfig/openbao-tls"
 
       serviceAccount:
         create: true
