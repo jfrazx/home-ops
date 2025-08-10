@@ -91,6 +91,7 @@ spec:
       service:
         enabled: true
         type: ClusterIP
+        appProtocol: https
         port: 8200
         targetPort: 8200
 
@@ -103,6 +104,7 @@ spec:
       extraVolumes:
         - type: secret
           name: openbao-tls
+          mountPath: "/vault/userconfig/openbao-tls"
 
       serviceAccount:
         create: true
