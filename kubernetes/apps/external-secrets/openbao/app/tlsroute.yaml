@@ -1,0 +1,19 @@
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: openbao
+  namespace: external-secrets
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+spec:
+  hostnames: ["openbao.${SECRET_DOMAIN}"]
+  parentRefs:
+    - name: internal
+      namespace: kube-system
+      sectionName: tls
+  rules:
+    - backendRefs:
+        - name: openbao
+          port: 8200
+          weight: 100
