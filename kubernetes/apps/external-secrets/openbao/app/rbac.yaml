@@ -27,5 +27,5 @@ roleRef:
   name: openbao-auth
 subjects:
   - kind: ServiceAccount
-    name: openbao
+    name: external-secrets-operator
     namespace: external-secrets
