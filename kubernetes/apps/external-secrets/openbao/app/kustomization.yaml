@@ -5,6 +5,5 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./tlsroute.yaml
-  - ./dnsendpoint.yaml
   - ./secretstore.yaml
   - ./rbac.yaml
