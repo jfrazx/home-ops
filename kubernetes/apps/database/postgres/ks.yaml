@@ -21,5 +21,4 @@ spec:
     name: flux-system
   dependsOn:
     - name: cnpg-operator
-    - name: cluster-secrets
   wait: true
