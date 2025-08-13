@@ -1,0 +1,36 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cnpg-operator
+  namespace: cnpg-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: cloudnative-pg
+      version: 0.22.1
+      sourceRef:
+        kind: HelmRepository
+        name: cnpg
+        namespace: flux-system
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    crds:
+      create: true
+    monitoring:
+      enabled: true
+      podMonitorEnabled: true
+      podMonitor:
+        enabled: true
+    config:
+      data:
+        INHERITED_ANNOTATIONS: "reloader.stakater.com/auto"
+        INHERITED_LABELS: "kustomize.toolkit.fluxcd.io/name,kustomize.toolkit.fluxcd.io/namespace"
