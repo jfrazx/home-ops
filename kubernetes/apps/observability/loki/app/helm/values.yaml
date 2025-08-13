@@ -19,7 +19,9 @@ loki:
       s3ForcePathStyle: true
       insecure: true
       access_key_id: loki-user
-      secret_access_key: ${LOKI_PASSWORD}
+      secret_access_key:
+        name: loki-credentials
+        key: LOKI_PASSWORD
 
   schemaConfig:
     configs:
