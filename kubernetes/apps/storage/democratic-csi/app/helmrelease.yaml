@@ -303,133 +303,127 @@ spec:
           shareAllowedNetworks: []
           shareMaprootUser: root
           shareMaprootGroup: root
-# ---
-# # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
-# apiVersion: helm.toolkit.fluxcd.io/v2
-# kind: HelmRelease
-# metadata:
-#   name: democratic-csi-iscsi
-#   namespace: storage
-# spec:
-#   interval: 1h
-#   chart:
-#     spec:
-#       chart: democratic-csi
-#       version: 0.14.6
-#       sourceRef:
-#         kind: HelmRepository
-#         name: democratic-csi
-#         namespace: flux-system
-#   install:
-#     remediation:
-#       retries: -1
-#   upgrade:
-#     cleanupOnFail: true
-#     remediation:
-#       retries: 3
-#   values:
-#     csiDriver:
-#       name: org.democratic-csi.truenas-iscsi
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: democratic-csi-iscsi
+  namespace: storage
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: democratic-csi
+      version: 0.14.6
+      sourceRef:
+        kind: HelmRepository
+        name: democratic-csi
+        namespace: flux-system
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    csiDriver:
+      name: org.democratic-csi.truenas-iscsi
 
-#     controller:
-#       enabled: true
-#       strategy: deployment
-#       externalAttacher:
-#         enabled: true
-#         extraArgs:
-#           - --driver=org.democratic-csi.truenas-iscsi
-#       externalProvisioner:
-#         extraArgs:
-#           - --leader-election=false
-#           - --node-deployment=false
-#           - --enable-capacity=true
-#           - --capacity-poll-interval=30s
-#       externalResizer:
-#         enabled: true
-#       externalSnapshotter:
-#         enabled: true
-#         extraArgs:
-#           - --leader-election=false
-#           - --node-deployment=false
+    controller:
+      enabled: true
+      strategy: deployment
+      externalAttacher:
+        enabled: true
+        extraArgs:
+          - --driver=org.democratic-csi.truenas-iscsi
+      externalProvisioner:
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+          - --enable-capacity=true
+          - --capacity-poll-interval=30s
+      externalResizer:
+        enabled: true
+      externalSnapshotter:
+        enabled: true
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
 
-#       driver:
-#         image: democraticcsi/democratic-csi:v1.9.3
+      driver:
+        image: democraticcsi/democratic-csi:v1.9.3
 
-#     node:
-#       enabled: true
-#       hostPID: true  # Required for iSCSI
-#       driver:
-#         image: democraticcsi/democratic-csi:v1.9.3
-#         extraEnv:
-#           - name: ISCSIADM_HOST_STRATEGY
-#             value: nsenter
-#           - name: ISCSIADM_HOST_PATH
-#             value: /usr/local/sbin/iscsiadm
-#         iscsiDirHostPath: /usr/local/etc/iscsi
-#         iscsiDirHostPathType: ""
+    node:
+      enabled: true
+      hostPID: true
+      driver:
+        image: democraticcsi/democratic-csi:v1.9.3
+        extraEnv:
+          - name: ISCSIADM_HOST_STRATEGY
+            value: nsenter
+          - name: ISCSIADM_HOST_PATH
+            value: /usr/local/sbin/iscsiadm
+        iscsiDirHostPath: /usr/local/etc/iscsi
+        iscsiDirHostPathType: ""
 
-#     storageClasses:
-#     - name: truenas-iscsi
-#       defaultClass: false
-#       reclaimPolicy: Retain
-#       volumeBindingMode: Immediate
-#       allowVolumeExpansion: true
-#       parameters:
-#         csi.storage.k8s.io/fstype: ext4
+    storageClasses:
+    - name: truenas-iscsi
+      defaultClass: false
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+      parameters:
+        csi.storage.k8s.io/fstype: ext4
 
-#       secrets:
-#         provisioner-secret:
-#         controller-publish-secret:
-#         node-stage-secret:
-#         node-publish-secret:
-#         controller-expand-secret:
+      secrets:
+        provisioner-secret:
+        controller-publish-secret:
+        node-stage-secret:
+        node-publish-secret:
+        controller-expand-secret:
 
-#     volumeSnapshotClasses:
-#     - name: truenas-iscsi-snapshots
-#       parameters:
-#         snapshotPrefix: "snapshot-"
-#       secrets:
-#         snapshotter-secret:
+    volumeSnapshotClasses:
+    - name: truenas-iscsi-snapshots
+      parameters:
+        snapshotPrefix: "snapshot-"
+      secrets:
+        snapshotter-secret:
 
-#     driver:
-#       existingConfigSecret: democratic-csi-secret
-#       config:
-#         driver: freenas-api-iscsi
-#         instance_id: "truenas-iscsi"
-#         httpConnection:
-#           protocol: https
-#           host: "${SECRET_NFS_SERVER}"
-#           port: 443
-#           # Same API key as NFS
-#           apiKey: "${SECRET_NAS_API_KEY}"
-#           allowInsecure: true
-#           apiVersion: 2
-#         zfs:
-#           datasetProperties:
-#             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
-#           datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
-#           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
+    driver:
+      existingConfigSecret: democratic-csi-secret
+      config:
+        driver: freenas-api-iscsi
+        instance_id: "truenas-iscsi"
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
+        zfs:
+          datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+          datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
 
-#           datasetEnableQuotas: true
-#           datasetEnableReservation: false
-#         iscsi:
-#           # TrueNAS iSCSI portal configuration
-#           targetPortal: "${SECRET_NFS_SERVER}:3260"
-#           interface: "enp129s0f1"
-#           # iSCSI target naming
-#           namePrefix: csi-
-#           nameSuffix: ""
-#           # IMPORTANT: Configure these in TrueNAS first
-#           # Sharing -> Block (iSCSI) -> Portals -> Add Portal (if not exists)
-#           # Sharing -> Block (iSCSI) -> Initiators -> Add Initiator Group
-#           targetGroups:
-#             - targetGroupPortalGroup: 1  # Default portal group
-#               targetGroupInitiatorGroup: 1  # Create initiator group for your nodes
-#               targetGroupAuthType: None
-#               # targetGroupAuthGroup: # For CHAP authentication if needed
-#           extentInsecureTpc: true
-#           extentXenCompat: false
-#           extentDisablePhysicalBlocksize: true
-#           extentBlocksize: 512
-#           extentRpm: "SSD"
-#           extentAvailThreshold: 0
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+        iscsi:
+          targetPortal: "${SECRET_NFS_SERVER}:3260"
+          interface: "enp129s0f1"
+          namePrefix: csi-
+          nameSuffix: ""
+          targetGroups:
+            - targetGroupPortalGroup: 2
+              targetGroupInitiatorGroup: 1
+              targetGroupAuthType: None
+              # targetGroupAuthGroup: # For CHAP authentication if needed
+          extentInsecureTpc: true
+          extentXenCompat: false
+          extentBlocksize: 4096
+          extentDisablePhysicalBlocksize: true
+          extentRpm: "SSD"
+          extentAvailThreshold: 0
