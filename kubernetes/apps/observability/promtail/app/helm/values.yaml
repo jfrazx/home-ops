@@ -7,7 +7,7 @@ config:
   serverPort: 3101
 
   clients:
-    - url: http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push
+    - url: http://loki-distributed-gateway.observability.svc.cluster.local/loki/api/v1/push
       tenant_id: 1
 
   positions:
@@ -155,6 +155,8 @@ volumes:
   - name: pods
     hostPath:
       path: /var/log/pods
+  - name: positions
+    emptyDir: {}
 
 volumeMounts:
   - name: containers
@@ -163,3 +165,5 @@ volumeMounts:
   - name: pods
     mountPath: /var/log/pods
     readOnly: true
+  - name: positions
+    mountPath: /tmp/positions
