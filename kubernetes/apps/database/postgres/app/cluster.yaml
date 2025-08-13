@@ -28,12 +28,10 @@ spec:
   postgresql:
     parameters:
       max_connections: "200"
-      shared_preload_libraries: "pg_stat_statements"
       shared_buffers: "256MB"
       effective_cache_size: "1GB"
       maintenance_work_mem: "64MB"
       work_mem: "4MB"
-      log_destination: "stderr"
       log_statement: "all"
       log_duration: "on"
       log_lock_waits: "on"
