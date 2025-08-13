@@ -391,11 +391,6 @@ spec:
           - name: ISCSIADM_HOST_PATH
             value: /usr/sbin/iscsiadm
 
-        extraVolumeMounts:
-          - name: iscsi-dir
-            mountPath: /etc/iscsi
-            mountPropagation: Bidirectional
-
       extraVolumes:
         - name: iscsi-dir
           hostPath:
@@ -403,7 +398,7 @@ spec:
             type: DirectoryOrCreate
 
       tolerations:
-            - operator: Exists
+        - operator: Exists
 
     storageClasses:
     - name: truenas-iscsi
