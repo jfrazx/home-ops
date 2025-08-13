@@ -54,18 +54,26 @@ backend:
   persistence:
     storageClass: ceph-block
     size: 20Gi
-
+  extraEnvFrom:
+    - secretRef:
+        name: loki-credentials
 read:
   replicas: 2
   persistence:
     storageClass: ceph-block
     size: 10Gi
+  extraEnvFrom:
+    - secretRef:
+        name: loki-credentials
 
 write:
   replicas: 2
   persistence:
     storageClass: ceph-block
     size: 10Gi
+  extraEnvFrom:
+    - secretRef:
+        name: loki-credentials
 
 gateway:
   enabled: true
