@@ -365,8 +365,43 @@ spec:
             value: nsenter
           - name: ISCSIADM_HOST_PATH
             value: /usr/local/sbin/iscsiadm
-        iscsiDirHostPath: /usr/local/etc/iscsi
-        iscsiDirHostPathType: ""
+
+        extraVolumeMounts:
+          - name: dev
+            mountPath: /dev
+            mountPropagation: HostToContainer
+          - name: sys
+            mountPath: /sys
+          - name: run-udev
+            mountPath: /run/udev
+          - name: lib-modules
+            mountPath: /lib/modules
+            readOnly: true
+          - name: iscsi-info
+            mountPath: /var/lib/iscsi
+            mountPropagation: Bidirectional
+
+      extraVolumes:
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: sys
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: run-udev
+          hostPath:
+            path: /run/udev
+            type: Directory
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
+        - name: iscsi-info
+          hostPath:
+            path: /var/lib/iscsi
+            type: DirectoryOrCreate
 
     storageClasses:
     - name: truenas-iscsi
@@ -408,7 +443,6 @@ spec:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
           datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
-
           datasetEnableQuotas: true
           datasetEnableReservation: false
         iscsi:
