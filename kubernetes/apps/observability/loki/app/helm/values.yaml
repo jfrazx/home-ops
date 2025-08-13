@@ -1,4 +1,6 @@
 ---
+fullnameOverride: loki-distributed
+
 memcachedChunks:
   enabled: true
   replicas: 1

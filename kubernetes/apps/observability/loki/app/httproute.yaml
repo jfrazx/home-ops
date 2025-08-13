@@ -14,7 +14,7 @@ spec:
       sectionName: https
   rules:
     - backendRefs:
-        - name: loki-gateway
+        - name: loki-distributed-gateway
           port: 80
       matches:
         - path:

@@ -64,7 +64,7 @@ datasources:
       - name: Loki
         type: loki
         uid: loki
-        url: http://loki-gateway.observability.svc.cluster.local
+        url: http://loki-distributed-gateway.observability.svc.cluster.local
         access: proxy
         jsonData:
           derivedFields:

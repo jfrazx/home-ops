@@ -132,6 +132,6 @@ loki.process "cluster_events" {
 
 loki.write "default" {
   endpoint {
-    url = "http://loki-headless.observability.svc.cluster.local:3100/loki/api/v1/push"
+    url = "http://loki-distributed-headless.observability.svc.cluster.local:3100/loki/api/v1/push"
   }
 }
