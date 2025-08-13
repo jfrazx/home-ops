@@ -54,7 +54,7 @@ backend:
     size: 20Gi
   extraEnvFrom:
     - secretRef:
-        name: loki-credentials
+        name: loki-minio-credentials
 read:
   replicas: 2
   persistence:
@@ -62,7 +62,7 @@ read:
     size: 10Gi
   extraEnvFrom:
     - secretRef:
-        name: loki-credentials
+        name: loki-minio-credentials
 
 write:
   replicas: 2
@@ -71,7 +71,7 @@ write:
     size: 10Gi
   extraEnvFrom:
     - secretRef:
-        name: loki-credentials
+        name: loki-minio-credentials
 
 gateway:
   enabled: true
