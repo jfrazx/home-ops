@@ -29,21 +29,17 @@ spec:
     parameters:
       max_connections: "200"
       shared_preload_libraries: "pg_stat_statements"
-
       shared_buffers: "256MB"
       effective_cache_size: "1GB"
       maintenance_work_mem: "64MB"
       work_mem: "4MB"
-
       log_destination: "stderr"
       log_statement: "all"
       log_duration: "on"
       log_lock_waits: "on"
       log_min_duration_statement: "1000"
-
       random_page_cost: "1.1"
       effective_io_concurrency: "200"
-
       wal_level: "replica"
       max_wal_senders: "10"
       max_replication_slots: "10"
@@ -54,7 +50,7 @@ spec:
     storageClass: "truenas-iscsi-db"
 
   monitoring:
-    enabled: true
+    enablePodMonitor: true
 
   backup:
     retentionPolicy: "20d"
