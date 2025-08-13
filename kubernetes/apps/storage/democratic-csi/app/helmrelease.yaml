@@ -17,7 +17,7 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -64,6 +64,11 @@ spec:
 
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
 
         securityContext:
           allowPrivilegeEscalation: true
@@ -185,7 +190,7 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -222,6 +227,11 @@ spec:
       hostPID: false  # Not needed for SMB
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
 
     storageClasses:
     - name: truenas-smb
@@ -320,13 +330,16 @@ spec:
         kind: HelmRepository
         name: democratic-csi
         namespace: flux-system
+
   install:
     remediation:
-      retries: -1
+      retries: 3
+
   upgrade:
     cleanupOnFail: true
     remediation:
       retries: 3
+
   values:
     csiDriver:
       name: org.democratic-csi.truenas-iscsi
@@ -334,18 +347,22 @@ spec:
     controller:
       enabled: true
       strategy: deployment
+
       externalAttacher:
         enabled: true
         extraArgs:
           - --driver=org.democratic-csi.truenas-iscsi
+
       externalProvisioner:
         extraArgs:
           - --leader-election=false
           - --node-deployment=false
           - --enable-capacity=true
           - --capacity-poll-interval=30s
+
       externalResizer:
         enabled: true
+
       externalSnapshotter:
         enabled: true
         extraArgs:
@@ -358,15 +375,58 @@ spec:
     node:
       enabled: true
       hostPID: true
+      hostNetwork: true
+
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
+
         extraEnv:
           - name: ISCSIADM_HOST_STRATEGY
             value: nsenter
           - name: ISCSIADM_HOST_PATH
             value: /usr/local/sbin/iscsiadm
-        iscsiDirHostPath: /usr/local/etc/iscsi
-        iscsiDirHostPathType: ""
+
+        extraVolumeMounts:
+          - name: dev
+            mountPath: /dev
+            mountPropagation: HostToContainer
+          - name: sys
+            mountPath: /sys
+          - name: run-udev
+            mountPath: /run/udev
+          - name: lib-modules
+            mountPath: /lib/modules
+            readOnly: true
+          - name: iscsi-info
+            mountPath: /var/lib/iscsi
+            mountPropagation: Bidirectional
+
+      extraVolumes:
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: sys
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: run-udev
+          hostPath:
+            path: /run/udev
+            type: Directory
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
+        - name: iscsi-info
+          hostPath:
+            path: /var/lib/iscsi
+            type: DirectoryOrCreate
 
     storageClasses:
     - name: truenas-iscsi
@@ -393,9 +453,11 @@ spec:
 
     driver:
       existingConfigSecret: democratic-csi-secret
+
       config:
         driver: freenas-api-iscsi
         instance_id: "truenas-iscsi"
+
         httpConnection:
           protocol: https
           host: "${SECRET_NFS_SERVER}"
@@ -403,24 +465,27 @@ spec:
           apiKey: "${SECRET_NAS_API_KEY}"
           allowInsecure: true
           apiVersion: 2
+
         zfs:
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
           datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
-
           datasetEnableQuotas: true
           datasetEnableReservation: false
+
         iscsi:
           targetPortal: "${SECRET_NFS_SERVER}:3260"
           interface: "enp129s0f1"
           namePrefix: csi-
           nameSuffix: ""
+
           targetGroups:
             - targetGroupPortalGroup: 2
               targetGroupInitiatorGroup: 1
               targetGroupAuthType: None
               # targetGroupAuthGroup: # For CHAP authentication if needed
+
           extentInsecureTpc: true
           extentXenCompat: false
           extentBlocksize: 4096
