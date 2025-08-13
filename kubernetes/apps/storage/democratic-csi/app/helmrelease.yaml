@@ -379,8 +379,6 @@ spec:
 
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
-        iscsiDirHostPathType: DirectoryOrCreate
-        iscsiDirHostPath: /var/lib/iscsi
 
         readinessProbe:
           initialDelaySeconds: 30
