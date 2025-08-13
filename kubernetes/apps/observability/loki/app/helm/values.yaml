@@ -18,6 +18,8 @@ loki:
       region: us-east-1
       s3ForcePathStyle: true
       insecure: true
+      access_key_id: loki-user
+      secret_access_key: ${LOKI_PASSWORD}
 
   schemaConfig:
     configs:
