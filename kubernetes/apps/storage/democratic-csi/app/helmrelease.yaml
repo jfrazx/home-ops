@@ -17,7 +17,7 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -64,6 +64,11 @@ spec:
 
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
 
         securityContext:
           allowPrivilegeEscalation: true
@@ -185,7 +190,7 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -222,6 +227,11 @@ spec:
       hostPID: false  # Not needed for SMB
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
 
     storageClasses:
     - name: truenas-smb
@@ -323,7 +333,7 @@ spec:
 
   install:
     remediation:
-      retries: -1
+      retries: 3
 
   upgrade:
     cleanupOnFail: true
@@ -369,6 +379,12 @@ spec:
 
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
+
         extraEnv:
           - name: ISCSIADM_HOST_STRATEGY
             value: nsenter
