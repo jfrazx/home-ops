@@ -357,7 +357,7 @@ spec:
 
     node:
       enabled: true
-      hostPID: true  # Required for iSCSI
+      hostPID: true
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
         extraEnv:
@@ -400,7 +400,6 @@ spec:
           protocol: https
           host: "${SECRET_NFS_SERVER}"
           port: 443
-          # Same API key as NFS
           apiKey: "${SECRET_NAS_API_KEY}"
           allowInsecure: true
           apiVersion: 2
@@ -418,13 +417,13 @@ spec:
           namePrefix: csi-
           nameSuffix: ""
           targetGroups:
-            - targetGroupPortalGroup: 1  # Default portal group
-              targetGroupInitiatorGroup: 1  # Create initiator group for your nodes
+            - targetGroupPortalGroup: 2
+              targetGroupInitiatorGroup: 1
               targetGroupAuthType: None
               # targetGroupAuthGroup: # For CHAP authentication if needed
           extentInsecureTpc: true
           extentXenCompat: false
-          extentBlocksize: 4096  # Changed from 512
+          extentBlocksize: 4096
           extentDisablePhysicalBlocksize: true
           extentRpm: "SSD"
           extentAvailThreshold: 0
