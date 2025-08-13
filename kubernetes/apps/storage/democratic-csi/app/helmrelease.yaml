@@ -354,8 +354,6 @@ spec:
 
       externalAttacher:
         enabled: true
-        extraArgs:
-          - --driver=org.democratic-csi.truenas-iscsi
 
       externalProvisioner:
         extraArgs:
@@ -424,8 +422,6 @@ spec:
         snapshotter-secret:
 
     driver:
-      existingConfigSecret: democratic-csi-secret
-
       config:
         driver: freenas-api-iscsi
         instance_id: "truenas-iscsi"
