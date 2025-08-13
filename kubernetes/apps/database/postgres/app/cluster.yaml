@@ -78,4 +78,4 @@ spec:
     topologyKey: kubernetes.io/hostname
     podAntiAffinityType: preferred
     nodeSelector:
-      node-role.kubernetes.io/control-plane: "true"
+      topologyKey: kubernetes.io/hostname
