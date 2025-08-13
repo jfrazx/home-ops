@@ -1,0 +1,94 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: database
+  labels:
+    backup/database: "true"
+    kustomize.toolkit.fluxcd.io/name: postgres-cluster
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.5
+
+  bootstrap:
+    initdb:
+      database: shiftx-cluster
+      owner: admin
+      secret:
+        name: postgres-superuser
+      dataChecksums: true
+      encoding: "UTF8"
+      localeCType: "en_US.UTF-8"
+      localeCollate: "en_US.UTF-8"
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_preload_libraries: "pg_stat_statements"
+
+      shared_buffers: "256MB"
+      effective_cache_size: "1GB"
+      maintenance_work_mem: "64MB"
+      work_mem: "4MB"
+
+      log_destination: "stderr"
+      log_statement: "all"
+      log_duration: "on"
+      log_lock_waits: "on"
+      log_min_duration_statement: "1000"
+
+      random_page_cost: "1.1"
+      effective_io_concurrency: "200"
+
+      wal_level: "replica"
+      max_wal_senders: "10"
+      max_replication_slots: "10"
+      wal_keep_segments: "32"
+
+  storage:
+    size: "20Gi"
+    storageClass: "truenas-iscsi-db"
+
+  monitoring:
+    enabled: true
+
+  backup:
+    retentionPolicy: "20d"
+    barmanObjectStore:
+      destinationPath: "s3://postgresql-backups"
+      endpointURL: "http://minio.storage.svc.cluster.local:9000"
+      s3Credentials:
+        accessKeyId:
+          name: postgres-minio
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: postgres-minio
+          key: MINIO_SECRET_KEY
+      wal:
+        retention: "7d"
+      data:
+        retention: "30d"
+        jobs: 1
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            postgresql: postgres
+        topologyKey: kubernetes.io/hostname
+
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
