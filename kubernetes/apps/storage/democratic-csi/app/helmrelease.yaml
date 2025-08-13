@@ -389,7 +389,21 @@ spec:
           - name: ISCSIADM_HOST_STRATEGY
             value: nsenter
           - name: ISCSIADM_HOST_PATH
-            value: /usr/local/sbin/iscsiadm
+            value: /usr/sbin/iscsiadm
+
+        extraVolumeMounts:
+          - name: iscsi-dir
+            mountPath: /etc/iscsi
+            mountPropagation: Bidirectional
+
+      extraVolumes:
+        - name: iscsi-dir
+          hostPath:
+            path: /var/lib/iscsi
+            type: DirectoryOrCreate
+
+      tolerations:
+            - operator: Exists
 
     storageClasses:
     - name: truenas-iscsi
