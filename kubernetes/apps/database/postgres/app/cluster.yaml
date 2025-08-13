@@ -64,11 +64,6 @@ spec:
         secretAccessKey:
           name: postgres-minio
           key: MINIO_SECRET_KEY
-      wal:
-        retention: "7d"
-      data:
-        retention: "30d"
-        jobs: 1
 
   resources:
     requests:
@@ -79,12 +74,8 @@ spec:
       memory: "2Gi"
 
   affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            postgresql: postgres
-        topologyKey: kubernetes.io/hostname
-
-  nodeSelector:
-    node-role.kubernetes.io/control-plane: "true"
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: preferred
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
