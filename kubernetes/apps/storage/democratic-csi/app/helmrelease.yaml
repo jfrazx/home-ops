@@ -339,6 +339,10 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+      strategy: rollback
+
+  uninstall:
+    keepHistory: false
 
   values:
     csiDriver:
@@ -379,6 +383,8 @@ spec:
 
       driver:
         image: democraticcsi/democratic-csi:v1.9.3
+        iscsiDirHostPath: /var/iscsi
+        iscsiDirHostPathType: ""
 
         readinessProbe:
           initialDelaySeconds: 30
@@ -389,13 +395,7 @@ spec:
           - name: ISCSIADM_HOST_STRATEGY
             value: nsenter
           - name: ISCSIADM_HOST_PATH
-            value: /usr/sbin/iscsiadm
-
-      extraVolumes:
-        - name: iscsi-dir
-          hostPath:
-            path: /var/lib/iscsi
-            type: DirectoryOrCreate
+            value: /usr/local/sbin/iscsiadm
 
       tolerations:
         - operator: Exists
