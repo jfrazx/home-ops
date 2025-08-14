@@ -6,6 +6,13 @@ admin:
 
 replicas: 1
 
+deployment:
+  strategy:
+    type: Recreate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+
 persistence:
   enabled: true
   type: pvc
@@ -146,7 +153,7 @@ sidecar:
 
 plugins:
   - grafana-clock-panel
-  - grafana-piechart-panel
-  - grafana-worldmap-panel
-  - natel-discrete-panel
+  - ae3e-plotly-panel
+  - geomap
+  - discrete-panel
   - vonage-status-panel
