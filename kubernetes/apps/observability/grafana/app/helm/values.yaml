@@ -154,5 +154,6 @@ sidecar:
 plugins:
   - grafana-clock-panel
   - ae3e-plotly-panel
+  - vonage-status-panel
   # - discrete-panel
-  # - vonage-status-panel
+
