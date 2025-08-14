@@ -11,10 +11,9 @@ config:
       tenant_id: 1
 
   positions:
-    filename: /tmp/positions.yaml
+    filename: /tmp/positions/positions.yaml
 
   scrape_configs:
-    # Kubernetes pod logs
     - job_name: kubernetes-pods
       kubernetes_sd_configs:
         - role: pod

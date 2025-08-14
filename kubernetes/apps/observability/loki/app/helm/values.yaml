@@ -125,7 +125,7 @@ loki:
 
     memberlist:
       join_members:
-        - loki-memberlist
+        - loki-distributed-memberlist
 
     ingester:
       lifecycler:
