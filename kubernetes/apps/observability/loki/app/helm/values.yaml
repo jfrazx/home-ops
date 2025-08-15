@@ -127,6 +127,9 @@ loki:
       join_members:
         - loki-distributed-memberlist
 
+    # volume_enabled: true
+    # enable_api: true
+
     ingester:
       lifecycler:
         ring:
