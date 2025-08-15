@@ -31,8 +31,8 @@ spec:
   path: ./kubernetes/apps/database/cnpg/plugin
   prune: true
   sourceRef:
-    kind: OCIRepository
-    name: cnpg-plugin-barman-cloud
+    kind: GitRepository
+    name: flux-system
   dependsOn:
     - name: cnpg-operator
   wait: true
