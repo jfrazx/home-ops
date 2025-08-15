@@ -74,7 +74,7 @@ parameters:
   # 8K blocksize for PostgreSQL, 16K for MySQL
   # volblocksize: "8k"  # Set via PVC annotation
 reclaimPolicy: Retain
-volumeBindingMode: WaitForFirstConsumer  # Better for databases
+volumeBindingMode: Immediate
 allowVolumeExpansion: true
 
 ---
