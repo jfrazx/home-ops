@@ -14,4 +14,5 @@ resources:
   - ./openbao.yaml
   - ./piraeus-charts.yaml
   - ./prometheus.yaml
+  - ./trivy-charts.yaml
   - ./velero.yaml
