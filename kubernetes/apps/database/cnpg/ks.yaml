@@ -36,3 +36,5 @@ spec:
   dependsOn:
     - name: cnpg-operator
   wait: true
+  resources:
+    - ./plugin/kustomization.yaml
