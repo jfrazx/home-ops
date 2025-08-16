@@ -1,0 +1,221 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mimir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: mimir-distributed
+      version: 5.7.0
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-charts
+        namespace: flux-system
+  values:
+    fullnameOverride: mimir
+
+    global:
+      clusterDomain: cluster.local
+      dnsService: coredns
+      dnsNamespace: kube-system
+
+    nginx:
+      enabled: false
+
+    gateway:
+      enabledNonEnterprise: true
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+
+    compactor:
+      replicas: 1
+      persistentVolume:
+        storageClass: truenas-nfs-archive
+        size: 20Gi
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+
+    distributor:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    ingester:
+      replicas: 3
+      persistentVolume:
+        storageClass: truenas-iscsi
+        size: 50Gi
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 200m
+          memory: 1Gi
+        limits:
+          memory: 2Gi
+      zoneAwareReplication:
+        enabled: false
+
+    querier:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    query_frontend:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    store_gateway:
+      replicas: 3
+      persistentVolume:
+        storageClass: truenas-nfs-archive
+        size: 20Gi
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+      zoneAwareReplication:
+        enabled: false
+
+    overrides_exporter:
+      replicas: 1
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+
+    ruler:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    alertmanager:
+      enabled: false
+
+    admin_api:
+      replicas: 1
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+
+    mimir:
+      structuredConfig:
+        # Common configuration
+        common:
+          storage:
+            backend: s3
+            s3:
+              endpoint: minio.storage.svc.cluster.local:9000
+              bucket_name: mimir-blocks
+              insecure: true
+
+        # Individual component configs
+        server:
+          http_listen_port: 8080
+          grpc_listen_port: 9095
+          log_level: info
+
+        blocks_storage:
+          backend: s3
+          s3:
+            endpoint: minio.storage.svc.cluster.local:9000
+            bucket_name: mimir-blocks
+            insecure: true
+          tsdb:
+            retention_period: 90d
+
+        ruler_storage:
+          backend: s3
+          s3:
+            endpoint: minio.storage.svc.cluster.local:9000
+            bucket_name: mimir-ruler
+            insecure: true
+
+        alertmanager_storage:
+          backend: local  # Disabled since using existing AlertManager
+
+        compactor:
+          data_dir: /data
+          blocks_retention_period: 90d
+
+        ingester:
+          ring:
+            replication_factor: 3
+
+        store_gateway:
+          sharding_ring:
+            replication_factor: 3
+
+        limits:
+          ingestion_rate: 10000
+          ingestion_burst_size: 200000
+          max_global_series_per_user: 1500000
+
+    serviceMonitor:
+      enabled: true
+      labels:
+        app.kubernetes.io/name: mimir

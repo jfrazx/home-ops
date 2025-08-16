@@ -79,6 +79,18 @@ datasources:
               matcherRegex: (?:traceID|traceId|trace_id)=(\w+)
               name: TraceID
               url: "$${__value.raw}"
+      - name: Mimir
+        type: prometheus
+        uid: mimir
+        url: http://mimir-gateway.observability.svc.cluster.local/prometheus
+        access: proxy
+        isDefault: false
+        jsonData:
+          httpMethod: POST
+          timeInterval: 30s
+          timeRange: "90d"
+        editable: false
+
 
 dashboardProviders:
   dashboardproviders.yaml:
