@@ -52,7 +52,7 @@ spec:
             disable_mlock = true
 
             listener "tcp" {
-              tls_disable = 0
+              tls_disable = 1
               address = "[::]:8200"
               cluster_address = "[::]:8201"
               tls_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
