@@ -4,12 +4,11 @@ kind: HelmRelease
 metadata:
   name: trivy-operator
 spec:
-  interval: 10m0s
+  interval: 30m
   chart:
     spec:
       chart: trivy-operator
-      version: "0.30.0"
-      reconcileStrategy: ChartVersion
+      version: 0.30.0
       sourceRef:
         kind: HelmRepository
         name: trivy-charts
