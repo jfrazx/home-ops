@@ -164,6 +164,11 @@ spec:
 
     mimir:
       structuredConfig:
+        memberlist:
+          bind_port: 7946
+          join_members:
+            - mimir-memberlist.observability.svc.cluster.local:7946
+
         # Common configuration
         common:
           storage:
