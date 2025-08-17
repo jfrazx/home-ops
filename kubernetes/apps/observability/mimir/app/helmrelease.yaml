@@ -66,6 +66,25 @@ spec:
           memory: 512Mi
 
     ingester:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: target # support for enterprise.legacyLabels
+                    operator: In
+                    values:
+                      - ingester
+              topologyKey: 'kubernetes.io/hostname'
+
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - ingester
+              topologyKey: 'kubernetes.io/hostname'
+
       replicas: 3
       persistentVolume:
         storageClass: truenas-iscsi
@@ -107,6 +126,24 @@ spec:
           memory: 512Mi
 
     store_gateway:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: target # support for enterprise.legacyLabels
+                    operator: In
+                    values:
+                      - store-gateway
+              topologyKey: 'kubernetes.io/hostname'
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - store-gateway
+              topologyKey: 'kubernetes.io/hostname'
+
       replicas: 3
       persistentVolume:
         storageClass: truenas-nfs-archive
@@ -176,6 +213,8 @@ spec:
             s3:
               endpoint: minio.storage.svc.cluster.local:9000
               bucket_name: mimir-blocks
+              access_key_id: "${AWS_ACCESS_KEY_ID}"
+              secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
               insecure: true
 
         server:
@@ -189,9 +228,7 @@ spec:
         blocks_storage:
           backend: s3
           s3:
-            endpoint: minio.storage.svc.cluster.local:9000
             bucket_name: mimir-blocks
-            insecure: true
           tsdb:
             # 90 days
             retention_period: 2160h
@@ -199,9 +236,7 @@ spec:
         ruler_storage:
           backend: s3
           s3:
-            endpoint: minio.storage.svc.cluster.local:9000
             bucket_name: mimir-ruler
-            insecure: true
 
         alertmanager_storage:
           backend: local
