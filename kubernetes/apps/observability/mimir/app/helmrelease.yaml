@@ -173,8 +173,10 @@ spec:
               bucket_name: mimir-blocks
               insecure: true
 
-        # Individual component configs
         server:
+          grpc_server_max_recv_msg_size: 104857600
+          grpc_server_max_send_msg_size: 104857600
+          grpc_server_max_concurrent_streams: 1000
           http_listen_port: 8080
           grpc_listen_port: 9095
           log_level: info
@@ -186,7 +188,8 @@ spec:
             bucket_name: mimir-blocks
             insecure: true
           tsdb:
-            retention_period: 90d
+            # 90 days
+            retention_period: 2160h
 
         ruler_storage:
           backend: s3
@@ -196,11 +199,10 @@ spec:
             insecure: true
 
         alertmanager_storage:
-          backend: local  # Disabled since using existing AlertManager
+          backend: local
 
         compactor:
           data_dir: /data
-          blocks_retention_period: 90d
 
         ingester:
           ring:
@@ -211,11 +213,9 @@ spec:
             replication_factor: 3
 
         limits:
-          ingestion_rate: 10000
+          ingestion_rate: 150000
           ingestion_burst_size: 200000
           max_global_series_per_user: 1500000
-
-    serviceMonitor:
-      enabled: true
-      labels:
-        app.kubernetes.io/name: mimir
+          max_global_series_per_metric: 200000000
+          compactor_blocks_retention_period: 90d
+          max_label_names_per_series: 120
