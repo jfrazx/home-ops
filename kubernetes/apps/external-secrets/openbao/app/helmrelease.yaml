@@ -68,6 +68,14 @@ spec:
               path = "/openbao/data"
             }
 
+            seal "gcpckms" {
+              project     = "shiftx-399401"
+              region      = "us-west1"
+              key_ring    = "openbao-unseal"
+              crypto_key  = "openbao-key"
+              credentials = "/openbao/userconfig/gcp-kms/credentials.json"
+            }
+
             service_registration "kubernetes" {}
 
       resources:
@@ -105,6 +113,9 @@ spec:
         - type: secret
           name: openbao-tls
           mountPath: "/openbao/userconfig/openbao-tls"
+        - type: secret
+          name: openbao-gcp-kms
+          mountPath: "/openbao/userconfig/gcp-kms"
 
       serviceAccount:
         create: true
