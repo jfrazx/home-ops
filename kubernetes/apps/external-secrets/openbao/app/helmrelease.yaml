@@ -103,7 +103,7 @@ spec:
       service:
         enabled: true
         type: ClusterIP
-        appProtocol: https
+        # appProtocol: https
         port: 8200
         targetPort: 8200
 
