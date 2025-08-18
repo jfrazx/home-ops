@@ -73,7 +73,7 @@ spec:
               region      = "us-west1"
               key_ring    = "openbao-unseal"
               crypto_key  = "openbao-key"
-              credentials = "/openbao/userconfig/gcp-kms/credentials.json"
+              credentials = "/openbao/userconfig/openbao-gcp-kms/credentials.json"
             }
 
             service_registration "kubernetes" {}
@@ -125,6 +125,8 @@ spec:
     ui:
       enabled: true
       serviceType: ClusterIP
+      publishNotReadyAddresses: true
+      activeVaultPodOnly: true
 
     # Injector disabled (not needed for External Secrets)
     injector:
