@@ -7,3 +7,4 @@ resources:
   - ./tlsroute.yaml
   - ./secretstore.yaml
   - ./rbac.yaml
+  - ./secret.sops.yaml
