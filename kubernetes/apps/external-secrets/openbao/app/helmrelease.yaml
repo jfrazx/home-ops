@@ -59,9 +59,6 @@ spec:
               tls_disable = 1
               address = "[::]:8200"
               cluster_address = "[::]:8201"
-              tls_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
-              tls_key_file = "/openbao/userconfig/openbao-tls/tls.key"
-              tls_min_version = "tls12"
 
               telemetry {
                 unauthenticated_metrics_access = "true"
