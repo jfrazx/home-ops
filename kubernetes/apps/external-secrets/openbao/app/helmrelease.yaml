@@ -28,6 +28,10 @@ spec:
       tlsDisable: false
 
     server:
+      readinessProbe:
+        enabled: false
+      livenessProbe:
+        enabled: false
       enabled: true
       image:
         registry: quay.io
@@ -55,9 +59,6 @@ spec:
               tls_disable = 1
               address = "[::]:8200"
               cluster_address = "[::]:8201"
-              tls_cert_file = "/openbao/userconfig/openbao-tls/tls.crt"
-              tls_key_file = "/openbao/userconfig/openbao-tls/tls.key"
-              tls_min_version = "tls12"
 
               telemetry {
                 unauthenticated_metrics_access = "true"
@@ -66,6 +67,14 @@ spec:
 
             storage "raft" {
               path = "/openbao/data"
+            }
+
+            seal "gcpckms" {
+              project     = "shiftx-399401"
+              region      = "us-west1"
+              key_ring    = "openbao-unseal"
+              crypto_key  = "openbao-key"
+              credentials = "/openbao/userconfig/openbao-gcp-kms/credentials.json"
             }
 
             service_registration "kubernetes" {}
@@ -91,7 +100,7 @@ spec:
       service:
         enabled: true
         type: ClusterIP
-        appProtocol: https
+        # appProtocol: https
         port: 8200
         targetPort: 8200
 
@@ -105,6 +114,9 @@ spec:
         - type: secret
           name: openbao-tls
           mountPath: "/openbao/userconfig/openbao-tls"
+        - type: secret
+          name: openbao-gcp-kms
+          mountPath: "/openbao/userconfig/gcp-kms"
 
       serviceAccount:
         create: true
@@ -114,6 +126,8 @@ spec:
     ui:
       enabled: true
       serviceType: ClusterIP
+      publishNotReadyAddresses: true
+      activeVaultPodOnly: true
 
     # Injector disabled (not needed for External Secrets)
     injector:
