@@ -228,7 +228,11 @@ spec:
         blocks_storage:
           backend: s3
           s3:
+            endpoint: minio.storage.svc.cluster.local:9000
             bucket_name: mimir-blocks
+            access_key_id: "${AWS_ACCESS_KEY_ID}"
+            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+            insecure: true
           tsdb:
             # 90 days
             retention_period: 2160h
@@ -236,7 +240,11 @@ spec:
         ruler_storage:
           backend: s3
           s3:
+            endpoint: minio.storage.svc.cluster.local:9000
             bucket_name: mimir-ruler
+            access_key_id: "${AWS_ACCESS_KEY_ID}"
+            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+            insecure: true
 
         alertmanager_storage:
           backend: local
