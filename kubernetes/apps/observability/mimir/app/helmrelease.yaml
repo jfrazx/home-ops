@@ -19,7 +19,7 @@ spec:
 
     global:
       clusterDomain: cluster.local
-      dnsService: coredns
+      dnsService: kube-dns
       dnsNamespace: kube-system
 
     nginx:
