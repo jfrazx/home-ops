@@ -147,6 +147,28 @@ nodeSelector:
 
 priorityClassName: ""
 
+
+extraVolumes:
+  - name: containers
+    hostPath:
+      path: /var/log/containers
+  - name: pods
+    hostPath:
+      path: /var/log/pods
+  - name: positions
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: containers
+    mountPath: /var/log/containers
+    readOnly: true
+  - name: pods
+    mountPath: /var/log/pods
+    readOnly: true
+  - name: positions
+    mountPath: /tmp/positions
+
+
 volumes:
   - name: containers
     hostPath:

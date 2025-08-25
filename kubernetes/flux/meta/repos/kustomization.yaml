@@ -3,6 +3,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - ./authentik.yaml
   - ./backube.yaml
   - ./cnpg.yaml
   - ./csi-driver-nfs.yaml
@@ -14,5 +15,6 @@ resources:
   - ./openbao.yaml
   - ./piraeus-charts.yaml
   - ./prometheus.yaml
+  - ./traefik.yaml
   - ./trivy-charts.yaml
   - ./velero.yaml
