@@ -28,10 +28,6 @@ spec:
       tlsDisable: false
 
     server:
-      readinessProbe:
-        enabled: false
-      livenessProbe:
-        enabled: false
       enabled: true
       image:
         registry: quay.io

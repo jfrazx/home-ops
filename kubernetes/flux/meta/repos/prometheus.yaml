@@ -9,5 +9,19 @@ spec:
   type: "oci"
   interval: 30m
   url: oci://ghcr.io/prometheus-community/charts
-  secretRef:
-    name: ghcr-auth
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: prometheus-operator-source
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://github.com/prometheus-operator/prometheus-operator.git
+  ref:
+    tag: v0.84.1
+  ignore: |
+    # exclude all
+    /*
+    # include only the CRDs
+    !/example/prometheus-operator-crd
