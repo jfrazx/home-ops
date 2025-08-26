@@ -22,6 +22,8 @@ spec:
       dnsService: coredns
       dnsNamespace: kube-system
 
+    minio:
+      enabled: false
     nginx:
       enabled: false
 

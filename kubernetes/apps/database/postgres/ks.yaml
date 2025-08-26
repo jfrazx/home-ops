@@ -21,4 +21,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: cnpg-operator
+    - name: openbao
+      namespace: external-secrets
   wait: true

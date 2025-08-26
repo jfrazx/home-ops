@@ -11,7 +11,7 @@ resources:
   - ./grafana/ks.yaml
   - ./kube-state-metrics/ks.yaml
   - ./loki/ks.yaml
-  # - ./mimir/ks.yaml
+  - ./mimir/ks.yaml
   - ./node-exporter/ks.yaml
   - ./prometheus/ks.yaml
   - ./promtail/ks.yaml
