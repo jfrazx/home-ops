@@ -61,10 +61,10 @@ ingester:
   resources:
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 1.5Gi
     limits:
       cpu: 500m
-      memory: 1Gi
+      memory: 3Gi
 
 distributor:
   replicas: 2
