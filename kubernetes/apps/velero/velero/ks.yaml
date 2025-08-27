@@ -9,13 +9,11 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   dependsOn:
     - name: minio
       namespace: storage
+    - name: openbao
+      namespace: external-secrets
   interval: 1h
   path: ./kubernetes/apps/velero/velero/resources
   postBuild:
@@ -42,13 +40,11 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   dependsOn:
     - name: velero-resources
       namespace: velero
+    - name: openbao
+      namespace: external-secrets
   interval: 1h
   path: ./kubernetes/apps/velero/velero/app
   postBuild:
@@ -75,10 +71,6 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   dependsOn:
     - name: velero
       namespace: velero

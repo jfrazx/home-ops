@@ -10,18 +10,13 @@ spec:
   interval: 30m
   url: oci://ghcr.io/prometheus-community/charts
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/helmrepository_v1.json
 apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
+kind: HelmRepository
 metadata:
-  name: prometheus-operator-source
+  name: prometheus-community-charts
   namespace: flux-system
 spec:
-  interval: 30m
-  url: https://github.com/prometheus-operator/prometheus-operator.git
-  ref:
-    tag: v0.84.1
-  ignore: |
-    # exclude all
-    /*
-    # include only the CRDs
-    !/example/prometheus-operator-crd
+  interval: 15m
+  url: https://prometheus-community.github.io/helm-charts
+  timeout: 3m

@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./httproute.yaml
-  - ./secret.sops.yaml
+  - ./externalsecret.yaml
   - ./minio-setup-job.yaml
 configMapGenerator:
   - name: loki-values
