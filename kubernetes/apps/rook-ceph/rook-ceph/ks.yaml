@@ -39,7 +39,7 @@ spec:
     - name: rook-ceph
       namespace: *namespace
     # - name: volsync
-    #   namespace: volsync-system
+    #   namespace: system
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
