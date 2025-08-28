@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - ./authentik.yaml
   - ./backube.yaml
+  - ./blackbox-exporter.yaml
   - ./cnpg.yaml
   - ./csi-driver-nfs.yaml
   - ./democratic-csi.yaml
