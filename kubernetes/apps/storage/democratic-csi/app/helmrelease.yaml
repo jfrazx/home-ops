@@ -395,6 +395,19 @@ spec:
           - name: ISCSIADM_HOST_PATH
             value: /usr/local/sbin/iscsiadm
 
+      driverRegistrar:
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+
+      volumeMounts:
+        - name: host-dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: host-usr-local-sbin
+          hostPath:
+            path: /usr/local/sbin
+            type: Directory
+
       tolerations:
         - operator: Exists
 
@@ -437,10 +450,19 @@ spec:
         zfs:
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+            "org.freenas:volsync": "enabled"
+            "org.freenas:storage-class": "iscsi-block"
+            "org.freenas:created-by": "kubernetes-csi"
+            "org.freenas:workload-type": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}"
+
           datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
           datasetEnableQuotas: true
           datasetEnableReservation: false
+
+          datasetPermissionsMode: "0600"
+          datasetPermissionsUser: 0
+          datasetPermissionsGroup: 0
 
         iscsi:
           targetPortal: "${SECRET_NFS_SERVER}:3260"
@@ -448,12 +470,15 @@ spec:
           namePrefix: csi-
           nameSuffix: ""
 
+          targetCommentTemplate: "K8s-{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+
           targetGroups:
             - targetGroupPortalGroup: 2
               targetGroupInitiatorGroup: 1
               targetGroupAuthType: None
               # targetGroupAuthGroup: # For CHAP authentication if needed
 
+          extentCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }} - {{ parameters.[csi.storage.k8s.io/pvc/size] }}"
           extentInsecureTpc: true
           extentXenCompat: false
           extentBlocksize: 4096

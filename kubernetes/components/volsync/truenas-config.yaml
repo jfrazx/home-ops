@@ -1,0 +1,34 @@
+---
+# TrueNAS-specific ReplicationSource leveraging ZFS snapshots
+# Use this instead of replicationsource.yaml when source PVCs use TrueNAS storage classes
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: "${APP}"
+spec:
+  sourcePVC: "${APP}"
+  trigger:
+    schedule: "${VOLSYNC_SCHEDULE:=0 2 * * *}"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 14
+    repository: "${APP}-volsync-secret"
+    repositoryPVC:
+      name: "${APP}-volsync-repository"
+      mountPath: "/repository"
+    volumeSnapshotClassName: "truenas-nfs-snapshots"
+    cacheCapacity: "${VOLSYNC_CACHE_CAPACITY:=15Gi}"
+    cacheStorageClassName: "truenas-iscsi"
+    cacheAccessModes: ["ReadWriteOnce"]
+    storageClassName: "truenas-nfs"
+    accessModes: ["ReadWriteMany"]
+    moverSecurityContext:
+      runAsUser: ${VOLSYNC_PUID:=1000}
+      runAsGroup: ${VOLSYNC_PGID:=1000}
+      fsGroup: ${VOLSYNC_PGID:=1000}
+      supplementalGroups: [100]
+    retain:
+      hourly: 4
+      daily: 14
+      weekly: 8
+      monthly: 12
