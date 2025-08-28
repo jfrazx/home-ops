@@ -16,6 +16,8 @@ spec:
   dependsOn:
     - name: minio
       namespace: storage
+    - name: openbao
+      namespace: external-secrets
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
