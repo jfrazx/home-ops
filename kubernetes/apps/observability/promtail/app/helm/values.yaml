@@ -20,6 +20,10 @@ config:
       pipeline_stages:
         - cri: {}
       relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace]
+          regex: rook-ceph
+          action: drop
+          target_label: __tmp_drop_rook_pods
         - source_labels:
             - __meta_kubernetes_pod_controller_name
           regex: ([0-9a-z-.]+?)(-[0-9a-f]{8,10})?
@@ -100,6 +104,10 @@ config:
       pipeline_stages:
         - cri: {}
       relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace]
+          regex: rook-ceph
+          action: drop
+          target_label: __tmp_drop_rook_pods
         - action: replace
           source_labels:
           - __meta_kubernetes_pod_node_name
