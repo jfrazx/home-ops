@@ -61,8 +61,6 @@ config:
           send_resolved: true
           http_config:
             follow_redirects: true
-          title: 'Alert: {{ .GroupLabels.alertname }}'
-          text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
   inhibit_rules:
     - source_matchers:
         - severity = "critical"
