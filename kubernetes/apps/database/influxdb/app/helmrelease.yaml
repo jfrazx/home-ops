@@ -18,6 +18,7 @@ spec:
       strategy: rollback
       retries: 3
   values:
+    envFromSecret: influxdb-auth
     defaultPodOptions:
       automountServiceAccountToken: false
     controllers:
@@ -72,7 +73,7 @@ spec:
     persistence:
       data:
         type: persistentVolumeClaim
-        storageClass: truenas-nfs-minio
+        storageClass: truenas-iscsi
         accessMode: ReadWriteOnce
         size: 50Gi
         globalMounts:

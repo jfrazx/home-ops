@@ -31,8 +31,8 @@ spec:
       VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
       VOLSYNC_REPOSITORY_NAMESPACE: "database"
       VOLSYNC_SCHEDULE: "0 3 * * *"
-      VOLSYNC_PUID: "0"
-      VOLSYNC_PGID: "0"
+      VOLSYNC_PUID: "999"
+      VOLSYNC_PGID: "999"
       VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
       VOLSYNC_REPOSITORY_SIZE: "200Gi"
   sourceRef:
