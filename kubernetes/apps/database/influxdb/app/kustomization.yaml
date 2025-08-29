@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: database
 components:
 - ../../../../components/volsync
+- ../../../../components/common
 resources:
 - ./externalsecret.yaml
 - ./helmrelease.yaml
