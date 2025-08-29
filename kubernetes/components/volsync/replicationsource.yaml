@@ -12,13 +12,10 @@ spec:
     copyMethod: "${VOLSYNC_COPYMETHOD:=Snapshot}"
     pruneIntervalDays: 14
     repository: "${APP}-volsync-secret"
-    repositoryPVC:
-      name: "${APP}-volsync-repository"
-      mountPath: "/repository"
     volumeSnapshotClassName: "${VOLSYNC_SNAPSHOTCLASS:=csi-ceph-blockpool}"
     cacheCapacity: "${VOLSYNC_CACHE_CAPACITY:=10Gi}"
-    cacheStorageClassName: "truenas-iscsi"
-    cacheAccessModes: ["ReadWriteOnce"]
+    cacheStorageClassName: "${VOLSYNC_CACHE_SNAPSHOTCLASS:=truenas-iscsi}"
+    cacheAccessModes: ["${VOLSYNC_CACHE_ACCESSMODES:=ReadWriteOnce}"]
     storageClassName: "${VOLSYNC_STORAGECLASS:=ceph-block}"
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:=ReadWriteOnce}"]
     moverSecurityContext:
@@ -27,7 +24,7 @@ spec:
       fsGroup: ${VOLSYNC_PGID:=1000}
       supplementalGroups: [100]
     retain:
-      hourly: 6
+      hourly: 24
       daily: 14
       weekly: 8
       monthly: 6

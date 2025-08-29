@@ -29,6 +29,7 @@ spec:
       VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
       VOLSYNC_STORAGECLASS: "truenas-nfs"
       VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
+      VOLSYNC_REPOSITORY_NAMESPACE: "database"
       VOLSYNC_SCHEDULE: "0 3 * * *"
       VOLSYNC_PUID: "999"
       VOLSYNC_PGID: "999"
