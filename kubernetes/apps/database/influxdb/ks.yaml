@@ -27,7 +27,7 @@ spec:
       VOLSYNC_CAPACITY: "100Gi"
       VOLSYNC_CACHE_CAPACITY: "20Gi"
       VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
-      VOLSYNC_STORAGECLASS: "truenas-nfs"
+      VOLSYNC_STORAGECLASS: "truenas-iscsi"
       VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
       VOLSYNC_REPOSITORY_NAMESPACE: "database"
       VOLSYNC_SCHEDULE: "0 3 * * *"
