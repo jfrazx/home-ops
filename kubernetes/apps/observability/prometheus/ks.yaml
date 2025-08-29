@@ -44,7 +44,7 @@ metadata:
   name: prometheus-operator-crds
   namespace: flux-system
 spec:
-  targetNamespace: monitoring
+  targetNamespace: observability
   path: ./kubernetes/apps/observability/prometheus/operator-crds
   prune: true
   sourceRef:

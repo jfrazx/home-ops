@@ -13,9 +13,6 @@ spec:
     copyMethod: Snapshot
     pruneIntervalDays: 14
     repository: "${APP}-volsync-secret"
-    repositoryPVC:
-      name: "${APP}-volsync-repository"
-      mountPath: "/repository"
     volumeSnapshotClassName: "truenas-nfs-snapshots"
     cacheCapacity: "${VOLSYNC_CACHE_CAPACITY:=15Gi}"
     cacheStorageClassName: "truenas-iscsi"
