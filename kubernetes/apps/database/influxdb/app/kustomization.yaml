@@ -14,3 +14,10 @@ labels:
   pairs:
     app.kubernetes.io/instance: influxdb
     app.kubernetes.io/name: influxdb
+patches:
+- target:
+    kind: PersistentVolumeClaim
+    name: influxdb
+  patch: |
+    - op: remove
+      path: /spec/dataSourceRef
