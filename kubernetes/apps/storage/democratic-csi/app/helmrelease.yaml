@@ -396,7 +396,7 @@ spec:
             value: /usr/local/sbin/iscsiadm
 
       driverRegistrar:
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
 
       volumeMounts:
         - name: host-dev
