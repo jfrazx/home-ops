@@ -8,7 +8,7 @@ resources:
   - ./httproute.yaml
   # - ./secret.sops.yaml
 configMapGenerator:
-  - name: grafana-values
+  - name: kube-prometheus-stack-values
     files:
       - values.yaml=./helm/values.yaml
 configurations:

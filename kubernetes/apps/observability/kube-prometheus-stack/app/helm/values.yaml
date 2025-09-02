@@ -1,0 +1,187 @@
+---
+crds:
+  enabled: true
+
+cleanPrometheusOperatorObjectNames: true
+
+alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ["alertname", "cluster", "service"]
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 6h
+      receiver: "null"
+      routes:
+        - receiver: "null"
+          matchers:
+            - alertname =~ "InfoInhibitor|Watchdog"
+        - receiver: "null"
+          matchers:
+            - severity = "none"
+    receivers:
+      - name: "null"
+    inhibit_rules:
+      - source_matchers:
+          - severity = "critical"
+        target_matchers:
+          - severity = "warning"
+        equal: ["alertname", "cluster", "service"]
+
+  alertmanagerSpec:
+    replicas: 1
+    podAntiAffinity: hard
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: ceph-block
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 50Mi
+      limits:
+        memory: 200Mi
+
+grafana:
+  enabled: false
+
+kube-state-metrics:
+  enabled: true
+  metricLabelsAllowlist:
+    - pods=[*]
+    - deployments=[*]
+    - persistentvolumeclaims=[*]
+  prometheus:
+    prometheusSpec:
+      secrets:
+        - minio-metrics-auth
+    monitor:
+      enabled: true
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels: ["__meta_kubernetes_pod_node_name"]
+          targetLabel: kubernetes_node
+
+prometheus-node-exporter:
+  enabled: true
+  prometheus:
+    monitor:
+      enabled: true
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: kubernetes_node
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: nodename
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - kubernetes_node
+          targetLabel: instance
+
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    replicas: 1
+    replicaExternalLabelName: __replica__
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+
+    enableAdminAPI: true
+    walCompression: true
+
+    retention: 30d
+    retentionSize: 90GB
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: truenas-iscsi
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
+      limits:
+        memory: 4Gi
+
+    # Additional scrape configs for services that don't have ServiceMonitors
+    additionalScrapeConfigs:
+      - job_name: minio
+        metrics_path: /minio/v2/metrics/cluster
+        basic_auth:
+          username_file: /etc/prometheus/secrets/minio-metrics-auth/username
+          password_file: /etc/prometheus/secrets/minio-metrics-auth/password
+        static_configs:
+          - targets: ["primary-hl.storage.svc.cluster.local:9000"]
+
+      - job_name: node-exporter
+        static_configs:
+          - targets:
+              - 10.168.2.91:9100
+              - 10.168.2.92:9100
+              - 10.168.2.93:9100
+
+kubeApiServer:
+  enabled: true
+  serviceMonitor:
+    metricRelabelings:
+      - action: drop
+        regex: apiserver_request_duration_seconds_bucket;(0.15|0.2|0.3|0.35|0.4|0.45|0.6|0.7|0.8|0.9|1.25|1.5|1.75|2|3|3.5|4|4.5|6|7|8|9|15|25|40|50)
+        sourceLabels:
+          - __name__
+          - le
+
+kubeControllerManager:
+  enabled: true
+  endpoints: &endpoints
+    - 10.168.2.91
+    - 10.168.2.92
+    - 10.168.2.93
+
+kubeEtcd:
+  enabled: true
+  endpoints: *endpoints
+  service:
+    enabled: true
+    port: 2381
+    targetPort: 2381
+
+kubeScheduler:
+  enabled: true
+  endpoints: *endpoints
+
+kubeProxy:
+  enabled: false
+
+coreDns:
+  enabled: true
+
+networkPolicy:
+  enabled: false

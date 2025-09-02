@@ -3,21 +3,21 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: database
 components:
-# - ../../../../components/volsync
-- ../../../../components/common
+  # - ../../../../components/volsync
+  - ../../../../components/common
 resources:
-- ./externalsecret.yaml
-- ./helmrelease.yaml
-- ./httproute.yaml
+  - ./externalsecret.yaml
+  - ./helmrelease.yaml
+  - ./httproute.yaml
 labels:
-- includeSelectors: true
-  pairs:
-    app.kubernetes.io/instance: influxdb
-    app.kubernetes.io/name: influxdb
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/instance: influxdb
+      app.kubernetes.io/name: influxdb
 patches:
-- target:
-    kind: PersistentVolumeClaim
-    name: influxdb
-  patch: |
-    - op: remove
-      path: /spec/dataSourceRef
+  - target:
+      kind: PersistentVolumeClaim
+      name: "${APP}"
+    patch: |
+      - op: remove
+        path: /spec/dataSourceRef

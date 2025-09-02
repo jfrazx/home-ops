@@ -6,15 +6,16 @@ namespace: observability
 components:
   - ../../components/common
 resources:
-  - ./alertmanager/ks.yaml
+  # - ./alertmanager/ks.yaml
   - ./alloy/ks.yaml
   - ./blackbox-exporter/ks.yaml
   - ./grafana/ks.yaml
   - ./keda/ks.yaml
-  - ./kube-state-metrics/ks.yaml
+  - ./kube-prometheus-stack/ks.yaml
+  # - ./kube-state-metrics/ks.yaml
   - ./loki/ks.yaml
   # - ./mimir/ks.yaml
-  - ./node-exporter/ks.yaml
-  - ./prometheus/ks.yaml
+  # - ./node-exporter/ks.yaml
+  # - ./prometheus/ks.yaml
   - ./promtail/ks.yaml
   - ./smartctl-exporter/ks.yaml

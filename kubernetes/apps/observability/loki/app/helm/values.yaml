@@ -54,7 +54,7 @@ ingester:
   persistence:
     enabled: true
     storageClass: ceph-block
-    size: 20Gi
+    size: 40Gi
   extraEnvFrom:
     - secretRef:
         name: loki-minio-credentials
