@@ -14,7 +14,7 @@ spec:
     secretRef:
       name: sops-age
   dependsOn:
-    - name: prometheus
+    - name: kube-prometheus-stack
       namespace: observability
     - name: loki
       namespace: observability
