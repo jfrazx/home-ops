@@ -26,10 +26,6 @@ spec:
       kind: Service
       name: kube-prometheus-stack-alertmanager
       namespace: *namespace
-    - apiVersion: v1
-      kind: Service
-      name: kube-prometheus-stack-grafana
-      namespace: *namespace
   interval: 1h
   path: ./kubernetes/apps/observability/kube-prometheus-stack/app
   postBuild:
