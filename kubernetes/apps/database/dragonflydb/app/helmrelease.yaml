@@ -1,0 +1,49 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dragonflydb-operator
+  namespace: database
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: dragonflydb-operator
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    crds:
+      install: true
+      keep: false
+
+    rbacProxy:
+      image:
+        repository: gcr.io/kubebuilder/kube-rbac-proxy
+        pullPolicy: IfNotPresent
+        tag: v0.19.1
+
+    manager:
+      image:
+        repository: ghcr.io/dragonflydb/operator
+        tag: v1.1.11
+
+    serviceMonitor:
+      enabled: true
+
+    grafanaDashboard:
+      enabled: true
+      folder: Dragonfly
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
