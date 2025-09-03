@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ldap
+  namespace: network
+spec:
+  plugin:
+    ldapAuth:
+      Attribute: uid
+      BaseDn: ou=people,dc=shiftx,dc=co
+      Enabled: "true"
+      LogLevel: DEBUG
+      Port: "389"
+      Url: ldap://lldap.security.svc.cluster.local
