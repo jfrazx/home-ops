@@ -27,6 +27,7 @@ spec:
   targetNamespace: network
   dependsOn:
     - name: cilium
+      namespace: kube-system
     - name: traefik-crds
   path: ./kubernetes/apps/network/traefik/external
   prune: true
@@ -49,6 +50,7 @@ spec:
   targetNamespace: network
   dependsOn:
     - name: cilium
+      namespace: kube-system
     - name: traefik-crds
   path: ./kubernetes/apps/network/traefik/internal
   prune: true
