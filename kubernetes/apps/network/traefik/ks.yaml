@@ -6,9 +6,6 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: network
-  dependsOn:
-    - name: kube-prometheus-stack
-      namespace: observability
   path: ./kubernetes/apps/network/traefik/crds
   prune: true
   sourceRef:
