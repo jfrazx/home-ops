@@ -9,6 +9,7 @@ resources:
   - ./cnpg.yaml
   - ./csi-driver-nfs.yaml
   - ./democratic-csi.yaml
+  - ./dragonflydb.yaml
   - ./external-dns.yaml
   - ./external-secrets.yaml
   - ./grafana.yaml
