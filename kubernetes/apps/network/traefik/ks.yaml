@@ -26,7 +26,7 @@ metadata:
 spec:
   targetNamespace: network
   dependsOn:
-    - name: cilium-resources
+    - name: cilium
     - name: traefik-crds
   path: ./kubernetes/apps/network/traefik/external
   prune: true
@@ -48,7 +48,7 @@ metadata:
 spec:
   targetNamespace: network
   dependsOn:
-    - name: cilium-resources
+    - name: cilium
     - name: traefik-crds
   path: ./kubernetes/apps/network/traefik/internal
   prune: true
