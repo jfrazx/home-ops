@@ -86,7 +86,7 @@ spec:
       access:
         enabled: true
         format: json
-        filePath: "/var/log/traefik/access.log"
+        # filePath: "/var/log/traefik/access.log"
         fields:
           headers:
             defaultmode: keep
@@ -109,7 +109,8 @@ spec:
             from: All
           protocol: HTTPS
           certificateRefs:
-            - name: ${SECRET_DOMAIN}-tls
+            - name: ${SECRET_DOMAIN/./-}-production-tls
+              namespace: kube-system
           mode: Terminate
         tcp:
           port: 1883
