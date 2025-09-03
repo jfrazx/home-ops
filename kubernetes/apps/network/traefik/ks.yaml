@@ -30,6 +30,10 @@ spec:
       namespace: kube-system
     - name: traefik-crds
   path: ./kubernetes/apps/network/traefik/external
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository
@@ -53,6 +57,10 @@ spec:
       namespace: kube-system
     - name: traefik-crds
   path: ./kubernetes/apps/network/traefik/internal
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository
@@ -74,6 +82,10 @@ spec:
   dependsOn:
     - name: traefik
   path: ./kubernetes/apps/network/traefik/addons
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository
@@ -96,6 +108,10 @@ spec:
     - name: traefik
     - name: cert-manager
   path: ./kubernetes/apps/network/traefik/certificates
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository
