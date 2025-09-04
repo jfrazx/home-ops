@@ -25,7 +25,7 @@ spec:
     adminUser:
       create: true
       createSecret: false
-      existingSecret: weave-auth
+      existingSecret: cluster-user-auth
     networkPolicy:
       create: false
     metrics:
@@ -34,4 +34,4 @@ spec:
       create: true
       impersonationResourceNames: ["admin"]
     podAnnotations:
-      secret.reloader.stakater.com/reload: weave-auth
+      secret.reloader.stakater.com/reload: cluster-user-auth
