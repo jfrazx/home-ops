@@ -9,11 +9,11 @@ metadata:
 spec:
   inputs:
     # - namespace: documents
-    - namespace: default
+    # - namespace: default
     # - namespace: automation
     - namespace: external-secrets
     - namespace: security
-    - namespace: network
+    # - namespace: network
     - namespace: observability
     - namespace: storage
     - namespace: kube-system
