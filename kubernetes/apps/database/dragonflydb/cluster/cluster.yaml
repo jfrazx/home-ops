@@ -45,7 +45,12 @@ spec:
     - "--proactor_threads=2"
     - "--cluster_mode=emulated"
 
-  storage:
-    requests:
-      storage: 10Gi
-    storageClassName: ceph-block
+  snapshot:
+    cron: "0 */6 * * *"  # Snapshot every 6 hours
+    persistentVolumeClaimSpec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: ceph-block
