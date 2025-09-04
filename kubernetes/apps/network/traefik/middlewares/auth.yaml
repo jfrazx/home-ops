@@ -8,10 +8,15 @@ metadata:
     fluxcd.controlplane.io/reconcileEvery: "30m"
 spec:
   inputs:
-    - namespace: documents
+    # - namespace: documents
     - namespace: default
-    - namespace: automation
+    # - namespace: automation
+    - namespace: external-secrets
+    - namespace: security
     - namespace: network
+    - namespace: observability
+    - namespace: storage
+    - namespace: kube-system
   resourcesTemplate: |
     ---
     apiVersion: traefik.io/v1alpha1
