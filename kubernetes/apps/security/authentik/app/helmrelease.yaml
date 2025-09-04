@@ -30,6 +30,18 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+
+      volumes:
+        - name: media-tmp
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+      volumeMounts:
+        - name: media-tmp
+          mountPath: /media
+        - name: tmp
+          mountPath: /tmp
+
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
