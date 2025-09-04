@@ -21,3 +21,4 @@ resources:
   - ./traefik.yaml
   - ./trivy-charts.yaml
   - ./velero.yaml
+  - ./weave.yaml
