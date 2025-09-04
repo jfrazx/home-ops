@@ -36,11 +36,17 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: dev-shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
       volumeMounts:
         - name: media-tmp
           mountPath: /media
         - name: tmp
           mountPath: /tmp
+        - name: dev-shm
+          mountPath: /dev/shm
 
       topologySpreadConstraints:
         - maxSkew: 1
