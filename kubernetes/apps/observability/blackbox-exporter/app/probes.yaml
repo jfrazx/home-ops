@@ -30,4 +30,4 @@ spec:
     staticConfig:
       static:
         - antipathy.internal:2049
-        - rapacity.internal:2049
+        # - rapacity.internal:2049
