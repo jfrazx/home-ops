@@ -76,7 +76,7 @@ discovery.relabel "pod_logs" {
   rule {
     source_labels = [
       "__meta_kubernetes_pod_label_app_kubernetes_io_instance",
-      "__meta_kubernetes_pod_label_instance"
+      "__meta_kubernetes_pod_label_instance",
     ]
     regex = "^;*([^;]+)(;.*)?$"
     action = "replace"
@@ -87,7 +87,7 @@ discovery.relabel "pod_logs" {
   rule {
     source_labels = [
       "__meta_kubernetes_pod_label_app_kubernetes_io_component",
-      "__meta_kubernetes_pod_label_component"
+      "__meta_kubernetes_pod_label_component",
     ]
     regex = "^;*([^;]+)(;.*)?$"
     action = "replace"
