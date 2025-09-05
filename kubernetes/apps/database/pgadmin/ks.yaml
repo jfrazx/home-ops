@@ -1,47 +1,44 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app influxdb
-  namespace: &namespace flux-system
+  name: &app pgadmin
+  namespace: &namespace database
+components:
+  - ../../../../components/common
+  # - ../../../../components/volsync
 spec:
-  components:
-    - ../../../../components/volsync
-    - ../../../../components/common
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: openbao
-      namespace: external-secrets
-    - name: volsync
-      namespace: system
+    - name: postgres
   interval: 1h
-  path: ./kubernetes/apps/database/influxdb/app
-  prune: true
-  retryInterval: 2m
+  path: ./kubernetes/apps/database/pgadmin/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: "100Gi"
+      VOLSYNC_CAPACITY: "40Gi"
       VOLSYNC_CACHE_CAPACITY: "20Gi"
+      VOLSYNC_ACCESSMODES: "ReadWriteOnce"
       VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
       VOLSYNC_STORAGECLASS: "truenas-iscsi"
       VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
       VOLSYNC_REPOSITORY_NAMESPACE: "database"
-      VOLSYNC_SCHEDULE: "0 3 * * *"
-      VOLSYNC_PUID: "999"
-      VOLSYNC_PGID: "999"
       VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
       VOLSYNC_REPOSITORY_SIZE: "200Gi"
+      VOLSYNC_SCHEDULE: "0 4 * * *"
+      VOLSYNC_PUID: "5050"
+      VOLSYNC_PGID: "5050"
+  prune: true
+  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: database
-  timeout: 10m
-  wait: true
+  targetNamespace: *namespace
+  timeout: 5m
