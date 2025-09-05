@@ -130,7 +130,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-    - name: traefik
+    # - name: traefik
     - name: error-pages
   path: ./kubernetes/apps/network/traefik/middlewares
   prune: true
