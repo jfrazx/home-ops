@@ -3,7 +3,8 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: prometheus
+  name: &name prometheus
+  namespace: &namespace observability
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
@@ -15,6 +16,7 @@ spec:
   rules:
     - backendRefs:
         - name: kube-prometheus-stack-prometheus
+          namespace: *namespace
           port: 9090
       matches:
         - path:
@@ -25,7 +27,8 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: alertmanager
+  name: &name alertmanager
+  namespace: &namespace observability
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
@@ -37,29 +40,8 @@ spec:
   rules:
     - backendRefs:
         - name: kube-prometheus-stack-alertmanager
+          namespace: *namespace
           port: 9093
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
----
-# yaml-language-server: $schema=https://github.com/datreeio/CRDs-catalog/raw/refs/heads/main/gateway.networking.k8s.io/httproute_v1.json
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: grafana
-  annotations:
-    kustomize.toolkit.fluxcd.io/substitute: "true"
-spec:
-  hostnames: ["grafana.${SECRET_DOMAIN}"]
-  parentRefs:
-    - name: internal
-      namespace: kube-system
-      sectionName: https
-  rules:
-    - backendRefs:
-        - name: kube-prometheus-stack-grafana
-          port: 80
       matches:
         - path:
             type: PathPrefix

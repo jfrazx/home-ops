@@ -15,6 +15,7 @@ spec:
   rules:
     - backendRefs:
         - name: openbao
+          namespace: external-secrets
           port: 8200
           weight: 100
       matches:
