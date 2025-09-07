@@ -4,17 +4,28 @@ apiVersion: velero.io/v1
 kind: Schedule
 metadata:
   name: weekly-cluster
+  namespace: velero
 spec:
-  schedule: "0 4 * * 0"  # 4 AM every Sunday
+  schedule: "0 5 * * 0"
   template:
     storageLocation: minio
     volumeSnapshotLocations:
       - truenas-nfs-snapshots
-    ttl: 720h0m0s  # 30 days
+      - truenas-iscsi-snapshots
+      - ceph-csi
+    ttl: 2160h0m0s  # 90 days
+
     excludedNamespaces:
       - velero
+
     excludedResources:
       - events
       - events.events.k8s.io
+
     snapshotVolumes: true
     defaultVolumesToFsBackup: false
+
+    metadata:
+      labels:
+        velero.io/backup-type: "full-cluster"
+        velero.io/schedule-name: "weekly-cluster"

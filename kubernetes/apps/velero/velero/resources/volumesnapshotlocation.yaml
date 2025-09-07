@@ -4,6 +4,7 @@ apiVersion: velero.io/v1
 kind: VolumeSnapshotLocation
 metadata:
   name: truenas-nfs-snapshots
+  namespace: velero
 spec:
   provider: csi
   config:
@@ -14,6 +15,7 @@ apiVersion: velero.io/v1
 kind: VolumeSnapshotLocation
 metadata:
   name: truenas-smb-snapshots
+  namespace: velero
 spec:
   provider: csi
   config:
@@ -24,6 +26,7 @@ apiVersion: velero.io/v1
 kind: VolumeSnapshotLocation
 metadata:
   name: ceph-csi
+  namespace: velero
 spec:
   provider: csi
   config:
@@ -34,6 +37,7 @@ apiVersion: velero.io/v1
 kind: VolumeSnapshotLocation
 metadata:
   name: truenas-iscsi-snapshots
+  namespace: velero
 spec:
   provider: csi
   config:

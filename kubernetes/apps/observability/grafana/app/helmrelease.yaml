@@ -6,6 +6,7 @@ metadata:
   name: grafana
 spec:
   interval: 1h
+  timeout: 10m
   chart:
     spec:
       chart: grafana
@@ -17,10 +18,18 @@ spec:
   install:
     remediation:
       retries: -1
+    timeout: 15m
+    replace: true
   upgrade:
     cleanupOnFail: true
     remediation:
-      retries: 3
+      retries: 5
+      strategy: uninstall
+    timeout: 15m
+    force: true
+  uninstall:
+    timeout: 5m
+    keepHistory: false
   valuesFrom:
     - kind: ConfigMap
       name: grafana-values

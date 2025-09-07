@@ -4,25 +4,31 @@ apiVersion: velero.io/v1
 kind: Schedule
 metadata:
   name: daily-apps
+  namespace: velero
 spec:
-  schedule: "0 2 * * *"  # 2 AM daily
+  schedule: "0 2 * * *"  # 2 AM daily - before database backups
   template:
     storageLocation: minio
     volumeSnapshotLocations:
       - truenas-nfs-snapshots
+      - ceph-csi
     ttl: 168h0m0s  # 7 days
-    includedNamespaces:
-      - default
-      - network
-      - flux-system
-      - cert-manager
+
     excludedNamespaces:
       - velero
-      - kube-system
-      - kube-public
-      - kube-node-lease
+      - database
+      - security
+
     excludedResources:
       - events
       - events.events.k8s.io
+      - replicasets
+      - pods
+
     snapshotVolumes: true
     defaultVolumesToFsBackup: false
+
+    metadata:
+      labels:
+        velero.io/backup-type: "applications"
+        velero.io/schedule-name: "daily-apps"

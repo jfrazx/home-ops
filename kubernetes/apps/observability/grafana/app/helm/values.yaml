@@ -9,9 +9,26 @@ replicas: 1
 deployment:
   strategy:
     type: Recreate
-    rollingUpdate:
-      maxUnavailable: 25%
-      maxSurge: 25%
+
+terminationGracePeriodSeconds: 60
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
 
 persistence:
   enabled: true
@@ -27,8 +44,8 @@ serviceMonitor:
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
+    cpu: 100m
+    memory: 256Mi
   limits:
     memory: 512Mi
 
@@ -90,7 +107,6 @@ datasources:
           timeInterval: 30s
           timeRange: "90d"
         editable: false
-
 
 dashboardProviders:
   dashboardproviders.yaml:
@@ -167,5 +183,3 @@ plugins:
   - grafana-clock-panel
   - ae3e-plotly-panel
   - vonage-status-panel
-  # - discrete-panel
-
