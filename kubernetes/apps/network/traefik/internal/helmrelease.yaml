@@ -90,3 +90,9 @@ spec:
         fields:
           headers:
             defaultmode: keep
+    resources:
+      requests:
+        cpu: 15m
+        memory: 110M
+      limits:
+        memory: 642M

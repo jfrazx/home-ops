@@ -75,3 +75,9 @@ spec:
         traefik-plugin-blockuseragent:
           moduleName: "github.com/agence-gaya/traefik-plugin-blockuseragent"
           version: "v0.1.7"
+    resources:
+      requests:
+        cpu: 15m
+        memory: 110M
+      limits:
+        memory: 642M
