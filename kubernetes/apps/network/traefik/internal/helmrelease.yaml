@@ -1,3 +1,4 @@
+---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -23,26 +24,18 @@ spec:
       strategy: rollback
       retries: 3
   values:
-    # for now
     deployment:
       kind: DaemonSet
     service:
       enabled: true
-      type: LoadBalancer
-      loadBalancerIPs:
-        - 10.168.2.98
+      type: ClusterIP
       annotations:
-        lbipam.cilium.io/ips: 10.168.2.98
         external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
-      labels:
-        cilium.l2.announce: "true"
-      externalTrafficPolicy: Cluster
       ipFamilies:
         - "IPv4"
     ingressClass:
       enabled: false
     additionalArguments:
-      - "--providers.kubernetesgateway.labelselector=app.kubernetes.io/instance=traefik-internal-network"
       - "--api.insecure=true"
       - "--serversTransport.insecureSkipVerify=true"
     providers:
@@ -54,8 +47,6 @@ spec:
       kubernetesGateway:
         enabled: true
         experimentalChannel: true
-        statusAddress:
-          ip: 10.168.2.98
     ports:
       mqtt:
         port: 1883
@@ -75,6 +66,16 @@ spec:
           options: default
         http3:
           enabled: true
+        forwardedHeaders:
+          trustedIPs:
+            - 10.42.0.0/16  # Pod CIDR - trust Cilium Gateway pods
+            - 10.43.0.0/16  # Service CIDR - trust cluster services
+            - 10.168.2.0/24 # Node network - trust node-to-node communication
+        proxyProtocol:
+          trustedIPs:
+            - 10.42.0.0/16  # Pod CIDR - trust Cilium Gateway pods
+            - 10.43.0.0/16  # Service CIDR - trust cluster services
+            - 10.168.2.0/24 # Node network - trust node-to-node communication
     metrics:
       prometheus:
         serviceMonitor:
@@ -86,46 +87,9 @@ spec:
       access:
         enabled: true
         format: json
-        # filePath: "/var/log/traefik/access.log"
         fields:
           headers:
             defaultmode: keep
-    gateway:
-      enabled: true
-      name: internal
-      annotations:
-        # https://kubernetes-sigs.github.io/external-dns/v0.14.2/sources/gateway/#targets
-        external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
-      listeners:
-        web:
-          port: 8000
-          # doesn't support None for now...
-          # https://gateway-api.sigs.k8s.io/reference/spec/#fromnamespaces
-          namespacePolicy:
-            from: All
-        websecure:
-          port: 8443
-          namespacePolicy:
-            from: All
-          protocol: HTTPS
-          certificateRefs:
-            - name: ${SECRET_DOMAIN/./-}-production-tls
-              namespace: kube-system
-          mode: Terminate
-        tcp:
-          port: 1883
-          namespacePolicy:
-            from: All
-          protocol: TCP
-        tls:
-          port: 8883
-          namespacePolicy:
-            from: All
-          protocol: TLS
-          mode: Passthrough
-    gatewayClass:
-      enabled: true
-      name: internal
     resources:
       requests:
         cpu: 15m
