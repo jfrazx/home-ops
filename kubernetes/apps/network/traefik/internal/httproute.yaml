@@ -21,3 +21,4 @@ spec:
           namespace: network
           port: 8080
           weight: 100
+

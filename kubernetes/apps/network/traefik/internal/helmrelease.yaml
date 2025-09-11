@@ -48,6 +48,12 @@ spec:
         enabled: true
         experimentalChannel: true
     ports:
+      traefik:
+        port: 8080
+        expose:
+          default: true
+        exposedPort: 8080
+        protocol: TCP
       mqtt:
         port: 1883
         expose:
