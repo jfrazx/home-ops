@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: traefik-internal
+  name: traefik
   namespace: network
 spec:
   interval: 5m
@@ -33,11 +33,12 @@ spec:
         external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
       ipFamilies:
         - "IPv4"
-    ingressClass:
-      enabled: false
+
     additionalArguments:
+      - "--api.dashboard=true"
       - "--api.insecure=true"
       - "--serversTransport.insecureSkipVerify=true"
+
     providers:
       kubernetesCRD:
         enabled: true
@@ -66,12 +67,28 @@ spec:
           default: true
         exposedPort: 8883
         protocol: TCP
+
+      web:
+        port: 8000
+        expose:
+          default: true
+        exposedPort: 8000
+        protocol: TCP
+
       websecure:
+        port: 8443
+        expose:
+          default: true
+        exposedPort: 8443
+        protocol: TCP
         tls:
           enabled: true
           options: default
         http3:
           enabled: true
+        middlewares:
+          - network-errors@kubernetescrd
+          - network-blockuseragent@kubernetescrd
         forwardedHeaders:
           trustedIPs:
             - 10.42.0.0/16  # Pod CIDR - trust Cilium Gateway pods
@@ -82,10 +99,19 @@ spec:
             - 10.42.0.0/16  # Pod CIDR - trust Cilium Gateway pods
             - 10.43.0.0/16  # Service CIDR - trust cluster services
             - 10.168.2.0/24 # Node network - trust node-to-node communication
+
     metrics:
       prometheus:
         serviceMonitor:
           enabled: false
+
+    experimental:
+      abortOnPluginFailure: true
+      plugins:
+        traefik-plugin-blockuseragent:
+          moduleName: "github.com/agence-gaya/traefik-plugin-blockuseragent"
+          version: "v0.1.7"
+
     logs:
       general:
         level: INFO
@@ -96,9 +122,10 @@ spec:
         fields:
           headers:
             defaultmode: keep
+
     resources:
       requests:
-        cpu: 15m
-        memory: 110M
+        cpu: 25m
+        memory: 150M
       limits:
-        memory: 642M
+        memory: 800M
