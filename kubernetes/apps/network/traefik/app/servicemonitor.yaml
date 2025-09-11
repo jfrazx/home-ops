@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: traefik-internal
+  name: traefik
   namespace: network
 spec:
   selector:

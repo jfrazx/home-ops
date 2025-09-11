@@ -6,7 +6,7 @@ metadata:
   namespace: network
 spec:
   hostnames:
-    - traefik-internal.${SECRET_DOMAIN}
+    - traefik.${SECRET_DOMAIN}
   parentRefs:
     - name: internal
       namespace: kube-system
@@ -17,8 +17,7 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: traefik-internal
+        - name: traefik
           namespace: network
           port: 8080
           weight: 100
-
