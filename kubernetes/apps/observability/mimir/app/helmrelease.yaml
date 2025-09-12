@@ -1,0 +1,327 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mimir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: mimir-distributed
+      version: 5.8.0
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-charts
+        namespace: flux-system
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    fullnameOverride: mimir
+
+    global:
+      podAnnotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+    mimir:
+      structuredConfig:
+        common:
+          storage:
+            backend: s3
+            s3:
+              endpoint: minio.storage.svc.cluster.local:9000
+              bucket_name: mimir-blocks
+              insecure: true
+
+        blocks_storage:
+          backend: s3
+          s3:
+            endpoint: minio.storage.svc.cluster.local:9000
+            bucket_name: mimir-blocks
+            access_key_id: "${AWS_ACCESS_KEY_ID}"
+            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+            insecure: true
+          tsdb:
+            retention_period: 2160h
+
+        ruler_storage:
+          backend: s3
+          s3:
+            endpoint: minio.storage.svc.cluster.local:9000
+            bucket_name: mimir-ruler
+            access_key_id: "${AWS_ACCESS_KEY_ID}"
+            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+            insecure: true
+
+        limits:
+          ingestion_rate: 100000
+          ingestion_burst_size: 200000
+          max_global_series_per_user: 1500000
+          max_global_series_per_metric: 50000
+          max_global_metadata_per_user: 8000
+          max_global_metadata_per_metric: 10
+          compactor_blocks_retention_period: 90d
+          max_label_names_per_series: 120
+
+        multitenancy_enabled: false
+
+        compactor:
+          data_dir: /data/compactor
+          sharding_ring:
+            kvstore:
+              store: memberlist
+
+        distributor:
+          ring:
+            kvstore:
+              store: memberlist
+
+        ingester:
+          ring:
+            kvstore:
+              store: memberlist
+            replication_factor: 2
+            zone_awareness_enabled: true
+
+        querier:
+          query_ingesters_within: 13h
+          query_store_after: 12h
+
+        query_frontend:
+          align_queries_with_step: true
+          cache_results: true
+          compress_responses: true
+          log_queries_longer_than: 10s
+
+        store_gateway:
+          sharding_ring:
+            kvstore:
+              store: memberlist
+
+        ruler:
+          enable_api: true
+          rule_path: /data/ruler
+          ring:
+            kvstore:
+              store: memberlist
+
+        memberlist:
+          join_members:
+            - mimir-distributor-headless.observability.svc.cluster.local:7946
+            - mimir-ingester-headless.observability.svc.cluster.local:7946
+            - mimir-querier-headless.observability.svc.cluster.local:7946
+            - mimir-query-frontend-headless.observability.svc.cluster.local:7946
+            - mimir-compactor-headless.observability.svc.cluster.local:7946
+            - mimir-store-gateway-headless.observability.svc.cluster.local:7946
+            - mimir-ruler-headless.observability.svc.cluster.local:7946
+
+        server:
+          log_level: info
+          log_format: logfmt
+
+    gateway:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 2
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values: [gateway]
+                topologyKey: kubernetes.io/hostname
+
+    distributor:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 2
+      resources:
+        requests:
+          cpu: 20m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values: [distributor]
+                topologyKey: kubernetes.io/hostname
+
+    ingester:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 3
+      zoneAwareReplication:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 512Mi
+        limits:
+          memory: 2Gi
+      persistentVolume:
+        enabled: true
+        storageClass: truenas-iscsi
+        accessModes:
+          - ReadWriteOnce
+        size: 50Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values: [ingester]
+                topologyKey: kubernetes.io/hostname
+
+    querier:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 2
+      resources:
+        requests:
+          cpu: 20m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values: [querier]
+                topologyKey: kubernetes.io/hostname
+
+    query_frontend:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 2
+      resources:
+        requests:
+          cpu: 10m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values: [query-frontend]
+                topologyKey: kubernetes.io/hostname
+
+    compactor:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 512Mi
+        limits:
+          memory: 2Gi
+      persistentVolume:
+        enabled: true
+        storageClass: truenas-iscsi
+        accessModes:
+          - ReadWriteOnce
+        size: 20Gi
+
+    store_gateway:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 2
+      resources:
+        requests:
+          cpu: 10m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+      persistentVolume:
+        enabled: true
+        storageClass: truenas-iscsi
+        accessModes:
+          - ReadWriteOnce
+        size: 10Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values: [store-gateway]
+                topologyKey: kubernetes.io/hostname
+
+    ruler:
+      extraEnvFrom:
+        - secretRef:
+          name: mimir-minio-credentials
+      replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+      persistentVolume:
+        enabled: true
+        storageClass: truenas-iscsi
+        accessModes:
+          - ReadWriteOnce
+        size: 10Gi
+
+    alertmanager:
+      enabled: false
+
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        app.kubernetes.io/part-of: kube-prometheus-stack
+
+    grafana:
+      enabled: false
+
+    nginx:
+      enabled: false

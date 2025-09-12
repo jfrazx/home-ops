@@ -148,6 +148,21 @@ prometheus:
               - 10.168.2.92:9100
               - 10.168.2.93:9100
 
+    remoteWrite:
+      - url: http://mimir-gateway.observability.svc.cluster.local/api/v1/push
+        writeRelabelConfigs:
+          - sourceLabels: [__name__]
+            regex: 'prometheus_.*|go_.*'
+            action: drop
+        queueConfig:
+          capacity: 10000
+          maxSamplesPerSend: 2000
+          batchSendDeadline: 5s
+          minShards: 1
+          maxShards: 10
+
+    retention: 24h
+
 kubeApiServer:
   enabled: true
   serviceMonitor:
