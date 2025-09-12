@@ -25,6 +25,9 @@ spec:
     fullnameOverride: mimir
 
     global:
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
       podAnnotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
 
@@ -32,31 +35,9 @@ spec:
       structuredConfig:
         common:
           storage:
-            backend: s3
-            s3:
-              endpoint: minio.storage.svc.cluster.local:9000
-              bucket_name: mimir-blocks
-              insecure: true
-
-        blocks_storage:
-          backend: s3
-          s3:
-            endpoint: minio.storage.svc.cluster.local:9000
-            bucket_name: mimir-blocks
-            access_key_id: "${AWS_ACCESS_KEY_ID}"
-            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
-            insecure: true
-          tsdb:
-            retention_period: 2160h
-
-        ruler_storage:
-          backend: s3
-          s3:
-            endpoint: minio.storage.svc.cluster.local:9000
-            bucket_name: mimir-ruler
-            access_key_id: "${AWS_ACCESS_KEY_ID}"
-            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
-            insecure: true
+            backend: filesystem
+            filesystem:
+              dir: /data/mimir
 
         limits:
           ingestion_rate: 100000
@@ -65,8 +46,6 @@ spec:
           max_global_series_per_metric: 50000
           max_global_metadata_per_user: 8000
           max_global_metadata_per_metric: 10
-          compactor_blocks_retention_period: 90d
-          max_label_names_per_series: 120
 
         multitenancy_enabled: false
 
@@ -125,9 +104,6 @@ spec:
           log_format: logfmt
 
     gateway:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 2
       resources:
         requests:
@@ -148,9 +124,6 @@ spec:
                 topologyKey: kubernetes.io/hostname
 
     distributor:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 2
       resources:
         requests:
@@ -171,9 +144,6 @@ spec:
                 topologyKey: kubernetes.io/hostname
 
     ingester:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 3
       zoneAwareReplication:
         enabled: false
@@ -202,9 +172,6 @@ spec:
                 topologyKey: kubernetes.io/hostname
 
     querier:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 2
       resources:
         requests:
@@ -225,9 +192,6 @@ spec:
                 topologyKey: kubernetes.io/hostname
 
     query_frontend:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 2
       resources:
         requests:
@@ -248,9 +212,6 @@ spec:
                 topologyKey: kubernetes.io/hostname
 
     compactor:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 1
       resources:
         requests:
@@ -266,9 +227,6 @@ spec:
         size: 20Gi
 
     store_gateway:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 2
       resources:
         requests:
@@ -295,9 +253,6 @@ spec:
                 topologyKey: kubernetes.io/hostname
 
     ruler:
-      extraEnvFrom:
-        - secretRef:
-          name: mimir-minio-credentials
       replicas: 1
       resources:
         requests:
