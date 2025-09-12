@@ -16,10 +16,11 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
+      strategy: rollback
       retries: 3
   values:
     fullnameOverride: mimir
@@ -29,180 +30,258 @@ spec:
         - secretRef:
             name: mimir-minio-credentials
 
+      clusterDomain: cluster.local
+      dnsService: kube-dns
+      dnsNamespace: kube-system
+
     minio:
       enabled: false
-
-    mimir:
-      structuredConfig:
-        multitenancy_enabled: false
-
-        blocks_storage:
-          backend: s3
-          s3:
-            bucket_name: mimir-blocks
-            access_key_id: ${MINIO_ACCESS_KEY_ID}
-            secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
-            endpoint: minio.storage.svc.cluster.local:9000
-            insecure: true
-
-        alertmanager_storage:
-          s3:
-            bucket_name: mimir-alertmanager
-            access_key_id: ${MINIO_ACCESS_KEY_ID}
-            secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
-            endpoint: minio.storage.svc.cluster.local:9000
-            insecure: true
-
-        ruler_storage:
-          s3:
-            bucket_name: mimir-ruler
-            access_key_id: ${MINIO_ACCESS_KEY_ID}
-            secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
-            endpoint: minio.storage.svc.cluster.local:9000
-            insecure: true
-
-        compactor:
-          data_dir: /data/compactor
-          sharding_ring:
-            kvstore:
-              store: memberlist
-
-        distributor:
-          ring:
-            kvstore:
-              store: memberlist
-
-        ingester:
-          ring:
-            kvstore:
-              store: memberlist
-            replication_factor: 2
-
-        querier:
-          query_ingesters_within: 13h
-          query_store_after: 12h
-
-        query_frontend:
-          align_queries_with_step: true
-          cache_results: true
-
-        store_gateway:
-          sharding_ring:
-            kvstore:
-              store: memberlist
-
-        ruler:
-          enable_api: true
-          rule_path: /data/ruler
-          ring:
-            kvstore:
-              store: memberlist
-
-        memberlist:
-          join_members:
-            - mimir-distributor-headless.observability.svc.cluster.local:7946
-            - mimir-ingester-headless.observability.svc.cluster.local:7946
-            - mimir-querier-headless.observability.svc.cluster.local:7946
-            - mimir-query-frontend-headless.observability.svc.cluster.local:7946
-            - mimir-compactor-headless.observability.svc.cluster.local:7946
-            - mimir-store-gateway-headless.observability.svc.cluster.local:7946
-            - mimir-ruler-headless.observability.svc.cluster.local:7946
+    nginx:
+      enabled: false
 
     gateway:
+      enabledNonEnterprise: true
       replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
       resources:
         requests:
-          cpu: 10m
-          memory: 32Mi
-        limits:
-          memory: 128Mi
-
-    distributor:
-      replicas: 2
-      resources:
-        requests:
-          cpu: 20m
+          cpu: 100m
           memory: 128Mi
         limits:
-          memory: 512Mi
-
-    ingester:
-      replicas: 3
-      persistentVolume:
-        enabled: true
-        storageClass: ceph-block
-        size: 10Gi
-      resources:
-        requests:
-          cpu: 50m
-          memory: 512Mi
-        limits:
-          memory: 2Gi
-
-    querier:
-      replicas: 2
-      resources:
-        requests:
-          cpu: 20m
           memory: 256Mi
-        limits:
-          memory: 1Gi
-
-    query_frontend:
-      replicas: 2
-      resources:
-        requests:
-          cpu: 10m
-          memory: 128Mi
-        limits:
-          memory: 512Mi
 
     compactor:
       replicas: 1
       persistentVolume:
-        enabled: true
-        storageClass: ceph-block
-        size: 10Gi
+        storageClass: truenas-nfs-archive
+        size: 20Gi
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
       resources:
         requests:
-          cpu: 20m
+          cpu: 100m
           memory: 512Mi
-        limits:
-          memory: 2Gi
-
-    store_gateway:
-      replicas: 2
-      persistentVolume:
-        enabled: true
-        storageClass: ceph-block
-        size: 5Gi
-      resources:
-        requests:
-          cpu: 10m
-          memory: 256Mi
         limits:
           memory: 1Gi
 
-    ruler:
-      replicas: 1
-      persistentVolume:
-        enabled: true
-        storageClass: ceph-block
-        size: 5Gi
+    distributor:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
       resources:
         requests:
-          cpu: 10m
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    ingester:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: target
+                    operator: In
+                    values:
+                      - ingester
+              topologyKey: 'kubernetes.io/hostname'
+
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - ingester
+              topologyKey: 'kubernetes.io/hostname'
+
+      replicas: 3
+      persistentVolume:
+        storageClass: truenas-iscsi
+        size: 50Gi
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 200m
+          memory: 1Gi
+        limits:
+          memory: 2Gi
+      zoneAwareReplication:
+        enabled: false
+
+    querier:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    query_frontend:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+
+    store_gateway:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: target
+                    operator: In
+                    values:
+                      - store-gateway
+              topologyKey: 'kubernetes.io/hostname'
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - store-gateway
+              topologyKey: 'kubernetes.io/hostname'
+
+      replicas: 3
+      persistentVolume:
+        storageClass: truenas-nfs-archive
+        size: 20Gi
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+      zoneAwareReplication:
+        enabled: false
+
+    overrides_exporter:
+      replicas: 1
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
           memory: 128Mi
+
+    ruler:
+      replicas: 2
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
         limits:
           memory: 512Mi
 
     alertmanager:
       enabled: false
-
-    nginx:
-      enabled: false
-
     serviceMonitor:
       enabled: true
       additionalLabels:
         app.kubernetes.io/part-of: kube-prometheus-stack
+
+    admin_api:
+      replicas: 1
+      extraEnvFrom:
+        - secretRef:
+            name: mimir-minio-credentials
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+
+    mimir:
+      structuredConfig:
+        memberlist:
+          bind_port: 7946
+          join_members:
+            - mimir-memberlist.observability.svc.cluster.local:7946
+
+        # Common configuration
+        common:
+          storage:
+            backend: s3
+            s3:
+              endpoint: minio.storage.svc.cluster.local:9000
+              bucket_name: mimir-blocks
+              access_key_id: "${AWS_ACCESS_KEY_ID}"
+              secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+              insecure: true
+
+        server:
+          grpc_server_max_recv_msg_size: 104857600
+          grpc_server_max_send_msg_size: 104857600
+          grpc_server_max_concurrent_streams: 1000
+          http_listen_port: 8080
+          grpc_listen_port: 9095
+          log_level: info
+
+        blocks_storage:
+          backend: s3
+          s3:
+            endpoint: minio.storage.svc.cluster.local:9000
+            bucket_name: mimir-blocks
+            access_key_id: "${AWS_ACCESS_KEY_ID}"
+            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+            insecure: true
+          tsdb:
+            # 90 days
+            retention_period: 2160h
+
+        ruler_storage:
+          backend: s3
+          s3:
+            endpoint: minio.storage.svc.cluster.local:9000
+            bucket_name: mimir-ruler
+            access_key_id: "${AWS_ACCESS_KEY_ID}"
+            secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+            insecure: true
+
+        alertmanager_storage:
+          backend: local
+
+        compactor:
+          data_dir: /data
+
+        ingester:
+          ring:
+            replication_factor: 3
+
+        store_gateway:
+          sharding_ring:
+            replication_factor: 3
+
+        limits:
+          ingestion_rate: 150000
+          ingestion_burst_size: 200000
+          max_global_series_per_user: 1500000
+          max_global_series_per_metric: 200000000
+          compactor_blocks_retention_period: 90d
+          max_label_names_per_series: 120
