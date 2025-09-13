@@ -60,7 +60,7 @@ spec:
     image:
       registry: percona
       repository: percona-server-mongodb-operator
-      tag: 1.18.2
+      tag: 1.20.1
 
     watchdog:
       enabled: true
