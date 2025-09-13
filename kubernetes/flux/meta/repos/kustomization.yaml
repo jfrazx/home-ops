@@ -16,6 +16,7 @@ resources:
   - ./influxdb.yaml
   - ./minio-operator.yaml
   - ./openbao.yaml
+  - ./percona.yaml
   - ./piraeus-charts.yaml
   - ./prometheus.yaml
   - ./traefik.yaml
