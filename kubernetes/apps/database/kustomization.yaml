@@ -5,6 +5,7 @@ resources:
   - ./dragonflydb/ks.yaml
   - ./influxdb/ks.yaml
   - ./pgadmin/ks.yaml
+  - ./percona/ks.yaml
   - ./postgres/ks.yaml
   - ./namespace.yaml
 components:
