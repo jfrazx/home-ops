@@ -57,11 +57,6 @@ spec:
       labels:
         release: kube-prometheus-stack
 
-    image:
-      registry: percona
-      repository: percona-server-mongodb-operator
-      tag: 1.18.2
-
     watchdog:
       enabled: true
 
