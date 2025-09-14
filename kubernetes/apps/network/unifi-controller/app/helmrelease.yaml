@@ -121,7 +121,7 @@ spec:
       unifi-controller:
         type: persistentVolumeClaim
         size: 1Gi
-        storageClass: "${VOLSYNC_STORAGECLASS}"
+        storageClass: ceph-block
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /unifi
