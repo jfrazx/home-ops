@@ -36,8 +36,5 @@ spec:
       enabled: true
       exposeType: ClusterIP
 
-    monitoring:
-      enabled: true
-
   secrets:
     users: unifi-mongodb-credentials
