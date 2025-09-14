@@ -118,7 +118,7 @@ spec:
             sectionName: https
 
     persistence:
-      config:
+      unifi-controller:
         type: persistentVolumeClaim
         size: 1Gi
         storageClass: "${VOLSYNC_STORAGECLASS}"
