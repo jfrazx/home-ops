@@ -126,14 +126,6 @@ spec:
             port: 10001
             protocol: UDP
 
-    route:
-      app:
-        hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
-        parentRefs:
-          - name: internal
-            namespace: kube-system
-            sectionName: https
-
     persistence:
       unifi-controller:
         type: persistentVolumeClaim
