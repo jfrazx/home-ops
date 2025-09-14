@@ -26,7 +26,7 @@ spec:
           app:
             image:
               repository: docker.io/jacobalberty/unifi
-              tag: v8.6.9
+              tag: v9.4.19
             env:
               TZ: "America/Los_Angeles"
               RUNAS_UID0: "false"
