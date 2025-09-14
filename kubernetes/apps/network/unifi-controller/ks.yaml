@@ -14,6 +14,7 @@ spec:
     - name: openbao
       namespace: external-secrets
     - name: percona-mongodb-operator
+      namespace: database
   path: ./kubernetes/apps/network/unifi-controller/database
   prune: true
   sourceRef:
