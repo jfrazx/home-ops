@@ -22,6 +22,18 @@ spec:
         strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          init-chown:
+            image:
+              repository: busybox
+              tag: latest
+            command:
+              - /bin/chown
+              - -R
+              - "999:999"
+              - /unifi
+            securityContext:
+              runAsUser: 0
         containers:
           app:
             image:
@@ -30,8 +42,10 @@ spec:
             env:
               TZ: "America/Los_Angeles"
               RUNAS_UID0: "false"
-              UNIFI_UID: "999"
-              UNIFI_GID: "999"
+              UNIFI_UID: "${VOLSYNC_PUID}"
+              UNIFI_GID: "${VOLSYNC_PGID}"
+              UNIFI_STDOUT: "true"
+              JVM_MAX_HEAP_SIZE: 1024M
             envFrom:
               - secretRef:
                   name: unifi-secret
