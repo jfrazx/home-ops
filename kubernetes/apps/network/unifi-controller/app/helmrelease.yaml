@@ -46,6 +46,9 @@ spec:
               UNIFI_GID: "${VOLSYNC_PGID}"
               UNIFI_STDOUT: "true"
               JVM_MAX_HEAP_SIZE: 1024M
+              UNIFI_HTTPS_PORT: "8443"
+              PORTAL_HTTP_PORT: "8880"
+              PORTAL_HTTPS_PORT: "8843"
             envFrom:
               - secretRef:
                   name: unifi-secret
@@ -122,14 +125,6 @@ spec:
             enabled: true
             port: 10001
             protocol: UDP
-
-    route:
-      app:
-        hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
-        parentRefs:
-          - name: internal
-            namespace: kube-system
-            sectionName: https
 
     persistence:
       unifi-controller:
