@@ -63,7 +63,7 @@ spec:
               # CERTNAME: "tls.crt"
               # CERT_PRIVATE_NAME: "tls.key"
               CERT_IS_CHAIN: "true"
-              UNIFI_ECC_CERT: "true"
+              # UNIFI_ECC_CERT: "true"
             envFrom:
               - secretRef:
                   name: unifi-secret
