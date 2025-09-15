@@ -159,5 +159,5 @@ spec:
         type: secret
         name: unifi-tls
         globalMounts:
-          - path: /tmp/cert
+          - path: /tmp/certs
             readOnly: true
