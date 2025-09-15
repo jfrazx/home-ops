@@ -65,6 +65,7 @@ spec:
               RUNAS_UID0: "false"
               UNIFI_UID: "${VOLSYNC_PUID}"
               UNIFI_GID: "${VOLSYNC_PGID}"
+              UNIFI_INFORM_HOST: "unifi-controller.${SECRET_DOMAIN}"
               UNIFI_STDOUT: "true"
               JVM_MAX_HEAP_SIZE: 1024M
               UNIFI_HTTPS_PORT: "8443"
