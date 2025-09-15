@@ -19,6 +19,7 @@ metadata:
   namespace: network
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: "true"
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
 spec:
   endpoints:
     - dnsName: "unifi-controller.${SECRET_DOMAIN}"
