@@ -35,7 +35,9 @@ spec:
               - |
                 # Set ownership of unifi directory and create subdirectories
                 chown -R 999:999 /unifi
-                mkdir -p /unifi/{data,logs,cert}
+                mkdir -p /unifi/data
+                mkdir -p /unifi/cert
+                mkdir -p /unifi/logs
                 chown -R 999:999 /unifi
 
                 # Copy certificates from secret mount to writable cert directory with correct names
