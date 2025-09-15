@@ -5,4 +5,4 @@ namespace: network
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./httproute.yaml
+  - ./tlsroute.yaml
