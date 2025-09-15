@@ -13,3 +13,4 @@ spec:
   commonName: "unifi.${SECRET_DOMAIN}"
   dnsNames:
     - "unifi.${SECRET_DOMAIN}"
+    - "unifi-controller.${SECRET_DOMAIN}"
