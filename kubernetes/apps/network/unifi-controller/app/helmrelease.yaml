@@ -35,7 +35,9 @@ spec:
                 # Set ownership of unifi directory
                 chown -R 999:999 /unifi
                 # Create directories if they don't exist
-                mkdir -p /unifi/{cert,data,log}
+                mkdir -p /unifi/cert
+                mkdir -p /unifi/data
+                mkdir -p /unifi/log
                 # Copy certificate files from secret mount to expected location
                 if [ -f /tmp/certs/tls.crt ] && [ -f /tmp/certs/tls.key ]; then
                   cp /tmp/certs/tls.crt /unifi/cert/cert.pem
@@ -60,10 +62,7 @@ spec:
               JVM_MAX_HEAP_SIZE: 1024M
               UNIFI_HTTPS_PORT: "8443"
               PORTAL_HTTPS_PORT: "8843"
-              # CERTNAME: "tls.crt"
-              # CERT_PRIVATE_NAME: "tls.key"
               CERT_IS_CHAIN: "true"
-              # UNIFI_ECC_CERT: "true"
             envFrom:
               - secretRef:
                   name: unifi-secret
