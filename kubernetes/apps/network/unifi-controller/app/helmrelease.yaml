@@ -123,6 +123,8 @@ spec:
       adoption:
         controller: unifi
         type: LoadBalancer
+        annotations:
+            lbipam.cilium.io/ips: "10.168.2.101"
         ports:
           controller:
             enabled: true

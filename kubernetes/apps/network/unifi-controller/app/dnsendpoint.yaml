@@ -11,3 +11,16 @@ spec:
     - dnsName: "unifi.${SECRET_DOMAIN}"
       recordType: CNAME
       targets: ["internal.${SECRET_DOMAIN}"]
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: unifi-controller
+  namespace: network
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+spec:
+  endpoints:
+    - dnsName: "unifi-controller.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["10.168.2.101"]
