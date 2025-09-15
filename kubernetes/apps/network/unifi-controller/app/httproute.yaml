@@ -18,7 +18,7 @@ spec:
     - backendRefs:
         - group: ""
           kind: Service
-          name: unifi
+          name: unifi-web
           namespace: network
           port: 8443
           weight: 1
