@@ -65,10 +65,9 @@ spec:
               RUNAS_UID0: "false"
               UNIFI_UID: "${VOLSYNC_PUID}"
               UNIFI_GID: "${VOLSYNC_PGID}"
-              UNIFI_INFORM_HOST: "unifi-controller.${SECRET_DOMAIN}"
               UNIFI_STDOUT: "true"
               JVM_MAX_HEAP_SIZE: 1024M
-              UNIFI_HTTPS_PORT: "8443"
+              UNIFI_HTTPS_PORT: "443"
               PORTAL_HTTP_PORT: "8880"
               PORTAL_HTTPS_PORT: "8843"
               CERT_IS_CHAIN: "true"
@@ -113,20 +112,16 @@ spec:
             fsGroupChangePolicy: OnRootMismatch
 
     service:
-      web:
-        controller: unifi
-        type: ClusterIP
-        ports:
-          https:
-            port: 8443
-            protocol: HTTPS
-
-      adoption:
+      app:
         controller: unifi
         type: LoadBalancer
         annotations:
             lbipam.cilium.io/ips: "10.168.2.101"
         ports:
+          https:
+            enabled: true
+            port: 443
+            protocol: HTTPS
           controller:
             enabled: true
             port: 8080
