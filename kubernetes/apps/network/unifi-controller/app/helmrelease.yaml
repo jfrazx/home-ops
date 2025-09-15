@@ -16,6 +16,7 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+
   values:
     controllers:
       unifi:
@@ -37,6 +38,7 @@ spec:
                 mkdir -p /unifi/{cert,data,log}
             securityContext:
               runAsUser: 0
+
         containers:
           app:
             image:
@@ -74,6 +76,7 @@ spec:
               readiness: *probes
               startup:
                 enabled: false
+
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: false
@@ -86,6 +89,7 @@ spec:
                 memory: 1Gi
               limits:
                 memory: 2Gi
+
         pod:
           securityContext:
             runAsUser: "${VOLSYNC_PUID}"
@@ -149,4 +153,4 @@ spec:
         name: unifi-tls
         globalMounts:
           - path: /unifi/cert
-            readOnly: true
+            readOnly: false
