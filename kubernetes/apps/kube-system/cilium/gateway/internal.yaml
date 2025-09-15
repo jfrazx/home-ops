@@ -23,7 +23,7 @@ spec:
         mode: Passthrough
       allowedRoutes:
         namespaces:
-          from: network
+          from: All
     - name: http
       protocol: HTTP
       port: 80
