@@ -50,7 +50,6 @@ spec:
               UNIFI_STDOUT: "true"
               JVM_MAX_HEAP_SIZE: 1024M
               UNIFI_HTTPS_PORT: "8443"
-              PORTAL_HTTP_PORT: "8880"
               PORTAL_HTTPS_PORT: "8843"
               CERTNAME: "tls.crt"
               CERT_PRIVATE_NAME: "tls.key"
@@ -66,11 +65,11 @@ spec:
                 spec:
                   httpGet:
                     path: /status
-                    port: &port 8443
-                    scheme: HTTPS
+                    port: 8080
+                    scheme: HTTP
                   initialDelaySeconds: 90
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  timeoutSeconds: 5
                   failureThreshold: 3
               readiness: *probes
               startup:
@@ -100,7 +99,7 @@ spec:
         type: ClusterIP
         ports:
           https:
-            port: *port
+            port: 8443
             protocol: HTTPS
 
       adoption:
