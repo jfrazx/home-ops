@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: network
 resources:
   - ./certificate.yaml
-  - ./dnsendpoint.yaml
+  # - ./dnsendpoint.yaml
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./tlsroute.yaml
+  # - ./tlsroute.yaml

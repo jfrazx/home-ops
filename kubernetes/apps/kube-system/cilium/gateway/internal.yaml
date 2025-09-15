@@ -15,15 +15,15 @@ spec:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
   listeners:
-    - name: unifi-tls
-      protocol: TLS
-      port: 443
-      hostname: "unifi.${SECRET_DOMAIN}"
-      tls:
-        mode: Passthrough
-      allowedRoutes:
-        namespaces:
-          from: All
+    # - name: unifi-tls
+    #   protocol: TLS
+    #   port: 443
+    #   hostname: "unifi.${SECRET_DOMAIN}"
+    #   tls:
+    #     mode: Passthrough
+    #   allowedRoutes:
+    #     namespaces:
+    #       from: All
     - name: http
       protocol: HTTP
       port: 80
