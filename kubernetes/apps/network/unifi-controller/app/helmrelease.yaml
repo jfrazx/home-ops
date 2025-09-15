@@ -96,38 +96,38 @@ spec:
             port: *port
             protocol: HTTPS
 
-    adoption:
-        controller: unifi
-        type: LoadBalancer
-        ports:
-          controller:
-            enabled: true
-            port: 8080
-            protocol: TCP
-          portal-http:
-            enabled: true
-            port: 8880
-            protocol: HTTP
-          portal-https:
-            enabled: true
-            port: 8843
-            protocol: HTTPS
-          speedtest:
-            enabled: true
-            port: 6789
-            protocol: TCP
-          stun:
-            enabled: true
-            port: 3478
-            protocol: UDP
-          syslog:
-            enabled: true
-            port: 5514
-            protocol: UDP
-          discovery:
-            enabled: true
-            port: 10001
-            protocol: UDP
+      adoption:
+          controller: unifi
+          type: LoadBalancer
+          ports:
+            controller:
+              enabled: true
+              port: 8080
+              protocol: TCP
+            portal-http:
+              enabled: true
+              port: 8880
+              protocol: HTTP
+            portal-https:
+              enabled: true
+              port: 8843
+              protocol: HTTPS
+            speedtest:
+              enabled: true
+              port: 6789
+              protocol: TCP
+            stun:
+              enabled: true
+              port: 3478
+              protocol: UDP
+            syslog:
+              enabled: true
+              port: 5514
+              protocol: UDP
+            discovery:
+              enabled: true
+              port: 10001
+              protocol: UDP
 
     persistence:
       unifi-controller:
