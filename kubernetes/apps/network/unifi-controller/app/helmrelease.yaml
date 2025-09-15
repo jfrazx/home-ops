@@ -36,6 +36,13 @@ spec:
                 chown -R 999:999 /unifi
                 # Create directories if they don't exist
                 mkdir -p /unifi/{cert,data,log}
+                # Copy certificate files from secret mount to expected location
+                if [ -f /tmp/certs/tls.crt ] && [ -f /tmp/certs/tls.key ]; then
+                  cp /tmp/certs/tls.crt /unifi/cert/cert.pem
+                  cp /tmp/certs/tls.key /unifi/cert/privkey.pem
+                  chmod 600 /unifi/cert/cert.pem /unifi/cert/privkey.pem
+                  chown 999:999 /unifi/cert/cert.pem /unifi/cert/privkey.pem
+                fi
             securityContext:
               runAsUser: 0
 
@@ -53,8 +60,8 @@ spec:
               JVM_MAX_HEAP_SIZE: 1024M
               UNIFI_HTTPS_PORT: "8443"
               PORTAL_HTTPS_PORT: "8843"
-              CERTNAME: "tls.crt"
-              CERT_PRIVATE_NAME: "tls.key"
+              # CERTNAME: "tls.crt"
+              # CERT_PRIVATE_NAME: "tls.key"
               CERT_IS_CHAIN: "true"
               UNIFI_ECC_CERT: "true"
             envFrom:
@@ -152,5 +159,5 @@ spec:
         type: secret
         name: unifi-tls
         globalMounts:
-          - path: /unifi/cert
-            readOnly: false
+          - path: /tmp/certs
+            readOnly: true
