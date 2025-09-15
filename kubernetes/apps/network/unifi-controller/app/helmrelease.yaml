@@ -28,10 +28,13 @@ spec:
               repository: busybox
               tag: latest
             command:
-              - /bin/chown
-              - -R
-              - "999:999"
-              - /unifi
+              - /bin/sh
+              - -c
+              - |
+                # Set ownership of unifi directory
+                chown -R 999:999 /unifi
+                # Create directories if they don't exist
+                mkdir -p /unifi/{cert,data,log}
             securityContext:
               runAsUser: 0
         containers:
@@ -49,6 +52,10 @@ spec:
               UNIFI_HTTPS_PORT: "8443"
               PORTAL_HTTP_PORT: "8880"
               PORTAL_HTTPS_PORT: "8843"
+              CERTNAME: "tls.crt"
+              CERT_PRIVATE_NAME: "tls.key"
+              CERT_IS_CHAIN: "true"
+              UNIFI_ECC_CERT: "true"
             envFrom:
               - secretRef:
                   name: unifi-secret
@@ -97,37 +104,37 @@ spec:
             protocol: HTTPS
 
       adoption:
-          controller: unifi
-          type: LoadBalancer
-          ports:
-            controller:
-              enabled: true
-              port: 8080
-              protocol: TCP
-            portal-http:
-              enabled: true
-              port: 8880
-              protocol: HTTP
-            portal-https:
-              enabled: true
-              port: 8843
-              protocol: HTTPS
-            speedtest:
-              enabled: true
-              port: 6789
-              protocol: TCP
-            stun:
-              enabled: true
-              port: 3478
-              protocol: UDP
-            syslog:
-              enabled: true
-              port: 5514
-              protocol: UDP
-            discovery:
-              enabled: true
-              port: 10001
-              protocol: UDP
+        controller: unifi
+        type: LoadBalancer
+        ports:
+          controller:
+            enabled: true
+            port: 8080
+            protocol: TCP
+          portal-http:
+            enabled: true
+            port: 8880
+            protocol: HTTP
+          portal-https:
+            enabled: true
+            port: 8843
+            protocol: HTTPS
+          speedtest:
+            enabled: true
+            port: 6789
+            protocol: TCP
+          stun:
+            enabled: true
+            port: 3478
+            protocol: UDP
+          syslog:
+            enabled: true
+            port: 5514
+            protocol: UDP
+          discovery:
+            enabled: true
+            port: 10001
+            protocol: UDP
 
     persistence:
       unifi-controller:
@@ -137,3 +144,10 @@ spec:
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /unifi
+
+      unifi-tls:
+        type: secret
+        name: unifi-tls
+        globalMounts:
+          - path: /unifi/cert
+            readOnly: true
