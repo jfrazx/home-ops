@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/volumesnapshotlocation_v1.json
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: truenas-nfs-snapshots
+  namespace: velero
+spec:
+  provider: csi
+  config:
+    driver: org.democratic-csi.truenas-nfs
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/volumesnapshotlocation_v1.json
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: truenas-smb-snapshots
+  namespace: velero
+spec:
+  provider: csi
+  config:
+    driver: org.democratic-csi.truenas-smb
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/volumesnapshotlocation_v1.json
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: ceph-csi
+  namespace: velero
+spec:
+  provider: csi
+  config:
+    driver: rook-ceph.rbd.csi.ceph.com
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/volumesnapshotlocation_v1.json
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: truenas-iscsi-snapshots
+  namespace: velero
+spec:
+  provider: csi
+  config:
+    driver: org.democratic-csi.truenas-iscsi

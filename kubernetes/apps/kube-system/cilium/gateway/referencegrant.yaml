@@ -1,0 +1,14 @@
+# kubernetes/apps/kube-system/cilium/gateway/referencegrant.yaml
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateways-to-ref-secrets
+  namespace: kube-system
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: network
+  to:
+    - group: ""
+      kind: Secret

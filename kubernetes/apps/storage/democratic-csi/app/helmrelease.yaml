@@ -4,6 +4,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: democratic-csi-nfs
+  namespace: storage
 spec:
   interval: 1h
   chart:
@@ -16,7 +17,7 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -24,10 +25,15 @@ spec:
   values:
     csiDriver:
       name: org.democratic-csi.truenas-nfs
+      attachRequired: false
+      storageCapacity: true
+      fsGroupPolicy: File
 
     controller:
       enabled: true
       strategy: deployment
+      externalAttacher:
+        enabled: false
       externalProvisioner:
         extraArgs:
           - --leader-election=false
@@ -46,16 +52,66 @@ spec:
         image:
           registry: docker.io
           repository: democraticcsi/democratic-csi
-          tag: v1.9.3
+          tag: latest
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+          privileged: true
 
     node:
       enabled: true
-      hostPID: false
+      hostPID: true
+      # hostNetwork: true  # May help with NFS connectivity
+
       driver:
         image:
           registry: docker.io
           repository: democraticcsi/democratic-csi
-          tag: v1.9.3
+          tag: latest
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
+
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+              - SYS_RESOURCE
+              - SYS_PTRACE
+              - DAC_READ_SEARCH
+              - DAC_OVERRIDE
+          privileged: true
+
+        # Mount host directories needed for NFS
+        extraVolumeMounts:
+          - name: host-usr-local-bin
+            mountPath: /host/usr/local/bin
+            mountPropagation: Bidirectional
+          - name: host-usr-local-sbin
+            mountPath: /host/usr/local/sbin
+            mountPropagation: Bidirectional
+
+        extraEnv:
+          - name: NODE_EXTRA_CREATE_METADATA
+            value: "true"
+
+      extraVolumes:
+        - name: host-usr-local-bin
+          hostPath:
+            path: /usr/local/bin
+            type: Directory
+        - name: host-usr-local-sbin
+          hostPath:
+            path: /usr/local/sbin
+            type: Directory
+
+      tolerations:
+        - operator: Exists
 
     storageClasses:
     - name: truenas-nfs
@@ -64,14 +120,13 @@ spec:
       volumeBindingMode: Immediate
       allowVolumeExpansion: true
       parameters:
-        fsType: nfs
+        csi.storage.k8s.io/fstype: nfs
 
       mountOptions:
         - nfsvers=4.1
         - hard
         - timeo=600
         - retrans=2
-        - noresvport
         - rsize=1048576
         - wsize=1048576
 
@@ -90,15 +145,45 @@ spec:
         snapshotter-secret:
 
     driver:
-      existingConfigSecret: democratic-csi-nfs-secret
       config:
         driver: freenas-api-nfs
+        instance_id: "truenas-nfs"
+
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
+
+        zfs:
+          datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+          datasetParentName: "${SECRET_NFS_SHARE}/nfs/volumes"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/nfs/snapshots"
+
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+          datasetPermissionsMode: "0777"
+          datasetPermissionsUser: 0
+          datasetPermissionsGroup: 0
+
+        nfs:
+          shareHost: "${SECRET_NFS_SERVER}"
+          shareAlldirs: false
+          shareAllowedHosts: []
+          shareAllowedNetworks: []
+          shareMaprootUser: root
+          shareMaprootGroup: root
+          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: democratic-csi-smb
+  namespace: storage
 spec:
   interval: 1h
   chart:
@@ -111,7 +196,7 @@ spec:
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -119,10 +204,13 @@ spec:
   values:
     csiDriver:
       name: org.democratic-csi.truenas-smb
+      attachRequired: false
 
     controller:
       enabled: true
       strategy: deployment
+      externalAttacher:
+        enabled: false
       externalProvisioner:
         extraArgs:
           - --leader-election=false
@@ -141,7 +229,7 @@ spec:
         image:
           registry: docker.io
           repository: democraticcsi/democratic-csi
-          tag: v1.9.3
+          tag: latest
 
     node:
       enabled: true
@@ -150,7 +238,12 @@ spec:
         image:
           registry: docker.io
           repository: democraticcsi/democratic-csi
-          tag: v1.9.3
+          tag: latest
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
 
     storageClasses:
     - name: truenas-smb
@@ -159,7 +252,7 @@ spec:
       volumeBindingMode: Immediate
       allowVolumeExpansion: true
       parameters:
-        fsType: cifs
+        csi.storage.k8s.io/fstype: cifs
 
       mountOptions:
         - dir_mode=0777
@@ -184,99 +277,227 @@ spec:
         snapshotter-secret:
 
     driver:
-      existingConfigSecret: democratic-csi-smb-secret
       config:
         driver: freenas-api-smb
-# ---
-# # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
-# apiVersion: helm.toolkit.fluxcd.io/v2
-# kind: HelmRelease
-# metadata:
-#   name: democratic-csi-iscsi
-# spec:
-#   interval: 1h
-#   chart:
-#     spec:
-#       chart: democratic-csi
-#       version: 0.14.6
-#       sourceRef:
-#         kind: HelmRepository
-#         name: democratic-csi
-#         namespace: flux-system
-#   install:
-#     remediation:
-#       retries: -1
-#   upgrade:
-#     cleanupOnFail: true
-#     remediation:
-#       retries: 3
-#   values:
-#     csiDriver:
-#       name: org.democratic-csi.truenas-iscsi
+        instance_id: "truenas-smb"
 
-#     controller:
-#       enabled: true
-#       strategy: deployment
-#       externalProvisioner:
-#         extraArgs:
-#           - --leader-election=false
-#           - --node-deployment=false
-#           - --enable-capacity=true
-#           - --capacity-poll-interval=30s
-#       externalResizer:
-#         enabled: true
-#       externalSnapshotter:
-#         enabled: true
-#         extraArgs:
-#           - --leader-election=false
-#           - --node-deployment=false
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
 
-#       driver:
-#         image:
-#           registry: docker.io
-#           repository: democraticcsi/democratic-csi
-#           tag: v1.9.3
+        zfs:
+          datasetParentName: "${SECRET_NFS_SHARE}/smb/volumes"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/smb/snapshots"
 
-#     node:
-#       enabled: true
-#       hostPID: true  # Required for iSCSI
-#       driver:
-#         image:
-#           registry: docker.io
-#           repository: democraticcsi/democratic-csi
-#           tag: v1.9.3
-#         extraEnv:
-#           - name: ISCSIADM_HOST_STRATEGY
-#             value: nsenter
-#           - name: ISCSIADM_HOST_PATH
-#             value: /usr/local/sbin/iscsiadm
-#         iscsiDirHostPath: /usr/local/etc/iscsi
-#         iscsiDirHostPathType: ""
+          datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+            aclmode: restricted
+            aclinherit: passthrough
 
-#     storageClasses:
-#     - name: truenas-iscsi
-#       defaultClass: false
-#       reclaimPolicy: Retain
-#       volumeBindingMode: Immediate
-#       allowVolumeExpansion: true
-#       parameters:
-#         fsType: ext4
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+          datasetPermissionsMode: "0770"
+          datasetPermissionsUser: 0
+          datasetPermissionsGroup: 0
 
-#       secrets:
-#         provisioner-secret:
-#         controller-publish-secret:
-#         node-stage-secret:
-#         node-publish-secret:
-#         controller-expand-secret:
+        smb:
+          shareHost: "${SECRET_NFS_SERVER}"
 
-#     volumeSnapshotClasses:
-#     - name: truenas-iscsi-snapshots
-#       parameters:
-#         snapshotPrefix: "snapshot-"
-#       secrets:
-#         snapshotter-secret:
+          shareAuxiliaryConfiguration: |
+            vfs objects = catia fruit streams_xattr
+            fruit:metadata = stream
+            fruit:model = MacStor
+            fruit:veto_appledouble = no
+            fruit:posix_rename = yes
+            fruit:zero_file_id = yes
+            fruit:wipe_intentionally_left_blank_rfork = yes
+            fruit:delete_empty_adfiles = yes
 
-#     driver:
-#       existingConfigSecret: democratic-csi-iscsi-secret
-#       config:
-#         driver: freenas-api-iscsi
+          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+          shareEnabled: true
+          shareAllowedHosts: []
+          shareAllowedNetworks: []
+          shareMaprootUser: root
+          shareMaprootGroup: root
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: democratic-csi-iscsi
+  namespace: storage
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: democratic-csi
+      version: 0.14.6
+      sourceRef:
+        kind: HelmRepository
+        name: democratic-csi
+        namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+
+  uninstall:
+    keepHistory: false
+
+  values:
+    csiDriver:
+      name: org.democratic-csi.truenas-iscsi
+
+    controller:
+      enabled: true
+      strategy: deployment
+
+      externalAttacher:
+        enabled: true
+
+      externalProvisioner:
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+          - --enable-capacity=true
+          - --capacity-poll-interval=30s
+
+      externalResizer:
+        enabled: true
+
+      externalSnapshotter:
+        enabled: true
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+
+      driver:
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
+
+    node:
+      enabled: true
+      hostPID: true
+      hostNetwork: true
+
+      driver:
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
+        iscsiDirHostPath: /var/iscsi
+        iscsiDirHostPathType: ""
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
+
+        extraEnv:
+          - name: ISCSIADM_HOST_STRATEGY
+            value: nsenter
+          - name: ISCSIADM_HOST_PATH
+            value: /usr/local/sbin/iscsiadm
+
+      driverRegistrar:
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+
+      volumeMounts:
+        - name: host-dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: host-usr-local-sbin
+          hostPath:
+            path: /usr/local/sbin
+            type: Directory
+
+      tolerations:
+        - operator: Exists
+
+    storageClasses:
+    - name: truenas-iscsi
+      defaultClass: false
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+      parameters:
+        csi.storage.k8s.io/fstype: ext4
+
+      secrets:
+        provisioner-secret:
+        controller-publish-secret:
+        node-stage-secret:
+        node-publish-secret:
+        controller-expand-secret:
+
+    volumeSnapshotClasses:
+    - name: truenas-iscsi-snapshots
+      parameters:
+        snapshotPrefix: "snapshot-"
+      secrets:
+        snapshotter-secret:
+
+    driver:
+      config:
+        driver: freenas-api-iscsi
+        instance_id: "truenas-iscsi"
+
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
+
+        zfs:
+          datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+            "org.freenas:volsync": "enabled"
+            "org.freenas:storage-class": "iscsi-block"
+            "org.freenas:created-by": "kubernetes-csi"
+            "org.freenas:workload-type": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}"
+
+          datasetParentName: "${SECRET_NFS_SHARE}/iscsi/volumes"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/iscsi/snapshots"
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+
+          datasetPermissionsMode: "0600"
+          datasetPermissionsUser: 0
+          datasetPermissionsGroup: 0
+
+        iscsi:
+          targetPortal: "${SECRET_NFS_SERVER}:3260"
+          interface: "enp129s0f1"
+          namePrefix: csi-
+          nameSuffix: ""
+
+          targetCommentTemplate: "K8s-{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+
+          targetGroups:
+            - targetGroupPortalGroup: 2
+              targetGroupInitiatorGroup: 1
+              targetGroupAuthType: None
+              # targetGroupAuthGroup: # For CHAP authentication if needed
+
+          extentCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }} - {{ parameters.[csi.storage.k8s.io/pvc/size] }}"
+          extentInsecureTpc: true
+          extentXenCompat: false
+          extentBlocksize: 4096
+          extentDisablePhysicalBlocksize: true
+          extentRpm: "SSD"
+          extentAvailThreshold: 0

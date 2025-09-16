@@ -1,0 +1,97 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio
+  namespace: storage
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      minio:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: quay.io/minio/minio
+              tag: RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
+            env:
+              MINIO_API_CORS_ALLOW_ORIGIN: https://s3.${SECRET_DOMAIN},https://minio.${SECRET_DOMAIN}
+              MINIO_BROWSER_REDIRECT_URL: https://minio.${SECRET_DOMAIN}
+              MINIO_PROMETHEUS_JOB_ID: minio
+              MINIO_PROMETHEUS_URL: https://prometheus.${SECRET_DOMAIN}
+              MINIO_SERVER_URL: https://s3.${SECRET_DOMAIN}
+            envFrom:
+              - secretRef:
+                  name: minio-root-credentials
+            args:
+              - server
+              - /data
+              - --console-address
+              - :9001
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /minio/health/live
+                    port: 9000
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: false
+    service:
+      app:
+        controller: minio
+        ports:
+          http:
+            port: &http 9001
+          s3:
+            port: &s3 9000
+    route:
+          app:
+            hostnames: ["minio.${SECRET_DOMAIN}"]
+            parentRefs:
+              - name: internal
+                namespace: kube-system
+                sectionName: https
+            rules:
+              - backendRefs:
+                  - identifier: app
+                    port: *http
+          s3:
+            hostnames: ["s3.${SECRET_DOMAIN}"]
+            parentRefs:
+              - name: internal
+                namespace: kube-system
+                sectionName: https
+            rules:
+              - backendRefs:
+                  - identifier: app
+                    port: *s3
+    persistence:
+      data:
+        type: persistentVolumeClaim
+        storageClass: truenas-nfs-minio
+        accessMode: ReadWriteMany
+        size: 2Ti
+        globalMounts:
+          - path: /data

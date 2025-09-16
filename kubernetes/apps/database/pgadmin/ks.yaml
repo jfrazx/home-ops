@@ -1,0 +1,49 @@
+---
+# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app pgadmin
+  namespace: &namespace database
+spec:
+  components:
+    - ../../../../components/common
+    # - ../../../../components/volsync
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  dependsOn:
+    - name: postgres-cluster
+      namespace: flux-system
+  interval: 1h
+  path: ./kubernetes/apps/database/pgadmin/app
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+    substitute:
+      APP: *app
+      VOLSYNC_CAPACITY: "40Gi"
+      VOLSYNC_CACHE_CAPACITY: "20Gi"
+      VOLSYNC_ACCESSMODES: "ReadWriteOnce"
+      VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
+      VOLSYNC_STORAGECLASS: "truenas-iscsi"
+      VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
+      VOLSYNC_REPOSITORY_NAMESPACE: "database"
+      VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
+      VOLSYNC_REPOSITORY_SIZE: "200Gi"
+      VOLSYNC_SCHEDULE: "0 4 * * *"
+      VOLSYNC_PUID: "5050"
+      VOLSYNC_PGID: "5050"
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: *namespace
+  timeout: 5m

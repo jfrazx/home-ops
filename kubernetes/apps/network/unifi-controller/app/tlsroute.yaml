@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: unifi
+  namespace: network
+spec:
+  hostnames:
+    - unifi.${SECRET_DOMAIN}
+  parentRefs:
+    - name: internal
+      namespace: kube-system
+      sectionName: unifi-tls
+  rules:
+    - backendRefs:
+        - name: unifi-web
+          port: 8443
+          weight: 1

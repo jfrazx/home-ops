@@ -8,16 +8,15 @@ metadata:
   name: truenas-nfs
 provisioner: org.democratic-csi.truenas-nfs
 parameters:
-  fsType: nfs
+  csi.storage.k8s.io/fstype: nfs
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
-  - noresvport
   - rsize=1048576
   - wsize=1048576
 
@@ -31,53 +30,52 @@ metadata:
     description: "Optimized for large media files"
 provisioner: org.democratic-csi.truenas-nfs
 parameters:
-  fsType: nfs
+  csi.storage.k8s.io/fstype: nfs
   # Will be created under datasetParentName/media
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
-  - noresvport
   - rsize=1048576
   - wsize=1048576
 
 ---
 # # iSCSI Storage Classes
-# ---
-# # General purpose iSCSI (block storage)
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: truenas-iscsi
-#   annotations:
-#     description: "Block storage for databases and high-performance workloads"
-# provisioner: org.democratic-csi.truenas-iscsi
-# parameters:
-#   fsType: ext4
-# reclaimPolicy: Retain
-# volumeBindingMode: Immediate
-# allowVolumeExpansion: true
+---
+# General purpose iSCSI (block storage)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-iscsi
+  annotations:
+    description: "Block storage for databases and high-performance workloads"
+provisioner: org.democratic-csi.truenas-iscsi
+parameters:
+  csi.storage.k8s.io/fstype: ext4
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
 
-# ---
-# # iSCSI optimized for databases
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: truenas-iscsi-db
-#   annotations:
-#     description: "Optimized for database workloads"
-# provisioner: org.democratic-csi.truenas-iscsi
-# parameters:
-#   fsType: ext4
-#   # 8K blocksize for PostgreSQL, 16K for MySQL
-#   # volblocksize: "8k"  # Set via PVC annotation
-# reclaimPolicy: Retain
-# volumeBindingMode: WaitForFirstConsumer  # Better for databases
-# allowVolumeExpansion: true
+---
+# iSCSI optimized for databases
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-iscsi-db
+  annotations:
+    description: "Optimized for database workloads"
+provisioner: org.democratic-csi.truenas-iscsi
+parameters:
+  csi.storage.k8s.io/fstype: ext4
+  # 8K blocksize for PostgreSQL, 16K for MySQL
+  # volblocksize: "8k"  # Set via PVC annotation
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
 
 ---
 # SMB Storage Classes
@@ -91,7 +89,7 @@ metadata:
     description: "SMB/CIFS storage for Windows compatibility"
 provisioner: org.democratic-csi.truenas-smb
 parameters:
-  fsType: cifs
+  csi.storage.k8s.io/fstype: cifs
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
@@ -115,16 +113,15 @@ metadata:
     description: "NFS with async writes - faster but less safe"
 provisioner: org.democratic-csi.truenas-nfs
 parameters:
-  fsType: nfs
+  csi.storage.k8s.io/fstype: nfs
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - soft  # Soft mount for better performance
   - timeo=600
   - retrans=2
-  - noresvport
   - rsize=1048576
   - wsize=1048576
   - async  # Async writes
@@ -139,16 +136,39 @@ metadata:
     description: "Long-term archive storage with high compression"
 provisioner: org.democratic-csi.truenas-nfs
 parameters:
-  fsType: nfs
+  csi.storage.k8s.io/fstype: nfs
   # Use PVC annotations to set compression=zstd
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 mountOptions:
-  - nfsvers=4.1
+  - nfsvers=4.2
   - hard
   - timeo=600
   - retrans=2
-  - noresvport
   - rsize=1048576
   - wsize=1048576
+
+---
+# Custom NFS storage class optimized for Minio
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-nfs-minio
+  annotations:
+    description: "NFS storage optimized for Minio object storage"
+provisioner: org.democratic-csi.truenas-nfs
+parameters:
+  csi.storage.k8s.io/fstype: nfs
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+mountOptions:
+  - nfsvers=4.2
+  - hard
+  - timeo=600
+  - retrans=2
+  - rsize=1048576
+  - wsize=1048576
+  - async  # Async writes for better performance (Minio handles consistency)
+  - noatime

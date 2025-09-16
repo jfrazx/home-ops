@@ -1,0 +1,185 @@
+---
+admin:
+  existingSecret: grafana-admin-secret
+  userKey: admin-user
+  passwordKey: SECRET_GRAFANA_PASSWORD
+
+replicas: 1
+
+deployment:
+  strategy:
+    type: Recreate
+
+terminationGracePeriodSeconds: 60
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+persistence:
+  enabled: true
+  type: pvc
+  storageClassName: ceph-block
+  size: 10Gi
+
+ingress:
+  enabled: false
+
+serviceMonitor:
+  enabled: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+grafana.ini:
+  server:
+    root_url: https://grafana.${SECRET_DOMAIN}
+  analytics:
+    check_for_updates: false
+    check_for_plugin_updates: false
+    reporting_enabled: false
+  security:
+    cookie_secure: true
+    cookie_samesite: strict
+    strict_transport_security: true
+  auth:
+    disable_login_form: false
+  auth.anonymous:
+    enabled: false
+  log:
+    mode: console
+  paths:
+    data: /var/lib/grafana/
+    logs: /var/log/grafana
+    plugins: /var/lib/grafana/plugins
+    provisioning: /etc/grafana/provisioning
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+        jsonData:
+          httpMethod: POST
+          timeInterval: 30s
+      - name: Loki
+        type: loki
+        uid: loki
+        url: http://loki-distributed-gateway.observability.svc.cluster.local
+        access: proxy
+        jsonData:
+          derivedFields:
+            - datasourceUid: prometheus
+              matcherRegex: (?:traceID|traceId|trace_id)=(\w+)
+              name: TraceID
+              url: "$${__value.raw}"
+      - name: Mimir
+        type: prometheus
+        uid: mimir
+        url: http://mimir-gateway.observability.svc.cluster.local/prometheus
+        access: proxy
+        isDefault: false
+        jsonData:
+          httpMethod: POST
+          timeInterval: 30s
+          timeRange: "90d"
+        editable: false
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+      - name: flux
+        orgId: 1
+        folder: Flux
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/flux
+      - name: kubernetes
+        orgId: 1
+        folder: Kubernetes
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/kubernetes
+      - name: storage
+        orgId: 1
+        folder: Storage
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/storage
+
+dashboards:
+  default:
+    cert-manager:
+      url: https://raw.githubusercontent.com/monitoring-mixins/website/refs/heads/master/assets/cert-manager/dashboards/overview.json
+      datasource: Prometheus
+    node-exporter-full:
+      url: https://raw.githubusercontent.com/rfmoz/grafana-dashboards/refs/heads/master/prometheus/node-exporter-full.json
+      datasource: Prometheus
+  flux:
+    flux-cluster:
+      url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/cluster.json
+      datasource: Prometheus
+    flux-control-plane:
+      url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/control-plane.json
+      datasource: Prometheus
+  kubernetes:
+    k8s-system-api-server:
+      url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-api-server.json
+      datasource: Prometheus
+    k8s-system-coredns:
+      url: https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-coredns.json
+      datasource: Prometheus
+
+sidecar:
+  dashboards:
+    enabled: true
+    searchNamespace: ALL
+    folderAnnotation: grafana_folder
+    provider:
+      foldersFromFilesStructure: true
+  datasources:
+    enabled: true
+    searchNamespace: ALL
+
+plugins:
+  - grafana-clock-panel
+  - ae3e-plotly-panel
+  - vonage-status-panel

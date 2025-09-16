@@ -1,0 +1,18 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: postgres-backup
+  namespace: database
+spec:
+  configuration:
+    destinationPath: "s3://postgresql-backups"
+    endpointURL: "http://minio.storage.svc.cluster.local:9000"
+    s3Credentials:
+      accessKeyId:
+        name: postgres-minio
+        key: MINIO_ACCESS_KEY
+      secretAccessKey:
+        name: postgres-minio
+        key: MINIO_SECRET_KEY
+  retentionPolicy: "20d"

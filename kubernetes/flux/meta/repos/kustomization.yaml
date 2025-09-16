@@ -3,9 +3,23 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./external-dns.yaml
-  - ./minio-operator.yaml
-  - ./democratic-csi.yaml
-  - ./bjw-s.yaml
+  - ./authentik.yaml
+  - ./backube.yaml
+  - ./blackbox-exporter.yaml
+  - ./cnpg.yaml
   - ./csi-driver-nfs.yaml
-  # - ./velero.yaml
+  - ./democratic-csi.yaml
+  - ./dragonflydb.yaml
+  - ./external-dns.yaml
+  - ./external-secrets.yaml
+  - ./grafana.yaml
+  - ./influxdb.yaml
+  - ./minio-operator.yaml
+  - ./openbao.yaml
+  - ./percona.yaml
+  - ./piraeus-charts.yaml
+  - ./prometheus.yaml
+  - ./traefik.yaml
+  - ./trivy-charts.yaml
+  - ./velero.yaml
+  - ./weave.yaml

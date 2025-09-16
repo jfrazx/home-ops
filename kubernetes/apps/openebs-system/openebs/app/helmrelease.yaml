@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 4.2.0
+    tag: 4.3.3
   url: oci://ghcr.io/home-operations/charts-mirror/openebs
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
@@ -37,7 +37,7 @@ spec:
       localpv:
         image:
           registry: quay.io/
-        basePath: &hostPath /var/mnt/extra/openebs/local
+        basePath: &hostPath /var/local/openebs/
       hostpathClass:
         enabled: true
         name: openebs-hostpath

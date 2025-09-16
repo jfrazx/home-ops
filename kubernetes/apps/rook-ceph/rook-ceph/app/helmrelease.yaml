@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: v1.17.4
+    tag: v1.17.7
   url: oci://ghcr.io/rook/rook-ceph
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
@@ -26,17 +26,19 @@ spec:
     name: rook-ceph
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
+      strategy: rollback
       retries: 3
   values:
+    crds:
+      enabled: true
     csi:
       cephFSKernelMountOptions: ms_mode=prefer-crc
-      # NOTE: Enable the driver and shapshotter if you want to use CephFS
-      enableCephfsDriver: false
-      enableCephfsSnapshotter: false
+      enableCephfsDriver: true
+      enableCephfsSnapshotter: true
       enableLiveness: true
       serviceMonitor:
         enabled: true

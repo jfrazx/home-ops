@@ -2,13 +2,13 @@
 fullnameOverride: coredns
 image:
   repository: mirror.gcr.io/coredns/coredns
+replicaCount: 3
 k8sAppLabelOverride: kube-dns
 serviceAccount:
   create: true
 service:
   name: kube-dns
-  clusterIP: "10.43.0.10"
-replicaCount: 2
+  clusterIP: 10.43.0.10
 servers:
   - zones:
       - zone: .
@@ -55,3 +55,10 @@ tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
     effect: NoSchedule
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/instance: coredns

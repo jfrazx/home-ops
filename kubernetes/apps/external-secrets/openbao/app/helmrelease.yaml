@@ -1,0 +1,131 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openbao
+  namespace: external-secrets
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: openbao
+      version: 0.18.1
+      sourceRef:
+        kind: HelmRepository
+        name: openbao
+        namespace: flux-system
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    global:
+      enabled: true
+      tlsDisable: true
+
+    server:
+      enabled: true
+      image:
+        registry: quay.io
+        repository: openbao/openbao
+        tag: 2.4.1@sha256:597f62847dd382382056a1d6704d50465908c2040038c4611832a23269a67112
+
+      updateStrategy: RollingUpdate
+      logLevel: "info"
+      logFormat: "json"
+
+      extraLabels:
+        reloader.stakater.com/auto: "true"
+
+      ha:
+        enabled: true
+        replicas: 3
+        raft:
+          enabled: true
+          setNodeId: true
+          config: |
+            ui = true
+            disable_mlock = true
+
+            listener "tcp" {
+              tls_disable = 1
+              address = "[::]:8200"
+              cluster_address = "[::]:8201"
+
+              telemetry {
+                unauthenticated_metrics_access = "true"
+              }
+            }
+
+            storage "raft" {
+              path = "/openbao/data"
+            }
+
+            seal "gcpckms" {
+              project     = "shiftx-399401"
+              region      = "us-west1"
+              key_ring    = "openbao-unseal"
+              crypto_key  = "openbao-key"
+              credentials = "/openbao/userconfig/openbao-gcp-kms/credentials.json"
+            }
+
+            service_registration "kubernetes" {}
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+
+      dataStorage:
+        enabled: true
+        size: 10Gi
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+      auditStorage:
+        enabled: true
+        size: 2Gi
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+
+      service:
+        enabled: true
+        type: ClusterIP
+        # appProtocol: https
+        port: 8200
+        targetPort: 8200
+
+      securityContext:
+        runAsNonRoot: true
+        runAsGroup: 1000
+        runAsUser: 100
+        fsGroup: 1000
+
+      extraVolumes:
+        - type: secret
+          name: openbao-tls
+          mountPath: "/openbao/userconfig/openbao-tls"
+        - type: secret
+          name: openbao-gcp-kms
+          mountPath: "/openbao/userconfig/gcp-kms"
+
+      serviceAccount:
+        create: true
+        name: openbao
+        annotations: {}
+
+    ui:
+      enabled: true
+      serviceType: ClusterIP
+      publishNotReadyAddresses: true
+      activeVaultPodOnly: true
+
+    # Injector disabled (not needed for External Secrets)
+    injector:
+      enabled: false

@@ -1,0 +1,80 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/velero.io/schedule_v1.json
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-databases
+  namespace: velero
+spec:
+  schedule: "0 3 * * *"
+  template:
+    storageLocation: minio
+    volumeSnapshotLocations:
+      - truenas-iscsi-snapshots
+      - ceph-csi
+    ttl: 720h0m0s  # 30 days
+
+    includedNamespaces:
+      - database
+      - security
+
+    labelSelector:
+      matchLabels:
+        backup/database: "true"
+
+    excludedResources:
+      - events
+      - events.events.k8s.io
+      - replicasets
+      - pods
+
+    snapshotVolumes: true
+    defaultVolumesToFsBackup: false
+
+    metadata:
+      labels:
+        velero.io/backup-type: "cnpg-databases"
+        velero.io/schedule-name: "daily-databases"
+
+    hooks:
+      resources:
+        - name: cnpg-pre-backup
+          includedNamespaces:
+            - database
+            - security
+          includedResources:
+            - clusters.postgresql.cnpg.io
+          pre:
+            - exec:
+                container: postgres
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    echo "Starting CNPG backup preparation at $(date)"
+                    # Force a WAL switch to ensure consistency
+                    psql -h localhost -U postgres -d postgres -c "SELECT pg_switch_wal();" 2>/dev/null || true
+                    # Brief pause to allow WAL archiving to complete
+                    sleep 5
+                    echo "CNPG pre-backup hook completed"
+                onError: Continue
+                timeout: 120s
+
+        - name: cnpg-post-backup
+          includedNamespaces:
+            - database
+            - security
+          includedResources:
+            - clusters.postgresql.cnpg.io
+          post:
+            - exec:
+                container: postgres
+                command:
+                  - /bin/bash
+                  - -c
+                  - |
+                    echo "CNPG backup completed successfully at $(date)"
+                    # Log backup completion
+                    psql -h localhost -U postgres -d postgres -c "SELECT 'Velero backup completed at ' || now();" 2>/dev/null || true
+                onError: Continue
+                timeout: 60s

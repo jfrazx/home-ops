@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "${APP}-volsync-repository"
+  annotations:
+    truenas.org/compression: "zstd"
+    truenas.org/quota: "${VOLSYNC_REPOSITORY_QUOTA:=100Gi}"
+    truenas.org/deduplication: "on"
+spec:
+  accessModes: ["ReadWriteMany"]
+  storageClassName: "truenas-nfs-archive"
+  resources:
+    requests:
+      storage: "${VOLSYNC_REPOSITORY_SIZE:=50Gi}"

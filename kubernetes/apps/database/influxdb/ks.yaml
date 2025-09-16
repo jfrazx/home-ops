@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app influxdb
+  namespace: &namespace flux-system
+spec:
+  components:
+    # - ../../../../components/volsync
+    - ../../../../components/common
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  dependsOn:
+    - name: openbao
+      namespace: external-secrets
+    - name: volsync
+      namespace: system
+  interval: 1h
+  path: ./kubernetes/apps/database/influxdb/app
+  prune: true
+  retryInterval: 2m
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+    substitute:
+      APP: *app
+      VOLSYNC_CAPACITY: "100Gi"
+      VOLSYNC_CACHE_CAPACITY: "20Gi"
+      VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
+      VOLSYNC_STORAGECLASS: "truenas-iscsi"
+      VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
+      VOLSYNC_REPOSITORY_NAMESPACE: "database"
+      VOLSYNC_SCHEDULE: "0 3 * * *"
+      VOLSYNC_PUID: "999"
+      VOLSYNC_PGID: "999"
+      VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
+      VOLSYNC_REPOSITORY_SIZE: "200Gi"
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: database
+  timeout: 10m
+  wait: true

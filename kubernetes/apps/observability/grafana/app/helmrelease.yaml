@@ -1,0 +1,35 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+spec:
+  interval: 1h
+  timeout: 10m
+  chart:
+    spec:
+      chart: grafana
+      version: "9.4.5"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-charts
+        namespace: flux-system
+  install:
+    remediation:
+      retries: -1
+    timeout: 15m
+    replace: true
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 5
+      strategy: uninstall
+    timeout: 15m
+    force: true
+  uninstall:
+    timeout: 5m
+    keepHistory: false
+  valuesFrom:
+    - kind: ConfigMap
+      name: grafana-values
