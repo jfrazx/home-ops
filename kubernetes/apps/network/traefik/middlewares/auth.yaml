@@ -12,7 +12,7 @@ spec:
     - namespace: default
     # - namespace: automation
     - namespace: external-secrets
-    - namespace: security
+    - namespace: auth
     - namespace: network
     - namespace: observability
     - namespace: storage
@@ -26,7 +26,7 @@ spec:
       namespace: << inputs.namespace >>
     spec:
       forwardAuth:
-        address: http://ak-outpost-proxy.security.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
+        address: http://ak-outpost-proxy.auth.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
         authResponseHeaders:
           - X-authentik-username
           - X-authentik-groups
