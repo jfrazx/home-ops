@@ -6,5 +6,5 @@ namespace: system
 resources:
   - ./volsync/ks.yaml
 components:
-  - ../../components/namespace
+  - ../../components/common
   - ../../components/flux/alerts
