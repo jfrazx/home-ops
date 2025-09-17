@@ -1,0 +1,29 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pgadmin-resources
+  namespace: database
+spec:
+  groups:
+    - name: pgadmin.resource.rules
+      rules:
+        - alert: PgAdminHighMemoryUsage
+          expr: |
+            (container_memory_working_set_bytes{namespace="database", container="main", pod=~"pgadmin.*"} /
+             container_spec_memory_limit_bytes{namespace="database", container="main", pod=~"pgadmin.*"}) * 100 > 80
+          for: 5m
+          annotations:
+            summary: "pgAdmin is using high memory ({{ $value }}%)"
+            description: "pgAdmin in database namespace is using {{ $value }}% of its memory limit"
+          labels:
+            severity: warning
+
+        - alert: PgAdminPodRestarting
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="database", container="main", pod=~"pgadmin.*"}[15m]) > 0
+          for: 1m
+          annotations:
+            summary: "pgAdmin pod is restarting frequently"
+            description: "pgAdmin pod has restarted {{ $value }} times in the last 15 minutes"
+          labels:
+            severity: critical
