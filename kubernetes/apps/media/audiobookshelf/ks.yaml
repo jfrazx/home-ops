@@ -36,8 +36,8 @@ spec:
       VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
       VOLSYNC_REPOSITORY_SIZE: "200Gi"
       VOLSYNC_SCHEDULE: "0 4 * * *"
-      VOLSYNC_PUID: "1001"
-      VOLSYNC_PGID: "1001"
+      VOLSYNC_PUID: "568"
+      VOLSYNC_PGID: "568"
   prune: true
   sourceRef:
     kind: GitRepository
