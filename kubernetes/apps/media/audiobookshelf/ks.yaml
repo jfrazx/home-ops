@@ -6,7 +6,7 @@ metadata:
   name: &name audiobookshelf
   namespace: &namespace media
 spec:
-  components:
+  components: []
     # - ../../../../components/volsync
   targetNamespace: *namespace
   commonMetadata:
