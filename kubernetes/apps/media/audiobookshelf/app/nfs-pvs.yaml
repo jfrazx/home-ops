@@ -25,7 +25,7 @@ spec:
     volumeHandle: nfs-audiobooks-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
-      share: "${SECRET_NFS_SHARE}/media/audiobooks"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/audiobooks"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -67,7 +67,7 @@ spec:
     volumeHandle: nfs-podcasts-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
-      share: "${SECRET_NFS_SHARE}/media/podcasts"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/podcasts"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -109,7 +109,7 @@ spec:
     volumeHandle: nfs-abs-backups-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
-      share: "${SECRET_NFS_SHARE}/backups/audiobookshelf"
+      share: "/mnt/${SECRET_NFS_SHARE}/backups/audiobookshelf"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
