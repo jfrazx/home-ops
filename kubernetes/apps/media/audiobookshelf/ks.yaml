@@ -1,26 +1,25 @@
 ---
-# yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &name pgadmin
-  namespace: &namespace database
+  name: &name audiobookshelf
+  namespace: &namespace media
 spec:
   components:
-    - ../../../../components/common
     # - ../../../../components/volsync
+  targetNamespace: *namespace
   commonMetadata:
     labels:
-      name.kubernetes.io/name: *name
+      app.kubernetes.io/name: *name
   decryption:
     provider: sops
     secretRef:
       name: sops-age
-  dependsOn:
-    - name: postgres-cluster
-      namespace: flux-system
-  interval: 1h
-  path: ./kubernetes/apps/database/pgadmin/app
+
+  interval: 30m
+  timeout: 5m
+  path: ./kubernetes/apps/media/audiobookshelf/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
@@ -37,13 +36,11 @@ spec:
       VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
       VOLSYNC_REPOSITORY_SIZE: "200Gi"
       VOLSYNC_SCHEDULE: "0 4 * * *"
-      VOLSYNC_PUID: "5050"
-      VOLSYNC_PGID: "5050"
+      VOLSYNC_PUID: "1001"
+      VOLSYNC_PGID: "1001"
   prune: true
-  retryInterval: 2m
   sourceRef:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
-  timeout: 5m
+  wait: false
