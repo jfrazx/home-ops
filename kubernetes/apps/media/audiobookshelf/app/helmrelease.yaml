@@ -130,7 +130,7 @@ spec:
         suffix: config
         storageClass: ceph-block
         accessMode: ReadWriteOnce
-        size: 10Gi
+        size: 20Gi
         globalMounts:
           - path: /config
       cache:
@@ -161,7 +161,7 @@ spec:
 
       tmp:
         type: emptyDir
-        sizeLimit: 1Gi
+        sizeLimit: 5Gi
         globalMounts:
           - path: /tmp
 
