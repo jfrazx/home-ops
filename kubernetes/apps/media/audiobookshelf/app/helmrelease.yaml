@@ -1,0 +1,198 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &name audiobookshelf
+  namespace: &namespace media
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    controllers:
+      audiobookshelf:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/advplyr/audiobookshelf
+              tag: 2.22.0@sha256:af827f25120c7a76c5b20bfb34f230353d44920ef7c55a9d7f3ae2aac9c51c94
+            env:
+              AUDIOBOOKSHELF_UID: "${VOLSYNC_PUID}"
+              AUDIOBOOKSHELF_GID: "${VOLSYNC_PGID}"
+              PORT: &port 80
+              CONFIG_PATH: /config
+              METADATA_PATH: /metadata
+              LOG_LEVEL: info
+              NODE_ENV: production
+            envFrom:
+              - secretRef:
+                  name: audiobookshelf-secret
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthcheck
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthcheck
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256M
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+              runAsUser: "${VOLSYNC_PUID}"
+              runAsGroup: "${VOLSYNC_PGID}"
+              runAsNonRoot: true
+
+        pod:
+          securityContext:
+            runAsUser: "${VOLSYNC_PUID}"
+            runAsGroup: "${VOLSYNC_PGID}"
+            fsGroup: "${VOLSYNC_PGID}"
+            fsGroupChangePolicy: OnRootMismatch
+
+    service:
+      app:
+        primary: true
+        controller: *name
+        ports:
+          http:
+            port: *port
+
+    # ingress:
+    #   app:
+    #     hostnames:
+    #       - "audiobookshelf.${SECRET_DOMAIN}"
+    #       - "abs.${SECRET_DOMAIN}"
+    #     parentRefs:
+    #       - name: external
+    #         namespace: kube-system
+    #         sectionName: https
+    #     rules:
+    #       - matches:
+    #           - path:
+    #               type: PathPrefix
+    #               value: /
+    #         filters:
+    #           - extensionRef:
+    #               group: traefik.io
+    #               kind: Middleware
+    #               name: authentik-outpost
+    #               namespace: *namespace
+    #             type: ExtensionRef
+    #         backendRefs:
+    #           - name: audiobookshelf
+    #             port: *port
+
+    persistence:
+      config:
+        suffix: config
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        globalMounts:
+          - path: /config
+      cache:
+        type: emptyDir
+        globalMounts:
+          - path: /.npm
+
+      audiobooks:
+        type: persistentVolumeClaim
+        existingClaim: nfs-audiobooks-pvc
+        globalMounts:
+          - path: /mnt/audiobooks/audiobooks
+            readOnly: false
+
+      podcasts:
+        type: persistentVolumeClaim
+        existingClaim: nfs-podcasts-pvc
+        globalMounts:
+          - path: /mnt/audiobooks/podcasts
+            readOnly: false
+
+      backups:
+        type: persistentVolumeClaim
+        existingClaim: nfs-backups-pvc
+        globalMounts:
+          - path: /metadata/backups
+            readOnly: false
+
+      tmp:
+        type: emptyDir
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /tmp
+
+    networkPolicy:
+      app:
+        controller: *name
+        policyTypes:
+          - Ingress
+          - Egress
+        rules:
+          ingress:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      name: kube-system
+              ports:
+                - protocol: TCP
+                  port: *port
+          egress:
+            - to:
+                - namespaceSelector:
+                    matchLabels:
+                      name: kube-system
+              ports:
+                - protocol: UDP
+                  port: 53
+            - to: []
+              ports:
+                - protocol: TCP
+                  port: 2049
+            - to: []
+              ports:
+                - protocol: TCP
+                  port: 443

@@ -1,0 +1,126 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-audiobooks-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-audiobooks-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "${SECRET_NFS_SHARE}/media/audiobooks"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-audiobooks-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 6Ti
+  storageClassName: nfs-csi
+  volumeName: nfs-audiobooks-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-podcasts-pv
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-podcasts-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "${SECRET_NFS_SHARE}/media/podcasts"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-podcasts-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Ti
+  storageClassName: nfs-csi
+  volumeName: nfs-podcasts-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-abs-backups-pv
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-abs-backups-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "${SECRET_NFS_SHARE}/backups/audiobookshelf"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-backups-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-csi
+  volumeName: nfs-abs-backups-pv
