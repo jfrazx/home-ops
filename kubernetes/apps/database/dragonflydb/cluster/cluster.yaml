@@ -9,7 +9,7 @@ spec:
   labels:
     dragonflydb.io/cluster: dragonflydb
 
-  image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.33.1
+  image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1
 
   authentication:
     passwordFromSecret:
