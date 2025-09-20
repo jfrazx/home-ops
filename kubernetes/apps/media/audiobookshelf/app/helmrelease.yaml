@@ -130,13 +130,19 @@ spec:
         suffix: config
         storageClass: ceph-block
         accessMode: ReadWriteOnce
-        size: 20Gi
+        size: 30Gi
         globalMounts:
           - path: /config
       cache:
         type: emptyDir
         globalMounts:
           - path: /.npm
+      metadata:
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+        size: 15Gi
+        globalMounts:
+          - path: /metadata
 
       audiobooks:
         type: persistentVolumeClaim
