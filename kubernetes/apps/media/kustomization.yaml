@@ -8,3 +8,4 @@ components:
   - ../../components/flux/alerts
 resources:
   - ./audiobookshelf/ks.yaml
+  - ./jellyfin/ks.yaml

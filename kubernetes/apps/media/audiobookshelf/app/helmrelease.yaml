@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &name audiobookshelf
+  name: &app audiobookshelf
   namespace: &namespace media
 spec:
   interval: 1h
@@ -95,7 +95,7 @@ spec:
     service:
       app:
         primary: true
-        controller: *name
+        controller: *app
         ports:
           http:
             port: *port
@@ -167,7 +167,7 @@ spec:
 
     networkPolicy:
       app:
-        controller: *name
+        controller: *app
         policyTypes:
           - Ingress
           - Egress
