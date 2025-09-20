@@ -48,7 +48,7 @@ metadata:
   name: nfs-jellyfin-shows-pv
 spec:
   capacity:
-    storage: 2Ti
+    storage: 6Ti
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
