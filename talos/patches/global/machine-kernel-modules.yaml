@@ -6,5 +6,8 @@ machine:
       - name: nfsv4
       - name: nfsd
       # - name: rpcsec_gss_krb5
-
+      - name: i915
+      - name: intel_agp
+      - name: drm
+      - name: drm_kms_helper
 
