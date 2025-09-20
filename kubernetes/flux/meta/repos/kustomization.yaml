@@ -14,6 +14,7 @@ resources:
   - ./external-secrets.yaml
   - ./grafana.yaml
   - ./influxdb.yaml
+  - ./intel-charts.yaml
   - ./minio-operator.yaml
   - ./openbao.yaml
   - ./percona.yaml

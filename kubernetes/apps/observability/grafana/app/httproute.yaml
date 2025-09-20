@@ -3,7 +3,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: &name grafana
+  name: &app grafana
   namespace: &namespace observability
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: "true"
@@ -15,7 +15,7 @@ spec:
       sectionName: https
   rules:
     - backendRefs:
-        - name: *name
+        - name: *app
           namespace: *namespace
           port: 80
       matches:

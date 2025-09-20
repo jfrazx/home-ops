@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://github.com/fluxcd-community/flux2-schemas/raw/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app jellyfin
+  namespace: flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: intel-device-plugins-gpu
+      namespace: system
+  interval: 30m
+  path: ./kubernetes/apps/media/jellyfin/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: media
+  timeout: 5m
+  wait: false
+  postBuild:
+    substitute:
+      APP: *app
+      VOLSYNC_CAPACITY: 200Gi
+      VOLSYNC_CACHE_CAPACITY: "30Gi"
+      VOLSYNC_ACCESSMODES: "ReadWriteOnce"
+      VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
+      VOLSYNC_STORAGECLASS: "truenas-iscsi"
+      VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
+      VOLSYNC_REPOSITORY_NAMESPACE: "database"
+      VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
+      VOLSYNC_REPOSITORY_SIZE: "200Gi"
+      VOLSYNC_SCHEDULE: "0 4 * * *"
+      VOLSYNC_PUID: "568"
+      VOLSYNC_PGID: "568"
+---
+# yaml-language-server: $schema=https://github.com/fluxcd-community/flux2-schemas/raw/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app jellyfin-meilisearch
+  namespace: flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: jellyfin
+      namespace: media
+  interval: 30m
+  path: ./kubernetes/apps/media/jellyfin/meilisearch
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: media
+  timeout: 5m
+  wait: false
+  postBuild:
+    substitute:
+      APP: *app
+      APP_UID: "568"
+      APP_GID: "568"
+      VOLSYNC_CAPACITY: 5Gi

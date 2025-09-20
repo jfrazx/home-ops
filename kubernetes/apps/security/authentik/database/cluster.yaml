@@ -2,11 +2,11 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &name authentik-database
+  name: &app authentik-database
   namespace: security
   labels:
     backup/database: "true"
-    kustomize.toolkit.fluxcd.io/name: *name
+    kustomize.toolkit.fluxcd.io/name: *app
     kustomize.toolkit.fluxcd.io/namespace: flux-system
   annotations:
     reloader.stakater.com/auto: "true"
