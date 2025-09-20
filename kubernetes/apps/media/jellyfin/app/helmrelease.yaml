@@ -102,6 +102,7 @@ spec:
           - secretName: "${SECRET_DOMAIN/./-}-tls"
             hosts:
               - *host
+
     persistence:
       config:
         suffix: config
