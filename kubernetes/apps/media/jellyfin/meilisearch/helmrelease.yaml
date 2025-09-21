@@ -68,6 +68,8 @@ spec:
             port: 7700
     persistence:
       config:
-        existingClaim: *app
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+        size: 5Gi
         globalMounts:
           - path: /config
