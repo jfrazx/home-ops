@@ -171,34 +171,34 @@ spec:
         globalMounts:
           - path: /tmp
 
-    networkPolicy:
-      app:
-        controller: *app
-        policyTypes:
-          - Ingress
-          - Egress
-        rules:
-          ingress:
-            - from:
-                - namespaceSelector:
-                    matchLabels:
-                      name: kube-system
-              ports:
-                - protocol: TCP
-                  port: *port
-          egress:
-            - to:
-                - namespaceSelector:
-                    matchLabels:
-                      name: kube-system
-              ports:
-                - protocol: UDP
-                  port: 53
-            - to: []
-              ports:
-                - protocol: TCP
-                  port: 2049
-            - to: []
-              ports:
-                - protocol: TCP
-                  port: 443
+    # networkPolicy:
+    #   app:
+    #     controller: *app
+    #     policyTypes:
+    #       - Ingress
+    #       - Egress
+    #     rules:
+    #       ingress:
+    #         - from:
+    #             - namespaceSelector:
+    #                 matchLabels:
+    #                   name: kube-system
+    #           ports:
+    #             - protocol: TCP
+    #               port: *port
+    #       egress:
+    #         - to:
+    #             - namespaceSelector:
+    #                 matchLabels:
+    #                   name: kube-system
+    #           ports:
+    #             - protocol: UDP
+    #               port: 53
+    #         - to: []
+    #           ports:
+    #             - protocol: TCP
+    #               port: 2049
+    #         - to: []
+    #           ports:
+    #             - protocol: TCP
+    #               port: 443

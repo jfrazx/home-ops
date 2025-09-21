@@ -2,22 +2,24 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: authentik
-  namespace: security
+  name: &app jellyfin
+  namespace: &namespace media
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: "true"
+    external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
 spec:
   hostnames:
-    - "auuth.${SECRET_DOMAIN}"
+    - "jellyfin.${SECRET_DOMAIN}"
   parentRefs:
     - name: external
       namespace: kube-system
       sectionName: https
   rules:
-    - backendRefs:
-        - name: authentik-server
-          port: 80
-      matches:
+    - matches:
         - path:
             type: PathPrefix
             value: /
+      backendRefs:
+        - name: ak-outpost-proxy
+          port: 9000
+          namespace: auth

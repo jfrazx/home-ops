@@ -5,5 +5,5 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./ingressroute.yaml
+  - ./httproute.yaml
   - ./nfs-pvs.yaml

@@ -82,26 +82,26 @@ spec:
         ports:
           http:
             port: *port
-    ingress:
-      main:
-        enabled: true
-        className: traefik
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-          # traefik.ingress.kubernetes.io/router.middlewares: "networking-traefik-middleware-chain-no-auth@kubernetescrd"
-          traefik.ingress.kubernetes.io/router.middlewares: "networking-rfc1918-ips@kubernetescrd"
-          # external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
-        hosts:
-          - host: &host "jellyfin.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-        tls:
-          - secretName: "${SECRET_DOMAIN/./-}-tls"
-            hosts:
-              - *host
+    # ingress:
+    #   main:
+    #     enabled: true
+    #     className: traefik
+    #     annotations:
+    #       traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    #       # traefik.ingress.kubernetes.io/router.middlewares: "networking-traefik-middleware-chain-no-auth@kubernetescrd"
+    #       traefik.ingress.kubernetes.io/router.middlewares: "networking-rfc1918-ips@kubernetescrd"
+    #       # external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
+    #     hosts:
+    #       - host: &host "jellyfin.${SECRET_DOMAIN}"
+    #         paths:
+    #           - path: /
+    #             service:
+    #               identifier: app
+    #               port: http
+    #     tls:
+    #       - secretName: "${SECRET_DOMAIN/./-}-tls"
+    #         hosts:
+    #           - *host
 
     persistence:
       config:
