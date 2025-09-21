@@ -10,5 +10,5 @@ resources:
   - ./cloudflare-tunnel/ks.yaml
   - ./error-pages/ks.yaml
   - ./k8s-gateway/ks.yaml
-  - ./traefik/ks.yaml
+  # - ./traefik/ks.yaml
   - ./unifi-controller/ks.yaml

@@ -61,10 +61,10 @@ ingester:
   resources:
     requests:
       cpu: 100m
-      memory: 1.5Gi
+      memory: 2Gi # temporary increase - set back to 1.5Gi later
     limits:
       cpu: 500m
-      memory: 3Gi
+      memory: 5Gi # temporary increase - set back to 3Gi later
 
 distributor:
   replicas: 2
