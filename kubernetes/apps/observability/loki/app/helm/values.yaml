@@ -64,7 +64,7 @@ ingester:
       memory: 2Gi # temporary increase - set back to 1.5Gi later
     limits:
       cpu: 500m
-      memory: 5Gi # temporary increase - set back to 3Gi later
+      memory: 15Gi # temporary increase - set back to 3Gi later
 
 distributor:
   replicas: 2

@@ -70,8 +70,8 @@ spec:
             runAsGroup: "${VOLSYNC_PGID}"
             runAsNonRoot: true
             fsGroup: "${VOLSYNC_PGID}"
-            fsGroupChangePolicy: OnRootMismatch
-            supplementalGroups: [44, 10000, 65539]
+            fsGroupChangePolicy: Never
+            supplementalGroups: [44, 568, 10000, 65539]
     service:
       app:
         controller: jellyfin
@@ -82,6 +82,7 @@ spec:
     persistence:
       config:
         suffix: config
+        type: persistentVolumeClaim
         storageClass: ceph-block
         accessMode: ReadWriteOnce
         size: 50Gi

@@ -89,8 +89,8 @@ spec:
           securityContext:
             runAsUser: "${VOLSYNC_PUID}"
             runAsGroup: "${VOLSYNC_PGID}"
-            fsGroup: "${VOLSYNC_PGID}"
-            fsGroupChangePolicy: OnRootMismatch
+            fsGroupChangePolicy: Never
+            supplementalGroups: [568]
 
     service:
       app:
