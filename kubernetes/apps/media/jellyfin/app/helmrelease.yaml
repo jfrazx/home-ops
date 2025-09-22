@@ -69,8 +69,6 @@ spec:
             runAsUser: "${VOLSYNC_PUID}"
             runAsGroup: "${VOLSYNC_PGID}"
             runAsNonRoot: true
-            fsGroup: "${VOLSYNC_PGID}"
-            fsGroupChangePolicy: Never
             supplementalGroups: [44, 568, 10000, 65539]
     service:
       app:

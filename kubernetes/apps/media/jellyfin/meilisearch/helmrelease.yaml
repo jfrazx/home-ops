@@ -61,8 +61,6 @@ spec:
             runAsUser: 568
             runAsGroup: 568
             runAsNonRoot: true
-            fsGroup: 568
-            fsGroupChangePolicy: Never
             supplementalGroups: [44, 568, 10000, 65539]
 
     service:
