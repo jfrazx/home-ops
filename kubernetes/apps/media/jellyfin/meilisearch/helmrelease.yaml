@@ -62,8 +62,8 @@ spec:
             runAsGroup: 568
             runAsNonRoot: true
             fsGroup: 568
-            fsGroupChangePolicy: OnRootMismatch
-            supplementalGroups: [44, 10000, 65539]
+            fsGroupChangePolicy: Never
+            supplementalGroups: [44, 568, 10000, 65539]
 
     service:
       app:
@@ -74,6 +74,7 @@ spec:
 
     persistence:
       config:
+        type: persistentVolumeClaim
         storageClass: ceph-block
         accessMode: ReadWriteOnce
         size: 5Gi
