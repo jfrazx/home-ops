@@ -19,6 +19,8 @@ spec:
     - timeo=600
     - retrans=2
     - _netdev
+    - noatime
+    - nocto
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
@@ -61,6 +63,8 @@ spec:
     - timeo=600
     - retrans=2
     - _netdev
+    - noatime
+    - nocto
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
@@ -103,6 +107,7 @@ spec:
     - timeo=600
     - retrans=2
     - _netdev
+    - nocto
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false

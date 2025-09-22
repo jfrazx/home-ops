@@ -24,11 +24,13 @@ spec:
       meilisearch:
         annotations:
           reloader.stakater.com/auto: "true"
+
         containers:
           app:
             image:
               repository: docker.io/getmeili/meilisearch
               tag: v1.21.0
+
             env:
               MEILI_ENV: production
               MEILI_NO_ANALYTICS: true
@@ -48,10 +50,12 @@ spec:
                 memory: 256Mi
               limits:
                 memory: 4Gi
+
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: false
               capabilities: { drop: ["ALL"] }
+
         pod:
           securityContext:
             runAsUser: 568
@@ -60,12 +64,14 @@ spec:
             fsGroup: 568
             fsGroupChangePolicy: OnRootMismatch
             supplementalGroups: [44, 10000, 65539]
+
     service:
       app:
         controller: meilisearch
         ports:
           http:
             port: 7700
+
     persistence:
       config:
         storageClass: ceph-block
