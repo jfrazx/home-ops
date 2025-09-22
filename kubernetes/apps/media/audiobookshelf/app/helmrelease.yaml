@@ -89,6 +89,7 @@ spec:
           securityContext:
             runAsUser: "${VOLSYNC_PUID}"
             runAsGroup: "${VOLSYNC_PGID}"
+            fsGroupChangePolicy: Never
             supplementalGroups: [568]
 
     service:
