@@ -6,7 +6,7 @@ metadata:
   name: &app intel-device-plugins-operator
   namespace: flux-system
 spec:
-  targetNamespace: system
+  targetNamespace: &namespace system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -15,6 +15,7 @@ spec:
   path: ./kubernetes/apps/system/intel-device-plugins/app
   dependsOn:
     - name: node-feature-discovery-rules
+      namespace: *namespace
   prune: true
   sourceRef:
     kind: GitRepository
@@ -29,7 +30,7 @@ metadata:
   name: &app intel-device-plugins-gpu
   namespace: flux-system
 spec:
-  targetNamespace: system
+  targetNamespace: &namespace system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -44,3 +45,4 @@ spec:
   wait: true
   dependsOn:
     - name: intel-device-plugins-operator
+      namespace: *namespace
