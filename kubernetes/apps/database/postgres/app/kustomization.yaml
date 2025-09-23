@@ -5,5 +5,4 @@ resources:
   - ./cluster.yaml
   - ./externalsecret.yaml
   - ./pooler.yaml
-  # - ./secret.sops.yaml
   - ./objectstore.yaml
