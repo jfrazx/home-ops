@@ -9,12 +9,14 @@ alertmanager:
   config:
     global:
       resolve_timeout: 5m
+      http_config:
+        timeout: 10s
     route:
       group_by: ["alertname", "cluster", "service"]
       group_wait: 10s
       group_interval: 5m
       repeat_interval: 6h
-      receiver: "null"
+      receiver: "discord"
       routes:
         - receiver: "null"
           matchers:
@@ -22,8 +24,25 @@ alertmanager:
         - receiver: "null"
           matchers:
             - severity = "none"
+        - receiver: "discord"
+          matchers:
+            - severity =~ "warning|critical"
     receivers:
       - name: "null"
+      - name: "discord"
+        discord_configs:
+          - webhook_url_file: /etc/alertmanager/secrets/alertmanager-webhook-secret/webhook-url
+            title: "🚨 {{ .GroupLabels.alertname }}"
+            message: |
+              **Status:** {{ .Status | title }}
+              **Severity:** {{ .GroupLabels.severity }}
+
+              {{ range .Alerts }}
+              **Alert:** {{ .Annotations.summary }}
+              {{ if .Annotations.description }}**Description:** {{ .Annotations.description }}{{ end }}
+              **Source:** {{ .Labels.namespace }}/{{ .Labels.pod }}
+              {{ end }}
+            send_resolved: true
     inhibit_rules:
       - source_matchers:
           - severity = "critical"
@@ -34,6 +53,8 @@ alertmanager:
   alertmanagerSpec:
     replicas: 1
     podAntiAffinity: hard
+    secrets:
+      - alertmanager-webhook-secret
     storage:
       volumeClaimTemplate:
         spec:
