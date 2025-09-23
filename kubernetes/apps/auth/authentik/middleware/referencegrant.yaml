@@ -1,0 +1,34 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: authentik-referencegrants
+  namespace: auth
+  annotations:
+    fluxcd.controlplane.io/reconcile: "enabled"
+    fluxcd.controlplane.io/reconcileEvery: "30m"
+spec:
+  inputs:
+    # - namespace: automation
+    - namespace: database
+    # - namespace: documents
+    - namespace: external-secrets
+    - namespace: media
+    - namespace: network
+    - namespace: observability
+    - namespace: storage
+  resourcesTemplate: |
+    ---
+    apiVersion: gateway.networking.k8s.io/v1beta1
+    kind: ReferenceGrant
+    metadata:
+      name: allow-<< inputs.namespace >>-to-auth-services
+      namespace: auth
+    spec:
+      from:
+        - group: gateway.networking.k8s.io
+          kind: HTTPRoute
+          namespace: << inputs.namespace >>
+      to:
+        - group: ""
+          kind: Service
