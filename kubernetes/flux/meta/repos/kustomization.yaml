@@ -13,6 +13,7 @@ resources:
   - ./external-dns.yaml
   - ./external-secrets.yaml
   - ./grafana.yaml
+  - ./home-operations.yaml
   - ./influxdb.yaml
   - ./intel-charts.yaml
   - ./minio-operator.yaml

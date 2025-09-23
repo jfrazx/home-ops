@@ -8,6 +8,7 @@ components:
   - ../../components/flux/alerts
 resources:
   - ./authentik/ks.yaml
+  - ./lldap/ks.yaml
 patches:
   - target:
       kind: Namespace
