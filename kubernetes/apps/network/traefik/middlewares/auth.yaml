@@ -27,7 +27,7 @@ spec:
       namespace: << inputs.namespace >>
     spec:
       forwardAuth:
-        address: http://ak-outpost-proxy.auth.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
+        address: http://ak-outpost-proxy-outpost.auth.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
         authResponseHeaders:
           - X-authentik-username
           - X-authentik-groups
