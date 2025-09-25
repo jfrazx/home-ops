@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: democratic-csi
-      version: 0.14.6
+      version: 0.15.0
       sourceRef:
         kind: HelmRepository
         name: democratic-csi
@@ -49,7 +49,10 @@ spec:
           - --node-deployment=false
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
         securityContext:
           allowPrivilegeEscalation: true
           capabilities:
@@ -63,7 +66,10 @@ spec:
       # hostNetwork: true  # May help with NFS connectivity
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
 
         readinessProbe:
           initialDelaySeconds: 30
@@ -183,7 +189,7 @@ spec:
   chart:
     spec:
       chart: democratic-csi
-      version: 0.14.6
+      version: 0.15.0
       sourceRef:
         kind: HelmRepository
         name: democratic-csi
@@ -220,13 +226,19 @@ spec:
           - --node-deployment=false
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
 
     node:
       enabled: true
       hostPID: false  # Not needed for SMB
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
 
         readinessProbe:
           initialDelaySeconds: 30
@@ -283,7 +295,6 @@ spec:
 
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
-            # SMB specific properties
             aclmode: restricted
             aclinherit: passthrough
 
@@ -296,7 +307,6 @@ spec:
         smb:
           shareHost: "${SECRET_NFS_SERVER}"
 
-          # SMB/CIFS share properties
           shareAuxiliaryConfiguration: |
             vfs objects = catia fruit streams_xattr
             fruit:metadata = stream
@@ -372,7 +382,10 @@ spec:
           - --node-deployment=false
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
 
     node:
       enabled: true
@@ -380,7 +393,10 @@ spec:
       hostNetwork: true
 
       driver:
-        image: democraticcsi/democratic-csi:v1.9.3
+        image:
+          registry: docker.io
+          repository: democraticcsi/democratic-csi
+          tag: latest
         iscsiDirHostPath: /var/iscsi
         iscsiDirHostPathType: ""
 
