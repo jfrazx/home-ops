@@ -414,7 +414,7 @@ spec:
       driverRegistrar:
         image:
           registry: registry.k8s.io/sig-storage/csi-node-driver-registrar
-          tag: v2.9.0
+          tag: v2.14.0
 
       volumeMounts:
         - name: host-dev
