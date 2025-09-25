@@ -5,6 +5,7 @@ kind: HelmRelease
 metadata:
   name: democratic-csi-nfs
   namespace: storage
+
 spec:
   interval: 1h
   chart:
@@ -50,9 +51,9 @@ spec:
 
       driver:
         image:
-          registry: docker.io
-          repository: democraticcsi/democratic-csi
-          tag: latest
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
+
         securityContext:
           allowPrivilegeEscalation: true
           capabilities:
@@ -63,13 +64,11 @@ spec:
     node:
       enabled: true
       hostPID: true
-      # hostNetwork: true  # May help with NFS connectivity
 
       driver:
         image:
-          registry: docker.io
-          repository: democraticcsi/democratic-csi
-          tag: latest
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
 
         readinessProbe:
           initialDelaySeconds: 30
@@ -160,12 +159,15 @@ spec:
         zfs:
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+            aclmode: restricted
+            aclinherit: passthrough
+
           datasetParentName: "${SECRET_NFS_SHARE}/nfs/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/nfs/snapshots"
 
           datasetEnableQuotas: true
           datasetEnableReservation: false
-          datasetPermissionsMode: "0777"
+          datasetPermissionsMode: "0770"
           datasetPermissionsUser: 0
           datasetPermissionsGroup: 0
 
@@ -227,18 +229,17 @@ spec:
 
       driver:
         image:
-          registry: docker.io
-          repository: democraticcsi/democratic-csi
-          tag: latest
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
 
     node:
       enabled: true
       hostPID: false  # Not needed for SMB
+
       driver:
         image:
-          registry: docker.io
-          repository: democraticcsi/democratic-csi
-          tag: latest
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
 
         readinessProbe:
           initialDelaySeconds: 30
@@ -335,7 +336,7 @@ spec:
   chart:
     spec:
       chart: democratic-csi
-      version: 0.14.6
+      version: 0.15.0
       sourceRef:
         kind: HelmRepository
         name: democratic-csi
@@ -383,9 +384,8 @@ spec:
 
       driver:
         image:
-          registry: docker.io
-          repository: democraticcsi/democratic-csi
-          tag: latest
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
 
     node:
       enabled: true
@@ -394,9 +394,9 @@ spec:
 
       driver:
         image:
-          registry: docker.io
-          repository: democraticcsi/democratic-csi
-          tag: latest
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
+
         iscsiDirHostPath: /var/iscsi
         iscsiDirHostPathType: ""
 
@@ -412,7 +412,9 @@ spec:
             value: /usr/local/sbin/iscsiadm
 
       driverRegistrar:
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.14.0
+        image:
+          registry: registry.k8s.io/sig-storage/csi-node-driver-registrar
+          tag: v2.14.0
 
       volumeMounts:
         - name: host-dev

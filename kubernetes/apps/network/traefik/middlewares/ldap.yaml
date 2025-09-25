@@ -11,4 +11,4 @@ spec:
       Enabled: "true"
       LogLevel: DEBUG
       Port: "389"
-      Url: ldap://lldap.security.svc.cluster.local
+      Url: ldap://lldap.auth.svc.cluster.local
