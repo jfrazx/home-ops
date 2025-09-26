@@ -1,3 +1,42 @@
+# ---
+# # yaml-language-server: $schema=https://github.com/fluxcd-community/flux2-schemas/raw/main/kustomization-kustomize-v1.json
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &app jellyfin-database
+#   namespace: flux-system
+# spec:
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *app
+#   dependsOn:
+#     - name: rook-ceph-cluster
+#       namespace: rook-ceph
+#     - name: openbao
+#       namespace: external-secrets
+#     - name: cnpg-operator
+#       namespace: flux-system
+#   interval: 30m
+#   path: ./kubernetes/apps/media/jellyfin/database
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   targetNamespace: media
+#   timeout: 5m
+#   wait: true
+#   postBuild:
+#     substituteFrom:
+#       - name: cluster-secrets
+#         kind: Secret
+#     substitute:
+#       APP: *app
+#       VOLSYNC_CAPACITY: 5Gi
+#       VOLSYNC_STORAGECLASS: "truenas-iscsi"
+#       VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
+#       VOLSYNC_REPOSITORY_NAMESPACE: "media"
+#       VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
 ---
 # yaml-language-server: $schema=https://github.com/fluxcd-community/flux2-schemas/raw/main/kustomization-kustomize-v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -14,6 +53,7 @@ spec:
       namespace: rook-ceph
     - name: intel-device-plugins-gpu
       namespace: system
+    # - name: jellyfin-database
   interval: 30m
   path: ./kubernetes/apps/media/jellyfin/app
   prune: true
@@ -23,7 +63,7 @@ spec:
     namespace: flux-system
   targetNamespace: media
   timeout: 5m
-  wait: false
+  wait: true
   postBuild:
     substituteFrom:
       - name: cluster-secrets
@@ -36,7 +76,7 @@ spec:
       VOLSYNC_SNAP_ACCESSMODES: "ReadWriteMany"
       VOLSYNC_STORAGECLASS: "truenas-iscsi"
       VOLSYNC_SNAPSHOTCLASS: "truenas-nfs-snapshots"
-      VOLSYNC_REPOSITORY_NAMESPACE: "database"
+      VOLSYNC_REPOSITORY_NAMESPACE: "media"
       VOLSYNC_REPOSITORY_STORAGECLASS: "truenas-nfs-archive"
       VOLSYNC_REPOSITORY_SIZE: "200Gi"
       VOLSYNC_SCHEDULE: "0 4 * * *"
@@ -67,13 +107,13 @@ spec:
     namespace: flux-system
   targetNamespace: media
   timeout: 5m
-  wait: false
+  wait: true
   postBuild:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
     substitute:
       APP: *app
-      APP_UID: "568"
-      APP_GID: "568"
+      VOLSYNC_PUID: "568"
+      VOLSYNC_GUID: "568"
       VOLSYNC_CAPACITY: 5Gi

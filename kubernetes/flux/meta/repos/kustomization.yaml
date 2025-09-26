@@ -10,6 +10,7 @@ resources:
   - ./csi-driver-nfs.yaml
   - ./democratic-csi.yaml
   - ./dragonflydb.yaml
+  - ./emqx.yaml
   - ./external-dns.yaml
   - ./external-secrets.yaml
   - ./grafana.yaml

@@ -30,26 +30,28 @@ spec:
         annotations:
           reloader.stakater.com/auto: 'true'
 
-        initContainers:
-          01-init-db:
-            image:
-              repository: ghcr.io/home-operations/postgres-init
-              tag: 17.6.0@sha256:86a1992d46273c58fd4ad95b626081dfaabfe16bd56944675169e406d1a660dd
-              pullPolicy: IfNotPresent
-            envFrom: &envFrom
-              - secretRef:
-                  name: lldap-secret
+        # initContainers:
+        #   01-init-db:
+        #     image:
+        #       repository: ghcr.io/home-operations/postgres-init
+        #       tag: 17.6.0@sha256:86a1992d46273c58fd4ad95b626081dfaabfe16bd56944675169e406d1a660dd
+        #       pullPolicy: IfNotPresent
+        #     envFrom: &envFrom
+        #       - secretRef:
+        #           name: lldap-secret
         containers:
           app:
             image:
               repository: ghcr.io/lldap/lldap
               tag: v0.6.2@sha256:9e605a66c02514bfcffd1b67cafb1e98d50992216bb2871d7ae44622047dd09d
-            envFrom: *envFrom
+            envFrom:
+              - secretRef:
+                  name: lldap-secret
             env:
               TZ: America/Los_Angeles
               LLDAP_HTTP_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
-              LLDAP_HTTP_PORT: &port 80
-              LLDAP_LDAP_PORT: &ldapPort 389
+              LLDAP_HTTP_PORT: &port 17170
+              LLDAP_LDAP_PORT: &ldapPort 3890
               LLDAP_LDAPS_PORT: 6360
 
             resources:

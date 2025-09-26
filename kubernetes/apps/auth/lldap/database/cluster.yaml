@@ -1,0 +1,66 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &app lldap-database
+  namespace: auth
+  labels:
+    backup/database: "true"
+    kustomize.toolkit.fluxcd.io/name: *app
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.5
+
+
+  bootstrap:
+    initdb:
+      database: lldap
+      owner: lldap
+      secret:
+        name: lldap-database-credentials
+      dataChecksums: true
+      encoding: "UTF8"
+      localeCType: "en_US.UTF-8"
+      localeCollate: "en_US.UTF-8"
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "128MB"
+      effective_cache_size: "512MB"
+      maintenance_work_mem: "32MB"
+      work_mem: "2MB"
+      log_statement: "all"
+      log_duration: "on"
+      log_lock_waits: "on"
+      log_min_duration_statement: "1000"
+      random_page_cost: "1.1"
+      effective_io_concurrency: "200"
+      wal_level: "replica"
+      max_wal_senders: "3"
+      max_replication_slots: "3"
+      wal_keep_size: "512MB"
+
+  storage:
+    size: "5Gi"
+    storageClass: "ceph-block"
+
+  monitoring:
+    enablePodMonitor: true
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  affinity:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
