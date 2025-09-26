@@ -25,13 +25,12 @@ spec:
           memory: 512Mi
           cpu: 200m
 
-      # Volume for data persistence
       volumeClaimTemplates:
         - metadata:
             name: emqx-data
           spec:
-            accessModes: ["ReadWriteOnce"]
             storageClassName: truenas-iscsi
+            accessModes: ["ReadWriteOnce"]
             resources:
               requests:
                 storage: 1Gi
@@ -82,8 +81,5 @@ spec:
       }
     }
 
-  # Bootstrap user for Node-RED
-  bootstrapConfig: |
-    - INSERT INTO mqtt_user(user_id, password_hash, salt, is_superuser) VALUES('${mqtt_username}', SHA256(CONCAT('${mqtt_password}', 'salt')), 'salt', true);
-    - INSERT INTO mqtt_acl(username, permission, action, topic) VALUES('${mqtt_username}', 'allow', 'all', 'automation/#');
-    - INSERT INTO mqtt_acl(username, permission, action, topic) VALUES('${mqtt_username}', 'allow', 'all', 'node-red/#');
+  bootstrap:
+    secret: node-red-mqtt-secret
