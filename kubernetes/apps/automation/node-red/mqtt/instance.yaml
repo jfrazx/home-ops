@@ -10,7 +10,6 @@ metadata:
 spec:
   image: emqx:5.4.0
 
-  # Single replica for automation workload
   coreTemplate:
     metadata:
       labels:
@@ -24,30 +23,35 @@ spec:
         limits:
           memory: 512Mi
           cpu: 200m
-
       volumeClaimTemplates:
         - metadata:
             name: emqx-data
           spec:
-            storageClassName: truenas-iscsi
             accessModes: ["ReadWriteOnce"]
+            storageClassName: truenas-iscsi
             resources:
               requests:
                 storage: 1Gi
 
-  # EMQX Configuration
   config: |
-    # Authentication
+    # Authentication with initial user creation
     authentication = [
       {
         backend = "built_in_database"
         mechanism = "password_based"
         password_hash_algorithm = {name = "sha256", salt_position = "suffix"}
         user_id_type = "username"
+        users = [
+          {
+            username = "${mqtt_username}",
+            password = "${mqtt_password}",
+            is_superuser = true
+          }
+        ]
       }
     ]
 
-    # Authorization - restrict to automation topics
+    # Authorization rules
     authorization = {
       no_match = "deny"
       deny_action = "ignore"
@@ -80,6 +84,3 @@ spec:
         level = "warning"
       }
     }
-
-  bootstrap:
-    secret: node-red-mqtt-secret
