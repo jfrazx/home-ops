@@ -9,7 +9,7 @@ metadata:
     fluxcd.controlplane.io/reconcileEvery: "30m"
 spec:
   inputs:
-    # - namespace: automation
+    - namespace: automation
     - namespace: database
     # - namespace: documents
     - namespace: external-secrets

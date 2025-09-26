@@ -9,6 +9,7 @@ metadata:
 spec:
   inputs:
     - namespace: auth
+    - namespace: automation
     - namespace: default
     - namespace: external-secrets
     - namespace: kube-system
@@ -16,7 +17,6 @@ spec:
     - namespace: network
     - namespace: observability
     - namespace: storage
-    # - namespace: automation
     # - namespace: documents
   resourcesTemplate: |
     ---

@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-red-mqtt
+  namespace: automation
+  labels:
+    app.kubernetes.io/name: node-red-mqtt
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      apps.emqx.io/instance: node-red-mqtt
+      apps.emqx.io/managed-by: emqx-operator
+  endpoints:
+    - port: http-management-18083
+      path: /api/v5/prometheus/stats
+      interval: 30s
+      scrapeTimeout: 10s

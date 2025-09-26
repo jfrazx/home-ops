@@ -1,0 +1,89 @@
+---
+apiVersion: apps.emqx.io/v2beta1
+kind: EMQX
+metadata:
+  name: node-red-mqtt
+  namespace: automation
+  labels:
+    app.kubernetes.io/name: node-red-mqtt
+    app.kubernetes.io/part-of: node-red-automation
+spec:
+  image: emqx:5.4.0
+
+  # Single replica for automation workload
+  coreTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: node-red-mqtt-core
+    spec:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+          cpu: 200m
+
+      # Volume for data persistence
+      volumeClaimTemplates:
+        - metadata:
+            name: emqx-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: truenas-iscsi
+            resources:
+              requests:
+                storage: 1Gi
+
+  # EMQX Configuration
+  config: |
+    # Authentication
+    authentication = [
+      {
+        backend = "built_in_database"
+        mechanism = "password_based"
+        password_hash_algorithm = {name = "sha256", salt_position = "suffix"}
+        user_id_type = "username"
+      }
+    ]
+
+    # Authorization - restrict to automation topics
+    authorization = {
+      no_match = "deny"
+      deny_action = "ignore"
+      sources = [
+        {
+          type = "built_in_database"
+          enable = true
+        }
+      ]
+    }
+
+    # Listeners
+    listeners.tcp.default = {
+      bind = "0.0.0.0:1883"
+      max_connections = 1000
+    }
+
+    # Dashboard
+    dashboard = {
+      listeners.http = {
+        bind = "0.0.0.0:18083"
+      }
+      default_username = "${admin_username}"
+      default_password = "${admin_password}"
+    }
+
+    # Logging
+    log = {
+      console_handler = {
+        level = "warning"
+      }
+    }
+
+  # Bootstrap user for Node-RED
+  bootstrapConfig: |
+    - INSERT INTO mqtt_user(user_id, password_hash, salt, is_superuser) VALUES('${mqtt_username}', SHA256(CONCAT('${mqtt_password}', 'salt')), 'salt', true);
+    - INSERT INTO mqtt_acl(username, permission, action, topic) VALUES('${mqtt_username}', 'allow', 'all', 'automation/#');
+    - INSERT INTO mqtt_acl(username, permission, action, topic) VALUES('${mqtt_username}', 'allow', 'all', 'node-red/#');

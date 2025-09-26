@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: jellyfin
+  name: &app jellyfin
 spec:
   interval: 1h
   chartRef:
@@ -22,12 +22,17 @@ spec:
       jellyfin:
         annotations:
           reloader.stakater.com/auto: "true"
+          # secret.reloader.stakater.com/reload: "jellyfin-secret"
+
         containers:
           app:
             image:
               repository: jellyfin/jellyfin
               tag: 10.10.7
               pullPolicy: IfNotPresent
+            # envFrom:
+            #   - secretRef:
+            #       name: jellyfin-secret
             env:
               DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
               JELLYFIN_FFmpeg__probesize: 50000000
@@ -70,9 +75,10 @@ spec:
             runAsGroup: "${VOLSYNC_PGID}"
             runAsNonRoot: true
             supplementalGroups: [44, 568, 10000, 65539]
+
     service:
       app:
-        controller: jellyfin
+        controller: *app
         ports:
           http:
             port: *port
