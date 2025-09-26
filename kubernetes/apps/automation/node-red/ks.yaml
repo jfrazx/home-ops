@@ -12,7 +12,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: emqx-operator
-      namespace: flux-system
+      namespace: messaging
     - name: openbao
       namespace: external-secrets
   path: ./kubernetes/apps/automation/node-red/mqtt
