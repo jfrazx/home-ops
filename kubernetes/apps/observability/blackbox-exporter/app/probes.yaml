@@ -11,11 +11,11 @@ spec:
   targets:
     staticConfig:
       static:
-        - antipathy.internal
-        - rapacity.internal
-        - pfsense.internal
-        - poe.internal
-        - homeassistant.internal
+        - antipathy.${SECRET_DOMAIN}
+        - rapacity.${SECRET_DOMAIN}
+        - pfsense.${SECRET_DOMAIN}
+        - poe.${SECRET_DOMAIN}
+        - homeassistant.${SECRET_DOMAIN}
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/probe_v1.json
 apiVersion: monitoring.coreos.com/v1
@@ -29,5 +29,5 @@ spec:
   targets:
     staticConfig:
       static:
-        - antipathy.internal:2049
-        # - rapacity.internal:2049
+        - antipathy.${SECRET_DOMAIN}:2049
+        # - rapacity.${SECRET_DOMAIN}:2049
