@@ -76,11 +76,11 @@ spec:
             sectionName: https
 
     persistence:
-      data:
+      nodered_data:
         type: persistentVolumeClaim
         storageClass: truenas-iscsi
         accessMode: ReadWriteOnce
-        size: 5Gi
+        size: 15Gi
         globalMounts:
           - path: /data
 

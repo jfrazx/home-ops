@@ -5,3 +5,7 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
+configMapGenerator:
+  - name: node-red-configmap
+    files:
+      - settings.js=resources/settings.js
