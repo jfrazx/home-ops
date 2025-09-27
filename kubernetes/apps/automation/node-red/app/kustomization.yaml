@@ -6,6 +6,8 @@ configMapGenerator:
   - name: node-red-configmap
     files:
       - settings.js=resources/settings.js
+generatorOptions:
+  disableNameSuffixHash: true
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml

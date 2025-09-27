@@ -8,4 +8,4 @@ components:
   - ../../components/flux/alerts
 resources:
   - ./n8n/ks.yaml
-  # - ./node-red/ks.yaml
+  - ./node-red/ks.yaml
