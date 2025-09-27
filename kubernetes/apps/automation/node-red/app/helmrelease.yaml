@@ -38,8 +38,8 @@ spec:
               TZ: "America/Los_Angeles"
               NODE_RED_ENABLE_SAFE_MODE: "false"
               NODE_RED_ENABLE_PROJECTS: "true"
-              MQTT_HOST: "node-red-mqtt-listeners.automation.svc.cluster.local"
-              MQTT_PORT: "1883"
+              # MQTT_HOST: "node-red-mqtt-listeners.automation.svc.cluster.local"
+              # MQTT_PORT: "1883"
 
             probes:
               liveness:
@@ -69,7 +69,7 @@ spec:
 
     route:
       app:
-        hostnames: ["{{ .Release.Name }}.${CLUSTER_DOMAIN}"]
+        hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
         parentRefs:
           - name: internal
             namespace: kube-system
