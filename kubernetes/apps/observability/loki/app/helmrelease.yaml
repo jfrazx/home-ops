@@ -25,7 +25,7 @@ spec:
       compactor:
         working_directory: /var/loki/compactor/retention
         delete_request_store: filesystem
-        retention_enabled: truews
+        retention_enabled: true
       ingester:
         chunk_encoding: snappy
       limits_config:
