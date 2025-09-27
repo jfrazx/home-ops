@@ -76,7 +76,7 @@ spec:
             sectionName: https
 
     persistence:
-      nodered_data:
+      data:
         type: persistentVolumeClaim
         storageClass: truenas-iscsi
         accessMode: ReadWriteOnce
