@@ -5,22 +5,73 @@ kind: HelmRelease
 metadata:
   name: loki
 spec:
-  interval: 1h
-  chart:
-    spec:
-      chart: loki-distributed
-      version: "0.80.5"
-      sourceRef:
-        kind: HelmRepository
-        name: grafana-charts
-        namespace: flux-system
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
-  valuesFrom:
-    - kind: ConfigMap
-      name: loki-values
+  interval: 30m
+  timeout: 15m
+  chartRef:
+    kind: OCIRepository
+    name: loki
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  values:
+    deploymentMode: SingleBinary
+
+    loki:
+      analytics:
+        reporting_enabled: false
+      auth_enabled: false
+      commonConfig:
+        replication_factor: 1
+      compactor:
+        working_directory: /var/loki/compactor/retention
+        delete_request_store: filesystem
+        retention_enabled: truews
+      ingester:
+        chunk_encoding: snappy
+      limits_config:
+        retention_period: 14d
+      schemaConfig:
+        configs:
+          - from: "2024-04-01"
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+      server:
+        log_level: info
+        grpc_server_max_recv_msg_size: 10485760 # 10 MiB
+        grpc_server_max_send_msg_size: 10485760 # 10 MiB
+      storage:
+        type: filesystem
+    backend:
+      replicas: 0
+    chunksCache:
+      enabled: false
+    gateway:
+      replicas: 0
+    lokiCanary:
+      enabled: false
+    read:
+      replicas: 0
+    resultsCache:
+      enabled: false
+    sidecar:
+      image:
+        repository: ghcr.io/home-operations/k8s-sidecar
+        tag: 1.30.9@sha256:74d65c3def9276b24b5bfe41f8efb773174e7a1ecf3c9b5a31bd02cfdee232c9
+      enableUniqueFilenames: true
+      rules:
+        searchNamespace: ALL
+        folder: /rules/fake
+    singleBinary:
+      replicas: 1
+      persistence:
+        enabled: true
+        storageClass: ceph-block
+        size: 50Gi
+    test:
+      enabled: false
+    write:
+      replicas: 0

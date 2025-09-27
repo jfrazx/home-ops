@@ -1,34 +1,34 @@
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &app node-red-mqtt
-  namespace: flux-system
-spec:
-  targetNamespace: automation
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
-  dependsOn:
-    - name: emqx-operator
-      namespace: messaging
-    - name: openbao
-      namespace: external-secrets
-  path: ./kubernetes/apps/automation/node-red/mqtt
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  wait: true
-  interval: 30m
-  retryInterval: 1m
-  timeout: 5m
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
+# ---
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &app node-red-mqtt
+#   namespace: flux-system
+# spec:
+#   targetNamespace: automation
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *app
+#   dependsOn:
+#     - name: emqx-operator
+#       namespace: messaging
+#     - name: openbao
+#       namespace: external-secrets
+#   path: ./kubernetes/apps/automation/node-red/mqtt
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   wait: true
+#   interval: 30m
+#   retryInterval: 1m
+#   timeout: 5m
+#   postBuild:
+#     substituteFrom:
+#       - name: cluster-secrets
+#         kind: Secret
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -50,7 +50,7 @@ spec:
       namespace: external-secrets
     - name: nfs-csi
       namespace: storage
-    - name: node-red-mqtt
+    # - name: node-red-mqtt
   path: ./kubernetes/apps/automation/node-red/app
   prune: true
   sourceRef:
