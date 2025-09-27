@@ -29,5 +29,5 @@ spec:
   targets:
     staticConfig:
       static:
-        - antipathy.${SECRET_DOMAIN}:2049
+        - ${SECRET_NFS_SERVER}:2049
         # - rapacity.${SECRET_DOMAIN}:2049
