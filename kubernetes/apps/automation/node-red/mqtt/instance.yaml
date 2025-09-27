@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: node-red-mqtt
     app.kubernetes.io/part-of: node-red-automation
 spec:
-  image: emqx:5.4.0
+  image: emqx:5.8.8
 
   coreTemplate:
     metadata:
