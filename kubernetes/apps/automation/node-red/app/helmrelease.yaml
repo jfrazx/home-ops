@@ -95,4 +95,4 @@ spec:
         globalMounts:
           - path: /data/settings.js
             subPath: settings.js
-            readOnly: true
+            readOnly: false

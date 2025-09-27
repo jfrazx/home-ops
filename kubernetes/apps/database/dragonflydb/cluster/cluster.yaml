@@ -3,11 +3,11 @@
 apiVersion: dragonflydb.io/v1alpha1
 kind: Dragonfly
 metadata:
-  name: dragonflydb
+  name: &app dragonflydb
   namespace: database
 spec:
   labels:
-    dragonflydb.io/cluster: dragonflydb
+    dragonflydb.io/cluster: *app
 
   image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.34.1
 
