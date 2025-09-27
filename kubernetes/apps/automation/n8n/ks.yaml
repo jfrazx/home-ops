@@ -23,7 +23,7 @@ spec:
     - name: volsync
       namespace: system
     - name: traefik
-      namespace: networking
+      namespace: network
   postBuild:
     substitute:
       APP: *app
