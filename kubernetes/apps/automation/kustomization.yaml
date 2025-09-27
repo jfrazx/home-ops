@@ -7,4 +7,5 @@ components:
   - ../../components/common
   - ../../components/flux/alerts
 resources:
-  - ./node-red/ks.yaml
+  - ./n8n/ks.yaml
+  # - ./node-red/ks.yaml

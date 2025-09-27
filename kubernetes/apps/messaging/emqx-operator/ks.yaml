@@ -33,7 +33,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: emqx
+    - name: emqx-operator
   path: ./kubernetes/apps/messaging/emqx-operator/cluster
   prune: true
   sourceRef:
