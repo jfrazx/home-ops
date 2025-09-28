@@ -38,7 +38,7 @@ spec:
               - secretRef:
                   name: node-red-secret
             env:
-              TZ: "America/Los_Angeles"
+              TZ: "${TIMEZONE}"
               NODE_RED_ENABLE_SAFE_MODE: "false"
               NODE_RED_ENABLE_PROJECTS: "true"
               # MQTT_HOST: "node-red-mqtt-listeners.automation.svc.cluster.local"

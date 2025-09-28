@@ -3,7 +3,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app lldap-database
+  name: &app lldap-postgres
   namespace: flux-system
 spec:
   targetNamespace: auth
@@ -11,8 +11,6 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: openbao
-      namespace: external-secrets
     - name: cnpg-operator
       namespace: flux-system
   path: ./kubernetes/apps/auth/lldap/database
@@ -44,7 +42,7 @@ spec:
   dependsOn:
     - name: openbao
       namespace: external-secrets
-    - name: lldap-database
+    - name: lldap-postgres
   path: ./kubernetes/apps/auth/lldap/app
   prune: true
   sourceRef:

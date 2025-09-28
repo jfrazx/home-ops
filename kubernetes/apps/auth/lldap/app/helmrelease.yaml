@@ -5,7 +5,7 @@ kind: HelmRelease
 metadata:
   name: &app lldap
 spec:
-  interval: 15m
+  interval: 1h
   chartRef:
     kind: OCIRepository
     name: app-template
@@ -35,15 +35,20 @@ spec:
             image:
               repository: ghcr.io/lldap/lldap
               tag: v0.6.2@sha256:9e605a66c02514bfcffd1b67cafb1e98d50992216bb2871d7ae44622047dd09d
-            envFrom:
-              - secretRef:
-                  name: lldap-secret
             env:
               TZ: ${TIMEZONE}
               LLDAP_HTTP_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
               LLDAP_HTTP_PORT: &port 17170
               LLDAP_LDAP_PORT: &ldapPort 3890
               LLDAP_LDAPS_PORT: 6360
+              LLDAP_DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: lldap-postgres-app
+                    key: uri
+            envFrom:
+              - secretRef:
+                  name: lldap-secret
 
             resources:
               requests:
