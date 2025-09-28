@@ -31,7 +31,7 @@ spec:
     kubectl:
       image:
         repository: registry.k8s.io/kubectl
-        tag: v1.31.4
+        tag: v1.34.1
 
     upgradeJobResources:
       requests:
