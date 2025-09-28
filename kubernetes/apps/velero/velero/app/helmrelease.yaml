@@ -31,7 +31,7 @@ spec:
     kubectl:
       image:
         repository: rancher/kubectl
-        tag: 1.34.1
+        tag: v1.34.1-amd64@sha256:57cff7fd64bc813cb1f066535178883ac8300c68ba8afab8c7f3b584235e7f26
 
     upgradeJobResources:
       requests:
