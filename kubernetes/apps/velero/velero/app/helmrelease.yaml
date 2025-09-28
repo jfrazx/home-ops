@@ -24,11 +24,28 @@ spec:
     remediation:
       retries: 3
   values:
+    image:
+      repository: velero/velero
+      tag: v1.17.0
+
+    kubectl:
+      image:
+        repository: registry.k8s.io/kubectl
+        tag: v1.31.4
+
+    upgradeJobResources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
     deployNodeAgent: true
 
     initContainers:
       - name: velero-plugin-for-aws
         image: velero/velero-plugin-for-aws:v1.13.0
+        imagePullPolicy: IfNotPresent
         volumeMounts:
           - mountPath: /target
             name: plugins
@@ -46,8 +63,10 @@ spec:
 
       features: "EnableCSI"
 
-      csiSnapshotTimeout: 10m
+      logLevel: info
+      logFormat: text
 
+      csiSnapshotTimeout: 10m
       backupRetentionPeriod: 720h0m0s
 
     credentials:
@@ -88,3 +107,9 @@ spec:
 
     backupsEnabled: false
     snapshotsEnabled: false
+
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsNonRoot: true
+      runAsUser: 65534
