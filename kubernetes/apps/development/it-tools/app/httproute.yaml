@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.networking.k8s.io/httproute_v1.json
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: it-tools-dashboard
+  namespace: &namespace development
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+spec:
+  hostnames: ["it-tools.${SECRET_DOMAIN}"]
+  parentRefs:
+    - name: internal
+      namespace: kube-system
+      sectionName: https
+  rules:
+    - backendRefs:
+        - name: it-tools
+          namespace: *namespace
+          port: 8080
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

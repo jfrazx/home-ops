@@ -24,6 +24,7 @@ spec:
         strategy: RollingUpdate
         annotations:
           reloader.stakater.com/auto: "true"
+
         containers:
           app:
             image:
@@ -41,25 +42,21 @@ spec:
                 drop:
                   - ALL
               readOnlyRootFilesystem: true
+
         pod:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
             fsGroup: 1000
             fsGroupChangePolicy: "OnRootMismatch"
+
     service:
       app:
         controller: it-tools
         ports:
           http:
             port: 8080
-    route:
-      app:
-        hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
-        parentRefs:
-          - name: internal
-            namespace: kube-system
-            sectionName: https
+
     persistence:
       tmp:
         type: emptyDir
