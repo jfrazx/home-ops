@@ -29,6 +29,9 @@ spec:
     - name: traefik
       namespace: network
   postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
     substitute:
       APP: *app
       VOLSYNC_PUID: "1000"
