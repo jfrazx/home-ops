@@ -25,7 +25,7 @@ spec:
     volumeHandle: nfs-user-content-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
-      share: "${SECRET_NFS_SHARE}/users"
+      share: "/mnt/${SECRET_NFS_SHARE}/users"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

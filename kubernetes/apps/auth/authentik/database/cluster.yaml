@@ -10,6 +10,8 @@ metadata:
     kustomize.toolkit.fluxcd.io/namespace: flux-system
   annotations:
     reloader.stakater.com/auto: "true"
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+
 spec:
   instances: 3
   imageName: ghcr.io/cloudnative-pg/postgresql:17.5
@@ -49,6 +51,8 @@ spec:
 
   monitoring:
     enablePodMonitor: true
+    prometheusRule:
+      enabled: true
 
   resources:
     requests:

@@ -1,0 +1,133 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app paperless
+spec:
+  interval: 15m
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+  install:
+    createNamespace: true
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+      strategy: rollback
+
+  values:
+    controllers:
+      paperless:
+        forceRename: *app
+        annotations:
+          reloader.stakater.com/auto: 'true'
+
+        containers:
+          gotenburg:
+            image:
+              repository: thecodingmachine/gotenberg
+              tag: 8.23.1
+              pullPolicy: IfNotPresent
+            env:
+              - {name: DISABLE_GOOGLE_CHROME, value: '1'}
+
+          tika:
+            image:
+              repository: ghcr.io/paperless/tika
+              tag: 2.9.1-full
+              pullPolicy: IfNotPresent
+
+          app:
+            image:
+              repository: ghcr.io/paperless/paperless
+              pullPolicy: IfNotPresent
+              tag: 2.18.4
+            env:
+              USERMAP_UID: 568
+              USERMAP_GID: 100
+              PAPERLESS_TIME_ZONE: "${TIMEZONE}"
+              PAPERLESS_PORT: &port 8000
+              PAPERLESS_WEBSERVER_WORKERS: 2
+              PAPERLESS_TASK_WORKERS: 2
+              PAPERLESS_TIKA_ENABLED: 1
+
+              PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
+              PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
+
+              PAPERLESS_URL: https://paperless.${SECRET_DOMAIN}
+              PAPERLESS_ALLOWED_HOSTS: paperless.${SECRET_DOMAIN}
+
+              # Configure folders
+              PAPERLESS_CONSUMPTION_DIR: /data/nas/incoming
+              PAPERLESS_DATA_DIR: /data/local/data
+              PAPERLESS_EXPORT_DIR: /data/nas/export
+              PAPERLESS_MEDIA_ROOT: /data/local/media
+
+              # Database settings
+              PAPERLESS_DBENGINE: postgresql
+              PAPERLESS_DBHOST: "paperless-postgres-rw.documents.svc.cluster.local"
+              PAPERLESS_DBPORT: "5432"
+              PAPERLESS_DBNAME: "paperless"
+              PAPERLESS_DBUSER: "paperless"
+              PAPERLESS_DBPASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: paperless-postgres-app
+                    key: password
+
+              PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME: HTTP_REMOTE_USER
+              PAPERLESS_ENABLE_HTTP_REMOTE_USER: true
+
+              PAPERLESS_CONSUMER_IGNORE_PATTERNS: '[".DS_STORE/*", "._*", ".stfolder/*", "@eaDir/*"]'
+              PAPERLESS_CONSUMER_DELETE_DUPLICATES: true
+              PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
+              PAPERLESS_CONSUMER_RECURSIVE: true
+              PAPERLESS_CONSUMER_POLLING: 60
+
+              PAPERLESS_OCR_LANGUAGE: eng
+              PAPERLESS_OCR_USER_ARGS: '{"optimize": 1, "pdfa_image_compression": "lossless"}'
+
+            resources:
+              requests:
+                cpu: 35m
+                memory: 926Mi
+              limits:
+                memory: 2Gi
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+    persistence:
+      data:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        storageClass: ceph-block
+        advancedMounts:
+          paperless:
+            app:
+              - path: /data/local
+
+      nas:
+        existingClaim: nfs-apps-paperless-pvc
+        advancedMounts:
+          paperless:
+            app:
+              - path: /data/nas
+
+    serviceMonitor:
+      app:
+        serviceName: *app
+        endpoints:
+          - port: http
+            scheme: http
+            path: /api/
+            interval: 1m
+            scrapeTimeout: 10s

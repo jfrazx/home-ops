@@ -25,7 +25,7 @@ spec:
     volumeHandle: nfs-media-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
-      share: "${SECRET_NFS_SHARE}/media"
+      share: "/mnt/${SECRET_NFS_SHARE}/media"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -40,3 +40,127 @@ spec:
       storage: 5Ti
   storageClassName: nfs-csi
   volumeName: nfs-media-pv
+---
+##############
+# Media Specific PVs
+##############
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-audiobooks-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-audiobooks-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/audiobooks"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-podcasts-pv
+spec:
+  capacity:
+    storage: 2Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-podcasts-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/podcasts"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-jellyfin-movies-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-jellyfin-movies-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/movies"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-jellyfin-shows-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-jellyfin-shows-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/shows"
