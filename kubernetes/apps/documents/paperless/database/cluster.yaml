@@ -1,5 +1,5 @@
 ---
-apiVersion: cnpg.io/v1
+apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: &app paperless-postgres
@@ -10,6 +10,7 @@ metadata:
     kustomize.toolkit.fluxcd.io/namespace: flux-system
   annotations:
     kustomize.toolkit.fluxcd.io/substitute: "true"
+    reloader.stakater.com/auto: "true"
 
 spec:
   instances: 3
