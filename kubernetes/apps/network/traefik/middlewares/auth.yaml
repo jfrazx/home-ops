@@ -11,13 +11,13 @@ spec:
     - namespace: auth
     - namespace: automation
     - namespace: default
+    - namespace: documents
     - namespace: external-secrets
     - namespace: kube-system
     - namespace: media
     - namespace: network
     - namespace: observability
     - namespace: storage
-    # - namespace: documents
   resourcesTemplate: |
     ---
     apiVersion: traefik.io/v1alpha1

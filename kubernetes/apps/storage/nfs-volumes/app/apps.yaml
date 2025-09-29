@@ -64,7 +64,7 @@ spec:
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
-    volumeHandle: nfs-apps-pv
+    volumeHandle: nfs-apps-paperless-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
       share: "/mnt/${SECRET_NFS_SHARE}/apps/paperless"

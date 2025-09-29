@@ -47,9 +47,6 @@ spec:
     size: 20Gi
     storageClass: ceph-block
 
-  superuserSecret:
-    name: paperless-postgres-superuser
-
   enableSuperuserAccess: true
 
   plugins:
