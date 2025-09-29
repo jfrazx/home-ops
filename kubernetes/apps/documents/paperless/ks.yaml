@@ -35,6 +35,10 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   interval: 10m
   path: ./kubernetes/apps/documents/paperless/app
   prune: true
