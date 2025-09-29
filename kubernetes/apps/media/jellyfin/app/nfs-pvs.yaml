@@ -31,7 +31,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nfs-backups-pv
+  name: nfs-backups-jellyfin-pv
 spec:
   capacity:
     storage: 50Gi
@@ -52,7 +52,7 @@ spec:
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
-    volumeHandle: nfs-backups-pv
+    volumeHandle: nfs-backups-jellyfin-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
       share: "/mnt/${SECRET_NFS_SHARE}/backups/jellyfin"
@@ -60,7 +60,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-backups-pvc
+  name: nfs-backups-jellyfin-pvc
   namespace: media
 spec:
   accessModes:
@@ -69,4 +69,4 @@ spec:
     requests:
       storage: 50Gi
   storageClassName: nfs-csi
-  volumeName: nfs-backups-pv
+  volumeName: nfs-backups-jellyfin-pv
