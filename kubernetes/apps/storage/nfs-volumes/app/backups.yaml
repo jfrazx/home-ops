@@ -25,7 +25,18 @@ spec:
     volumeHandle: nfs-backups-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
-      share: "${SECRET_NFS_SHARE}/backups"
+      share: "/mnt/${SECRET_NFS_SHARE}/backups"
+---
+# Example usage in a pod spec:
+#
+# volumeMounts:
+#   - name: backup-storage
+#     mountPath: /backups
+#     subPath: audiobookshelf
+# volumes:
+#   - name: backup-storage
+#     persistentVolumeClaim:
+#       claimName: nfs-backups-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

@@ -1,0 +1,69 @@
+---
+apiVersion: cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &app paperless-postgres
+  namespace: &namespace documents
+  labels:
+    backup/database: "true"
+    kustomize.toolkit.fluxcd.io/name: *app
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.5
+
+  primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    initdb:
+      database: paperless
+      owner: paperless
+      dataChecksums: true
+      encoding: "UTF8"
+      localeCType: "en_US.UTF-8"
+      localeCollate: "en_US.UTF-8"
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      max_slot_wal_keep_size: "10GB"
+      shared_preload_libraries: ""
+
+  nodeMaintenanceWindow:
+    inProgress: false
+    reusePVC: true
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+
+  storage:
+    size: 20Gi
+    storageClass: ceph-block
+
+  enableSuperuserAccess: true
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgres-backup
+
+  monitoring:
+    enabled: true
+    prometheusRule:
+      enabled: true
+
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          cnpg.io/cluster: paperless-postgres

@@ -11,7 +11,7 @@ spec:
   inputs:
     - namespace: automation
     - namespace: database
-    # - namespace: documents
+    - namespace: documents
     - namespace: external-secrets
     - namespace: media
     - namespace: network
