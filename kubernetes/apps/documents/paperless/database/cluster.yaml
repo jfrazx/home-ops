@@ -57,8 +57,6 @@ spec:
 
   monitoring:
     enabled: true
-    prometheusRule:
-      enabled: true
 
   topologySpreadConstraints:
     - maxSkew: 1
