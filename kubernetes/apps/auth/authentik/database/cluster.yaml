@@ -51,8 +51,6 @@ spec:
 
   monitoring:
     enablePodMonitor: true
-    prometheusRule:
-      enabled: true
 
   resources:
     requests:
