@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-jellyfin-movies-pvc
+  name: nfs-movies-pvc
   namespace: media
 spec:
   accessModes:
@@ -11,12 +11,12 @@ spec:
     requests:
       storage: 6Ti
   storageClassName: nfs-csi
-  volumeName: nfs-jellyfin-movies-pv
+  volumeName: nfs-movies-pv
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-jellyfin-shows-pvc
+  name: nfs-shows-pvc
   namespace: media
 spec:
   accessModes:
@@ -25,13 +25,13 @@ spec:
     requests:
       storage: 6Ti
   storageClassName: nfs-csi
-  volumeName: nfs-jellyfin-shows-pv
+  volumeName: nfs-shows-pv
 
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nfs-jellyfin-backups-pv
+  name: nfs-backups-pv
 spec:
   capacity:
     storage: 50Gi
@@ -52,7 +52,7 @@ spec:
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
-    volumeHandle: nfs-jellyfin-backups-pv
+    volumeHandle: nfs-backups-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
       share: "/mnt/${SECRET_NFS_SHARE}/backups/jellyfin"
@@ -60,7 +60,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-jellyfin-backups-pvc
+  name: nfs-backups-pvc
   namespace: media
 spec:
   accessModes:
@@ -69,4 +69,4 @@ spec:
     requests:
       storage: 50Gi
   storageClassName: nfs-csi
-  volumeName: nfs-jellyfin-backups-pv
+  volumeName: nfs-backups-pv

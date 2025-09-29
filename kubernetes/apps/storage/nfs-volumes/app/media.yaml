@@ -108,7 +108,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nfs-jellyfin-movies-pv
+  name: nfs-movies-pv
 spec:
   capacity:
     storage: 6Ti
@@ -130,7 +130,7 @@ spec:
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
-    volumeHandle: nfs-jellyfin-movies-pv
+    volumeHandle: nfs-movies-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
       share: "/mnt/${SECRET_NFS_SHARE}/media/movies"
@@ -138,7 +138,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nfs-jellyfin-shows-pv
+  name: nfs-shows-pv
 spec:
   capacity:
     storage: 6Ti
@@ -160,7 +160,7 @@ spec:
   csi:
     driver: nfs.csi.k8s.io
     readOnly: false
-    volumeHandle: nfs-jellyfin-shows-pv
+    volumeHandle: nfs-shows-pv
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
       share: "/mnt/${SECRET_NFS_SHARE}/media/shows"
