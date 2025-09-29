@@ -57,7 +57,7 @@ spec:
         barmanObjectName: postgres-backup
 
   monitoring:
-    enabled: true
+    enablePodMonitor: true
 
   topologySpreadConstraints:
     - maxSkew: 1
