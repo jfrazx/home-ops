@@ -503,3 +503,180 @@ spec:
           extentDisablePhysicalBlocksize: true
           extentRpm: "SSD"
           extentAvailThreshold: 0
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: democratic-csi-nfs-backups
+  namespace: storage
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: democratic-csi
+      version: 0.15.0
+      sourceRef:
+        kind: HelmRepository
+        name: democratic-csi
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    csiDriver:
+      name: org.democratic-csi.truenas-nfs-backups
+      attachRequired: false
+      storageCapacity: true
+      fsGroupPolicy: File
+
+    controller:
+      enabled: true
+      strategy: deployment
+      externalAttacher:
+        enabled: false
+      externalProvisioner:
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+          - --enable-capacity=true
+          - --capacity-poll-interval=30s
+      externalResizer:
+        enabled: true
+      externalSnapshotter:
+        enabled: true
+        extraArgs:
+          - --leader-election=false
+          - --node-deployment=false
+
+      driver:
+        image:
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
+
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+          privileged: true
+
+    node:
+      enabled: true
+      hostPID: true
+
+      driver:
+        image:
+          registry: democraticcsi/democratic-csi
+          tag: v1.9.3
+
+        readinessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
+
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+              - SYS_RESOURCE
+              - SYS_PTRACE
+              - DAC_READ_SEARCH
+              - DAC_OVERRIDE
+          privileged: true
+
+        extraVolumeMounts:
+          - name: host-usr-local-bin
+            mountPath: /host/usr/local/bin
+            mountPropagation: Bidirectional
+          - name: host-usr-local-sbin
+            mountPath: /host/usr/local/sbin
+            mountPropagation: Bidirectional
+
+        extraEnv:
+          - name: NODE_EXTRA_CREATE_METADATA
+            value: "true"
+
+      extraVolumes:
+        - name: host-usr-local-bin
+          hostPath:
+            path: /usr/local/bin
+            type: Directory
+        - name: host-usr-local-sbin
+          hostPath:
+            path: /usr/local/sbin
+            type: Directory
+
+      tolerations:
+        - operator: Exists
+
+    storageClasses:
+    - name: truenas-nfs-backups
+      defaultClass: false
+      reclaimPolicy: Retain
+      volumeBindingMode: Immediate
+      allowVolumeExpansion: true
+      parameters:
+        csi.storage.k8s.io/fstype: nfs
+
+    volumeSnapshotClasses:
+    - name: truenas-nfs-backups-snapshots
+      parameters:
+        snapshotPrefix: "snapshot-"
+
+      mountOptions:
+        - nfsvers=4.2
+        - hard
+        - timeo=600
+        - retrans=2
+        - rsize=1048576
+        - wsize=1048576
+
+      secrets:
+        snapshotter-secret:
+        provisioner-secret:
+        controller-publish-secret:
+        node-stage-secret:
+        node-publish-secret:
+        controller-expand-secret:
+
+    driver:
+      config:
+        driver: freenas-api-nfs
+        instance_id: "truenas-nfs-backups"
+
+        httpConnection:
+          protocol: https
+          host: "${SECRET_NFS_SERVER}"
+          port: 443
+          apiKey: "${SECRET_NAS_API_KEY}"
+          allowInsecure: true
+          apiVersion: 2
+
+        zfs:
+          datasetProperties:
+            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+            aclmode: restricted
+            aclinherit: passthrough
+
+          datasetParentName: "${SECRET_NFS_SHARE}/backups"
+          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/backups/snapshots"
+
+          datasetEnableQuotas: true
+          datasetEnableReservation: false
+          datasetPermissionsMode: "0770"
+          datasetPermissionsUser: 568  # volsync user
+          datasetPermissionsGroup: 568
+
+        nfs:
+          shareHost: "${SECRET_NFS_SERVER}"
+          shareAlldirs: false
+          shareAllowedHosts: []
+          shareAllowedNetworks: []
+          shareMaprootUser: root
+          shareMaprootGroup: root
+          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"

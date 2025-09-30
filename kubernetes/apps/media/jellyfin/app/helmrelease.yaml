@@ -109,7 +109,7 @@ spec:
 
       backups:
         type: persistentVolumeClaim
-        existingClaim: nfs-jellyfin-backups-pvc
+        existingClaim: jellyfin-backups
         globalMounts:
           - path: /backups
 
