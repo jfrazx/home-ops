@@ -23,8 +23,6 @@ spec:
       paperless:
         pod:
           securityContext:
-            runAsUser: 568
-            runAsGroup: 100
             fsGroup: 100
             fsGroupChangePolicy: "OnRootMismatch"
 
@@ -53,9 +51,6 @@ spec:
               pullPolicy: IfNotPresent
               tag: 2.18.4
             securityContext:
-              runAsNonRoot: true
-              runAsUser: 568
-              runAsGroup: 100
               allowPrivilegeEscalation: false
               capabilities:
                 drop:
