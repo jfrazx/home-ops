@@ -623,11 +623,6 @@ spec:
       parameters:
         csi.storage.k8s.io/fstype: nfs
 
-    volumeSnapshotClasses:
-    - name: truenas-nfs-backups-snapshots
-      parameters:
-        snapshotPrefix: "snapshot-"
-
       mountOptions:
         - nfsvers=4.2
         - hard
@@ -637,12 +632,18 @@ spec:
         - wsize=1048576
 
       secrets:
-        snapshotter-secret:
         provisioner-secret:
         controller-publish-secret:
         node-stage-secret:
         node-publish-secret:
         controller-expand-secret:
+
+    volumeSnapshotClasses:
+    - name: truenas-nfs-backups-snapshots
+      parameters:
+        snapshotPrefix: "snapshot-"
+      secrets:
+        snapshotter-secret:
 
     driver:
       config:
@@ -660,8 +661,6 @@ spec:
         zfs:
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
-            aclmode: restricted
-            aclinherit: passthrough
 
           datasetParentName: "${SECRET_NFS_SHARE}/backups/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/backups/snapshots"
