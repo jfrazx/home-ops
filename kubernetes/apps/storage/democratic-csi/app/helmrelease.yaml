@@ -530,7 +530,7 @@ spec:
       retries: 3
   values:
     csiDriver:
-      name: org.democratic-csi.truenas-nfs
+      name: org.democratic-csi.truenas-nfs-backups
       attachRequired: false
       storageCapacity: true
       fsGroupPolicy: File
