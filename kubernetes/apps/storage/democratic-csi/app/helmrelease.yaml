@@ -663,7 +663,7 @@ spec:
             aclmode: restricted
             aclinherit: passthrough
 
-          datasetParentName: "${SECRET_NFS_SHARE}/backups"
+          datasetParentName: "${SECRET_NFS_SHARE}/backups/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/backups/snapshots"
 
           datasetEnableQuotas: true

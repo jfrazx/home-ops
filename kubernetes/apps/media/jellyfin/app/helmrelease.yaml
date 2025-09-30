@@ -115,12 +115,12 @@ spec:
 
       movies:
         type: persistentVolumeClaim
-        existingClaim: nfs-jellyfin-movies-pvc
+        existingClaim: nfs-movies-pvc
         globalMounts:
           - path: /movies
 
       shows:
         type: persistentVolumeClaim
-        existingClaim: nfs-jellyfin-shows-pvc
+        existingClaim: nfs-shows-pvc
         globalMounts:
           - path: /shows
