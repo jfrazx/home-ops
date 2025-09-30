@@ -81,20 +81,6 @@ spec:
           http:
             port: *port
 
-
-    # route:
-    #   app:
-    #     hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
-    #     parentRefs:
-    #       - name: external
-    #         namespace: kube-system
-    #         sectionName: https
-    #     rules:
-    #       - backendRefs:
-    #           - identifier: app
-    #             port: *port
-
-
     # ingress:
     #   app:
     #     enabled: true

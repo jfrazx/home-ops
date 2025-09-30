@@ -45,6 +45,10 @@ spec:
               repository: ghcr.io/paperless/paperless
               pullPolicy: IfNotPresent
               tag: 2.18.4
+
+            envFrom:
+              - secretRef:
+                  name: paperless-secret
             env:
               USERMAP_UID: 568
               USERMAP_GID: 100

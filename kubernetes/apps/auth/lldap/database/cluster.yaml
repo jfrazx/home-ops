@@ -13,7 +13,7 @@ metadata:
     kustomize.toolkit.fluxcd.io/substitute: "true"
 
 spec:
-  instances: 1
+  instances: 2
   imageName: ghcr.io/cloudnative-pg/postgresql:17.5
 
   bootstrap:

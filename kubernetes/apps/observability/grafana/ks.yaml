@@ -18,6 +18,8 @@ spec:
       namespace: observability
     - name: loki
       namespace: observability
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
@@ -41,3 +43,4 @@ spec:
     namespace: flux-system
   targetNamespace: *namespace
   timeout: 10m
+  wait: true

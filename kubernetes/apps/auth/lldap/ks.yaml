@@ -11,6 +11,8 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: rook-ceph
+      namespace: storage
     - name: cnpg-operator
       namespace: flux-system
   path: ./kubernetes/apps/auth/lldap/database

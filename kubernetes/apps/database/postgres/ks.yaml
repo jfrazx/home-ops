@@ -20,6 +20,8 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
     - name: cnpg-operator
     - name: openbao
       namespace: external-secrets
