@@ -26,9 +26,9 @@ spec:
           reloader.stakater.com/auto: 'true'
 
         containers:
-          gotenburg:
+          gotenberg:
             image:
-              repository: thecodingmachine/gotenberg
+              repository: gotenberg/gotenberg
               tag: 8.23.1
               pullPolicy: IfNotPresent
             env:
@@ -36,13 +36,13 @@ spec:
 
           tika:
             image:
-              repository: ghcr.io/paperless/tika
+              repository: ghcr.io/paperless-ngx/tika
               tag: 2.9.1-full
               pullPolicy: IfNotPresent
 
           app:
             image:
-              repository: ghcr.io/paperless/paperless
+              repository: ghcr.io/paperless-ngx/paperless-ngx
               pullPolicy: IfNotPresent
               tag: 2.18.4
 
