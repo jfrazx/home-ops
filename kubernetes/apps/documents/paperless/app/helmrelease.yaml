@@ -1,78 +1,45 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: &app paperless
 spec:
-  interval: 15m
+  interval: 30m
   chartRef:
     kind: OCIRepository
     name: app-template
-  install:
-    createNamespace: true
-    remediation:
-      retries: 5
-  upgrade:
-    remediation:
-      retries: 5
-      strategy: rollback
+    namespace: flux-system
 
   values:
     controllers:
       paperless:
-        pod:
-          securityContext:
-            fsGroup: 100
-            fsGroupChangePolicy: "OnRootMismatch"
-
         forceRename: *app
         annotations:
-          reloader.stakater.com/auto: 'true'
+          reloader.stakater.com/auto: "true"
 
         containers:
-          gotenberg:
-            image:
-              repository: gotenberg/gotenberg
-              tag: 8.23.1
-              pullPolicy: IfNotPresent
-            env:
-              - {name: DISABLE_GOOGLE_CHROME, value: '1'}
-
-          tika:
-            image:
-              repository: ghcr.io/paperless-ngx/tika
-              tag: 2.9.1-full
-              pullPolicy: IfNotPresent
-
           app:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
               pullPolicy: IfNotPresent
               tag: 2.18.4
-            securityContext:
-              allowPrivilegeEscalation: false
-              capabilities:
-                drop:
-                  - ALL
 
+            # Configure application
             envFrom:
               - secretRef:
                   name: paperless-secret
             env:
-              USERMAP_UID: 568
-              USERMAP_GID: 100
+              PAPERLESS_URL: https://paperless.${SECRET_DOMAIN}
               PAPERLESS_TIME_ZONE: "${TIMEZONE}"
               PAPERLESS_PORT: &port 8000
               PAPERLESS_WEBSERVER_WORKERS: 2
               PAPERLESS_TASK_WORKERS: 2
-              PAPERLESS_TIKA_ENABLED: 1
 
+              # Tika / Gotenberg settings
+              PAPERLESS_TIKA_ENABLED: 1
               PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
               PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
-
-              PAPERLESS_URL: https://paperless.${SECRET_DOMAIN}
-              PAPERLESS_ALLOWED_HOSTS: paperless.${SECRET_DOMAIN}
 
               # Configure folders
               PAPERLESS_CONSUMPTION_DIR: /data/nas/incoming
@@ -92,27 +59,55 @@ spec:
                     name: paperless-postgres-app
                     key: password
 
-              PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME: HTTP_REMOTE_USER
-              PAPERLESS_ENABLE_HTTP_REMOTE_USER: true
-
+              # Configure folder importer
               PAPERLESS_CONSUMER_IGNORE_PATTERNS: '[".DS_STORE/*", "._*", ".stfolder/*", "@eaDir/*"]'
               PAPERLESS_CONSUMER_DELETE_DUPLICATES: true
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
               PAPERLESS_CONSUMER_RECURSIVE: true
               PAPERLESS_CONSUMER_POLLING: 60
 
+              # Configure OCR
               PAPERLESS_OCR_LANGUAGE: eng
               PAPERLESS_OCR_USER_ARGS: '{"optimize": 1, "pdfa_image_compression": "lossless"}'
 
+              # Configure user permissions
+              USERMAP_GID: 100
+
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 5
             resources:
               requests:
-                cpu: 35m
-                memory: 926Mi
-              limits:
+                cpu: 25m
                 memory: 2Gi
+              limits:
+                memory: 6Gi
+
+          gotenberg:
+            image:
+              repository: gotenberg/gotenberg
+              tag: 8.23.1
+              pullPolicy: IfNotPresent
+            env:
+              - {name: DISABLE_GOOGLE_CHROME, value: '1'}
+
+          tika:
+            image:
+              repository: ghcr.io/paperless-ngx/tika
+              tag: 2.9.1-full
+              pullPolicy: IfNotPresent
 
     service:
       app:
+        forceRename: *app
+        primary: true
         controller: *app
         ports:
           http:
@@ -136,12 +131,15 @@ spec:
             app:
               - path: /data/nas
 
-    serviceMonitor:
+    route:
       app:
-        serviceName: *app
-        endpoints:
-          - port: http
-            scheme: http
-            path: /api/
-            interval: 1m
-            scrapeTimeout: 10s
+        hostnames:
+          - paperless.${SECRET_DOMAIN}
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
