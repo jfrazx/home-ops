@@ -21,6 +21,13 @@ spec:
   values:
     controllers:
       paperless:
+        pod:
+          securityContext:
+            runAsUser: 568
+            runAsGroup: 100
+            fsGroup: 100
+            fsGroupChangePolicy: "OnRootMismatch"
+
         forceRename: *app
         annotations:
           reloader.stakater.com/auto: 'true'
@@ -45,6 +52,14 @@ spec:
               repository: ghcr.io/paperless-ngx/paperless-ngx
               pullPolicy: IfNotPresent
               tag: 2.18.4
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 568
+              runAsGroup: 100
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
 
             envFrom:
               - secretRef:

@@ -73,6 +73,8 @@ spec:
           securityContext:
             runAsUser: "${VOLSYNC_PUID}"
             runAsGroup: "${VOLSYNC_PGID}"
+            fsGroup: 568
+            fsGroupChangePolicy: "OnRootMismatch"
             runAsNonRoot: true
             supplementalGroups: [44, 568, 10000, 65539]
 
