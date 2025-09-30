@@ -504,11 +504,13 @@ spec:
           extentRpm: "SSD"
           extentAvailThreshold: 0
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: democratic-csi-nfs-backups
   namespace: storage
+
 spec:
   interval: 1h
   chart:
@@ -528,7 +530,7 @@ spec:
       retries: 3
   values:
     csiDriver:
-      name: org.democratic-csi.truenas-nfs-backups
+      name: org.democratic-csi.truenas-nfs
       attachRequired: false
       storageCapacity: true
       fsGroupPolicy: File
@@ -624,7 +626,7 @@ spec:
         csi.storage.k8s.io/fstype: nfs
 
       mountOptions:
-        - nfsvers=4.2
+        - nfsvers=4.1
         - hard
         - timeo=600
         - retrans=2
@@ -661,6 +663,8 @@ spec:
         zfs:
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+            aclmode: restricted
+            aclinherit: passthrough
 
           datasetParentName: "${SECRET_NFS_SHARE}/backups/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/backups/snapshots"
@@ -668,7 +672,7 @@ spec:
           datasetEnableQuotas: true
           datasetEnableReservation: false
           datasetPermissionsMode: "0770"
-          datasetPermissionsUser: 568  # volsync user
+          datasetPermissionsUser: 568
           datasetPermissionsGroup: 568
 
         nfs:
