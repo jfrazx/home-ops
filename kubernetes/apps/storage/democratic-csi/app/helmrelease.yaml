@@ -159,8 +159,6 @@ spec:
         zfs:
           datasetProperties:
             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
-            aclmode: restricted
-            aclinherit: passthrough
 
           datasetParentName: "${SECRET_NFS_SHARE}/nfs/volumes"
           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/nfs/snapshots"
