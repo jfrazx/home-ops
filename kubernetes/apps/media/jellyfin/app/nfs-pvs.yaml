@@ -26,47 +26,16 @@ spec:
       storage: 6Ti
   storageClassName: nfs-csi
   volumeName: nfs-shows-pv
-
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: nfs-backups-jellyfin-pv
-spec:
-  capacity:
-    storage: 50Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: nfs-csi
-  mountOptions:
-    - nfsvers=4.1
-    - rsize=1048576
-    - wsize=1048576
-    - hard
-    - timeo=600
-    - retrans=2
-    - _netdev
-    - nocto
-  csi:
-    driver: nfs.csi.k8s.io
-    readOnly: false
-    volumeHandle: nfs-backups-jellyfin-pv
-    volumeAttributes:
-      server: "${SECRET_NFS_SERVER}"
-      share: "/mnt/${SECRET_NFS_SHARE}/backups/jellyfin"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-backups-jellyfin-pvc
+  name: jellyfin-backups
   namespace: media
 spec:
   accessModes:
     - ReadWriteMany
+  storageClassName: truenas-nfs-backups
   resources:
     requests:
       storage: 50Gi
-  storageClassName: nfs-csi
-  volumeName: nfs-backups-jellyfin-pv

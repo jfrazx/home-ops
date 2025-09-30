@@ -53,8 +53,8 @@ spec:
         kind: Secret
   dependsOn:
     - name: paperless-postgres
-    - name: dragonflydb
-      namespace: database
+    - name: dragonflydb-cluster
+      namespace: flux-system
     - name: openbao
       namespace: external-secrets
   healthChecks:

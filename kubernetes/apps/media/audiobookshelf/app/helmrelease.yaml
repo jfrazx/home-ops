@@ -159,7 +159,7 @@ spec:
 
       backups:
         type: persistentVolumeClaim
-        existingClaim: nfs-backups-pvc
+        existingClaim: audiobookshelf-backups
         globalMounts:
           - path: /metadata/backups
             readOnly: false
