@@ -30,6 +30,10 @@ spec:
               - secretRef:
                   name: paperless-secret
             env:
+              # Configure user permissions
+              USERMAP_GID: 1001
+              USERMAP_UID: 1001
+
               PAPERLESS_URL: https://paperless.${SECRET_DOMAIN}
               PAPERLESS_TIME_ZONE: "${TIMEZONE}"
               PAPERLESS_PORT: &port 8000
@@ -69,10 +73,6 @@ spec:
               # Configure OCR
               PAPERLESS_OCR_LANGUAGE: eng
               PAPERLESS_OCR_USER_ARGS: '{"optimize": 1, "pdfa_image_compression": "lossless"}'
-
-              # Configure user permissions
-              USERMAP_GID: 1001
-              USERMAP_UID: 1001
 
             probes:
               liveness:
