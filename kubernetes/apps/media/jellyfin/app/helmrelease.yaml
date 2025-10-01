@@ -126,3 +126,16 @@ spec:
         existingClaim: nfs-shows-pvc
         globalMounts:
           - path: /shows
+
+    route:
+      app:
+        hostnames:
+          - jellyfin.${SECRET_DOMAIN}
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
