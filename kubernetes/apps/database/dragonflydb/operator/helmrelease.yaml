@@ -32,7 +32,7 @@ spec:
     manager:
       image:
         repository: ghcr.io/dragonflydb/operator
-        tag: v1.2.1
+        tag: v1.3.0
 
     serviceMonitor:
       enabled: true
