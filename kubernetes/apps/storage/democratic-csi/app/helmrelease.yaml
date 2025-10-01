@@ -23,6 +23,7 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+
   values:
     csiDriver:
       name: org.democratic-csi.truenas-nfs
@@ -120,6 +121,7 @@ spec:
       allowVolumeExpansion: true
       parameters:
         csi.storage.k8s.io/fstype: nfs
+        detachedVolumesFromSnapshots: 'false'
 
       mountOptions:
         - nfsvers=4.1
@@ -140,6 +142,7 @@ spec:
     - name: truenas-nfs-snapshots
       parameters:
         snapshotPrefix: "snapshot-"
+        detachedSnapshots: 'true'
       secrets:
         snapshotter-secret:
 
@@ -166,16 +169,16 @@ spec:
           datasetEnableQuotas: true
           datasetEnableReservation: false
           datasetPermissionsMode: "0770"
-          datasetPermissionsUser: 0
-          datasetPermissionsGroup: 0
+          datasetPermissionsUser: 1001
+          datasetPermissionsGroup: 1001
 
         nfs:
           shareHost: "${SECRET_NFS_SERVER}"
           shareAlldirs: false
           shareAllowedHosts: []
           shareAllowedNetworks: []
-          shareMaprootUser: root
-          shareMaprootGroup: root
+          shareMaprootUser: nfs
+          shareMaprootGroup: nfs
           shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
@@ -318,8 +321,8 @@ spec:
           shareEnabled: true
           shareAllowedHosts: []
           shareAllowedNetworks: []
-          shareMaprootUser: root
-          shareMaprootGroup: root
+          shareMaprootUser: nfs
+          shareMaprootGroup: nfs
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -482,7 +485,7 @@ spec:
           targetPortal: "${SECRET_NFS_SERVER}:3260"
           interface: "enp129s0f1"
           namePrefix: csi-
-          nameSuffix: ""
+          nameSuffix: "-cluster"
 
           targetCommentTemplate: "K8s-{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
 
@@ -620,6 +623,7 @@ spec:
       allowVolumeExpansion: true
       parameters:
         csi.storage.k8s.io/fstype: nfs
+        detachedVolumesFromSnapshots: 'false'
 
       mountOptions:
         - nfsvers=4.1
@@ -639,6 +643,7 @@ spec:
     volumeSnapshotClasses:
     - name: truenas-nfs-backups-snapshots
       parameters:
+        detachedSnapshots: 'true'
         snapshotPrefix: "snapshot-"
       secrets:
         snapshotter-secret:
@@ -666,14 +671,14 @@ spec:
           datasetEnableQuotas: true
           datasetEnableReservation: false
           datasetPermissionsMode: "0770"
-          datasetPermissionsUser: 568
-          datasetPermissionsGroup: 568
+          datasetPermissionsUser: 1001
+          datasetPermissionsGroup: 1001
 
         nfs:
           shareHost: "${SECRET_NFS_SERVER}"
           shareAlldirs: false
           shareAllowedHosts: []
           shareAllowedNetworks: []
-          shareMaprootUser: root
-          shareMaprootGroup: root
+          shareMaprootUser: nfs
+          shareMaprootGroup: nfs
           shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
