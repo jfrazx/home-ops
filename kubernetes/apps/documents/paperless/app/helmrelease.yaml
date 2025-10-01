@@ -71,8 +71,8 @@ spec:
               PAPERLESS_OCR_USER_ARGS: '{"optimize": 1, "pdfa_image_compression": "lossless"}'
 
               # Configure user permissions
-              USERMAP_GID: 100
-              USERMAP_UID: 568
+              USERMAP_GID: 1001
+              USERMAP_UID: 1001
 
             probes:
               liveness:
