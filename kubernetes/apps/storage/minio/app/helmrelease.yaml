@@ -2,8 +2,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: minio
-  namespace: storage
+  name: &app minio
+  namespace: &namespace storage
 spec:
   interval: 30m
   chartRef:
@@ -19,11 +19,13 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+
   values:
     controllers:
       minio:
         annotations:
           reloader.stakater.com/auto: "true"
+
         containers:
           app:
             image:
@@ -54,39 +56,44 @@ spec:
                   initialDelaySeconds: 30
                   periodSeconds: 30
                   timeoutSeconds: 10
-                  failureThreshold: 3
+                  failureThreshold: 5
               readiness: *probes
               startup:
                 enabled: false
+
     service:
       app:
-        controller: minio
+        controller: *app
         ports:
           http:
             port: &http 9001
           s3:
             port: &s3 9000
+
     route:
-          app:
-            hostnames: ["minio.${SECRET_DOMAIN}"]
-            parentRefs:
-              - name: internal
-                namespace: kube-system
-                sectionName: https
-            rules:
-              - backendRefs:
-                  - identifier: app
-                    port: *http
-          s3:
-            hostnames: ["s3.${SECRET_DOMAIN}"]
-            parentRefs:
-              - name: internal
-                namespace: kube-system
-                sectionName: https
-            rules:
-              - backendRefs:
-                  - identifier: app
-                    port: *s3
+      app:
+        hostnames:
+          - "minio.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *http
+      s3:
+        hostnames:
+          - "s3.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *s3
+
     persistence:
       data:
         type: persistentVolumeClaim

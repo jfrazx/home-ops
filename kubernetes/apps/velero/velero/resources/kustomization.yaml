@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - ./backupstoragelocation.yaml
   - ./volumesnapshotlocation.yaml
-  - ./minio-setup-job.yaml

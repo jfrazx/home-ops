@@ -1,4 +1,3 @@
-# kubernetes/apps/media/jellyfin/meilisearch/pvc.yaml
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
