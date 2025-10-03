@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: &namespace ai
+components:
+  - ../../components/flux/alerts
+  - ../../components/common
+resources:
+  - ./kokoro/ks.yaml
+  - ./ollama/ks.yaml
+  - ./open-webui/ks.yaml
+  - ./paperless-ai/ks.yaml
+  - ./searxng/ks.yaml
+patches:
+  - target:
+      kind: Namespace
+      name: *namespace
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: restricted
+          pod-security.kubernetes.io/audit: restricted
+          pod-security.kubernetes.io/warn: restricted
