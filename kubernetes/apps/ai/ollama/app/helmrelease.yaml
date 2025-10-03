@@ -104,7 +104,7 @@ spec:
         type: persistentVolumeClaim
         accessMode: ReadWriteMany
         size: 50Gi
-        storageClass: truenas-iscsi
+        storageClass: truenas-nfs
         advancedMounts:
           ollama:
             app:
