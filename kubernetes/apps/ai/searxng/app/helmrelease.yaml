@@ -36,7 +36,7 @@ spec:
               SEARXNG_BASE_URL: "https://search.${SECRET_DOMAIN}"
               SEARXNG_URL: "https://search.${SECRET_DOMAIN}"
               SEARXNG_PORT: &httpPort 8080
-              SEARXNG_REDIS_URL: redis://dragonflydb.database.svc.cluster.local:6379/7
+
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
@@ -98,6 +98,12 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /etc/searxng
+
+      tmp:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
 
     route:
       app:

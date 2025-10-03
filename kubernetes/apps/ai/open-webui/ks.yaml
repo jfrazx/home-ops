@@ -6,7 +6,7 @@ metadata:
   name: &app open-webui
   namespace: flux-system
 spec:
-  targetNamespace: ai
+  targetNamespace: &namespace ai
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -16,6 +16,7 @@ spec:
       name: sops-age
   dependsOn:
     - name: searxng
+      namespace: *namespace
     - name: volsync
       namespace: system
     - name: traefik
