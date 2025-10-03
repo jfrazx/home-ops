@@ -110,7 +110,7 @@ spec:
           gethomepage.dev/icon: sh-open-webui.svg
           gethomepage.dev/name: Open WebUI
           gethomepage.dev/app: open-webui
-        hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
+        hostnames: ["chat.${SECRET_DOMAIN}"]
         parentRefs:
           - name: internal
             namespace: kube-system

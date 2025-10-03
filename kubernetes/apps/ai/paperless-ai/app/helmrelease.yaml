@@ -104,6 +104,11 @@ spec:
         globalMounts:
           - path: /nltk_data
 
+      openapi:
+        type: emptyDir
+        globalMounts:
+          - path: /app/OPENAPI
+
     route:
       app:
         annotations:
