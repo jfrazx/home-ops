@@ -33,11 +33,13 @@ spec:
 
             env:
               PAPERLESS_API_URL: http://paperless.documents.svc.cluster.local:8000/api
+              PAPERLESS_NGX_URL: http://paperless.documents.svc.cluster.local:8000
               AI_PROVIDER: ollama
               ADD_AI_PROCESSED_TAG: yes
               AI_PROCESSED_TAG_NAME: ai-processed
               OLLAMA_API_URL: http://ollama.ai.svc.cluster.local:11434
               OLLAMA_MODEL: llama3.2:3b
+              NLTK_DATA: /nltk_data
 
             envFrom:
               - secretRef:
@@ -91,6 +93,16 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /app/public/images
+
+      pm2:
+        type: emptyDir
+        globalMounts:
+          - path: /.pm2
+
+      nltk-data:
+        type: emptyDir
+        globalMounts:
+          - path: /nltk_data
 
     route:
       app:
