@@ -8,5 +8,5 @@ components:
   - ../../components/flux/alerts
 resources:
   - ./excalidraw/ks.yaml
-  - ./grist/ks.yaml
+  # - ./grist/ks.yaml
   - ./paperless/ks.yaml
