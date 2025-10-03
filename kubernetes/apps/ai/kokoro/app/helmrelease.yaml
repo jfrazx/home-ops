@@ -40,6 +40,16 @@ spec:
           http:
             port: &port 8880
 
+    persistence:
+      cache:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        storageClass: ceph-block
+        globalMounts:
+          - path: /app/cache
+
     route:
       app:
         annotations:
