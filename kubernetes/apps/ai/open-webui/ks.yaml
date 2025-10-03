@@ -20,7 +20,7 @@ spec:
     - name: volsync
       namespace: system
     - name: traefik
-      namespace: system
+      namespace: network
     - name: openbao
       namespace: external-secrets
   path: ./kubernetes/apps/ai/open-webui/app
