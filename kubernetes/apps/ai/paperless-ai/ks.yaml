@@ -18,7 +18,9 @@ spec:
   path: ./kubernetes/apps/ai/paperless-ai/app
   dependsOn:
     - name: volsync
+      namespace: system
     - name: paperless
+      namespace: documents
   prune: true
   sourceRef:
     kind: GitRepository
