@@ -9,4 +9,5 @@ components:
 resources:
   - ./excalidraw/ks.yaml
   - ./grist/ks.yaml
+  - ./linkwarden/ks.yaml
   - ./paperless/ks.yaml

@@ -109,6 +109,14 @@ spec:
         globalMounts:
           - path: /app/OPENAPI
 
+  hf-cache:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 20Gi
+    storageClass: truenas-iscsi
+    globalMounts:
+      - path: /.cache
+
     route:
       app:
         annotations:
