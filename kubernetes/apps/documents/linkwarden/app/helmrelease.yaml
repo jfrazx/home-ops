@@ -37,7 +37,7 @@ spec:
               NEXT_PUBLIC_DISABLE_REGISTRATION: true
               PAGINATION_TAKE_COUNT: 20
               AUTOSCROLL_TIMEOUT: 30
-              STORAGE_FOLDER: "data"
+              STORAGE_FOLDER: "config"
               HOME: /data/config
 
               NEXT_PUBLIC_OLLAMA_ENDPOINT_URL: http://ollama.ai.svc.cluster.local:11434
@@ -89,14 +89,6 @@ spec:
         type: persistentVolumeClaim
         accessMode: ReadWriteOnce
         size: 100Gi
-        storageClass: truenas-iscsi
-        globalMounts:
-          - path: /data/data
-
-      config:
-        type: persistentVolumeClaim
-        accessMode: ReadWriteOnce
-        size: 10Gi
         storageClass: truenas-iscsi
         globalMounts:
           - path: /data/config
