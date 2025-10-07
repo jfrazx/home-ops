@@ -6,84 +6,27 @@ metadata:
 data:
   maddy.conf: |
     ## Maddy Mail Server - Relay Configuration
-    ## https://maddy.email/reference/config/
-
-    ## State directory for maddy runtime data
     state_dir /data/state
     runtime_dir /data/run
 
-    ## Hostname used in SMTP greeting
-    hostname {env:SMTP_DOMAIN}
+    $(hostname) = {env:SMTP_RELAY_HOSTNAME}
+    $(primary_domain) = {env:SMTP_DOMAIN}
 
-    ## TLS configuration using cert-manager provided certificates
     tls file /data/tls/tls.crt /data/tls/tls.key
 
-    ## SMTP submission endpoint (port 587)
-    ## Accepts mail from internal applications without authentication
-    submission tcp://0.0.0.0:587 {
-        source {
-            # Accept from cluster IP ranges
-            check {
-                source_in 10.0.0.0/8 127.0.0.0/8
-            }
-
-            destination postmaster {
-                deliver_to &remote_queue
-            }
-            default_destination {
-                deliver_to &remote_queue
-            }
-        }
-    }
-
-    ## SMTP endpoint (port 25)
-    ## Accepts mail from internal applications without authentication
+    ## SMTP port 25 - accepts from cluster IPs, relays everything
     smtp tcp://0.0.0.0:25 {
-        source {
-            # Accept from cluster IP ranges
-            check {
-                source_in 10.0.0.0/8 127.0.0.0/8
-            }
-
-            destination postmaster {
-                deliver_to &remote_queue
-            }
-            default_destination {
-                deliver_to &remote_queue
-            }
-        }
+        deliver_to &gmail_relay
     }
 
-    ## Remote queue for relaying through Gmail
-    target.queue remote_queue {
-        target &remote_relay
-
-        ## Retry configuration
-        max_tries 8
-        bounce {
-            destination postmaster {
-                deliver_to &local_mailboxes
-            }
-            default_destination {
-                reject 550 5.0.0 "User does not exist"
-            }
-        }
+    ## Submission port 587 - same behavior
+    submission tcp://0.0.0.0:587 {
+        deliver_to &gmail_relay
     }
 
-    ## Gmail relay configuration
-    target.remote remote_relay {
-        ## Use Gmail's SMTP server
+    ## Gmail relay target
+    target.remote gmail_relay {
         targets tls://smtp.gmail.com:587
 
-        ## Authentication credentials from environment
         auth plain {env:GMAIL_USERNAME} {env:GMAIL_PASSWORD}
-
-        ## Enforce TLS for Gmail connection
-        require_tls yes
-    }
-
-    ## Local mailbox storage (for bounce messages and future use)
-    storage.imapsql local_mailboxes {
-        driver sqlite3
-        dsn /data/state/imapsql.db
     }
