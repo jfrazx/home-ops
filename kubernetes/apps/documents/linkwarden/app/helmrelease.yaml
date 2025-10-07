@@ -38,6 +38,7 @@ spec:
               PAGINATION_TAKE_COUNT: 20
               AUTOSCROLL_TIMEOUT: 30
               STORAGE_FOLDER: "data"
+              HOME: /data/config
 
               NEXT_PUBLIC_OLLAMA_ENDPOINT_URL: http://ollama.ai.svc.cluster.local:11434
               OLLAMA_MODEL: llama3.2
@@ -91,6 +92,14 @@ spec:
         storageClass: truenas-iscsi
         globalMounts:
           - path: /data/data
+
+      config:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        storageClass: truenas-iscsi
+        globalMounts:
+          - path: /data/config
 
       cache:
         type: emptyDir
