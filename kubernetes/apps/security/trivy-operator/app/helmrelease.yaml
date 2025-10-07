@@ -29,7 +29,7 @@ spec:
     excludeNamespaces: "kube-system"
     operator:
       replicas: 1
-      scanJobsConcurrentLimit: 5
+      scanJobsConcurrentLimit: 3
       scanJobTTL: 10s
       builtInTrivyServer: true
       vulnerabilityScannerScanOnlyCurrentRevisions: true
