@@ -10,7 +10,6 @@ data:
 
     ## State directory for maddy runtime data
     state_dir /data/state
-    runtime_dir /data/run
 
     ## Hostname used in SMTP greeting
     hostname {env:SMTP_DOMAIN}
@@ -19,15 +18,14 @@ data:
     tls file /data/tls/tls.crt /data/tls/tls.key
 
     ## SMTP submission endpoint (port 587)
-    ## Accepts mail from internal applications with authentication
+    ## Accepts mail from internal applications without authentication
     submission tcp://0.0.0.0:587 {
-        auth plain {
-            # Allow any username/password for internal use
-            # Applications can use dummy credentials
-            dummy
-        }
-
         source {
+            # Accept from cluster IP ranges
+            check {
+                source_in 10.0.0.0/8 127.0.0.0/8
+            }
+
             destination postmaster {
                 deliver_to &remote_queue
             }
