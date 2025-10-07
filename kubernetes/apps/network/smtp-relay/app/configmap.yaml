@@ -5,7 +5,6 @@ metadata:
   name: smtp-relay-config
 data:
   maddy.conf: |
-    ## Maddy Mail Server - Relay Configuration
     state_dir /data/state
     runtime_dir /data/run
 
@@ -18,21 +17,18 @@ data:
         curves X25519
     }
 
-    ## SMTP port 25 - accepts from cluster IPs, relays everything
     smtp tcp://0.0.0.0:{env:SMTP_RELAY_SMTP_PORT} {
         default_source {
-            deliver_to &gmail_relay
+            deliver_to &remote_queue
         }
     }
 
-    ## Submission port 587 - same behavior
-    submission tcp://0.0.0.0:{env:SMTP_RELAY_SERVER_PORT} {
-        deliver_to &gmail_relay
+    target.queue remote_queue {
+        target &remote_smtp
     }
 
-    ## Gmail relay target
-    target.remote gmail_relay {
-        targets tls://smtp.gmail.com:587
-
+    target.smtp remote_smtp {
+        starttls no
         auth plain {env:GMAIL_USERNAME} {env:GMAIL_PASSWORD}
+        targets tls://smtp.gmail.com:587
     }
