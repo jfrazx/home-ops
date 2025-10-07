@@ -98,6 +98,14 @@ spec:
             scrapeTimeout: 10s
 
     persistence:
+      data:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: truenas-iscsi
+        globalMounts:
+          - path: /data
+
       config:
         type: configMap
         name: "{{ .Release.Name }}-config"
