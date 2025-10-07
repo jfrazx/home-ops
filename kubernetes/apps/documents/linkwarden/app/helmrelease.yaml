@@ -82,7 +82,7 @@ spec:
             env:
               - { name: CONCURRENT, value: "5" }
               - { name: TIMEOUT, value: "300000" }
-              - { name: PORT, value: "3000" }
+              - { name: PORT, value: "3001" }
               - name: TOKEN
                 valueFrom:
                   secretKeyRef:
