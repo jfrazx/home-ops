@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: maddy-config
+  name: smtp-relay-config
 data:
   maddy.conf: |
     ## Maddy Mail Server - Relay Configuration
