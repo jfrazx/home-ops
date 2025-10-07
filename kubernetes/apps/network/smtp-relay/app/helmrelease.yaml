@@ -87,9 +87,12 @@ spec:
             port: *metricsPort
           smtp:
             port: *smtpPort
+          submission:
+            port: 587
+
     serviceMonitor:
       app:
-        serviceName: *app
+        serviceName: app
         endpoints:
           - port: http
             scheme: http
