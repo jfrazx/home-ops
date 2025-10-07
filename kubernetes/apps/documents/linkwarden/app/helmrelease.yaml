@@ -75,11 +75,12 @@ spec:
               tag: latest@sha256:57d19e414d9fe4ae9d2ab12ba768c97f38d51246c5b31af55a009205c136012f
               pullPolicy: IfNotPresent
 
-              CONNECTION_TIMEOUT: "300000"
-              MAX_CONCURRENT_SESSIONS: "1"
-              DATA_DIR: "/profile"
-              PORT: "3001"
-              CHROME_ARGS: "--disable-crash-reporter --disable-dev-shm-usage --no-sandbox"
+            env:
+              - { name: CONNECTION_TIMEOUT, value: "300000" }
+              - { name: MAX_CONCURRENT_SESSIONS, value: "1" }
+              - { name: DATA_DIR, value: "/profile" }
+              - { name: PORT, value: "3001" }
+              - { name: CHROME_ARGS, value: "--disable-crash-reporter --disable-dev-shm-usage --no-sandbox" }
 
             resources:
               requests:
