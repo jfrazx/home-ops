@@ -18,12 +18,6 @@ data:
     ## TLS configuration using cert-manager provided certificates
     tls file /data/tls/tls.crt /data/tls/tls.key
 
-    ## Admin HTTP endpoint for monitoring and management
-    http tcp://0.0.0.0:8080 {
-        debug_pprof
-        metrics
-    }
-
     ## SMTP submission endpoint (port 587)
     ## Accepts mail from internal applications with authentication
     submission tcp://0.0.0.0:587 {
