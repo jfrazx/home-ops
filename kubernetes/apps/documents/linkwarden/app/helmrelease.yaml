@@ -69,6 +69,11 @@ spec:
                 memory: 1Gi
 
           browser:
+            securityContext:
+              runAsUser: 999
+              runAsGroup: 990
+              runAsNonRoot: true
+
             image:
               repository: ghcr.io/browserless/chromium
               tag: v2.37.0@sha256:615699913df92b5f0cdaa2873f92d70c87df43c14f6a54aabc53a418ba48fa86
@@ -94,8 +99,8 @@ spec:
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1001
-        runAsGroup: 1001
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1001
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile: { type: RuntimeDefault }
