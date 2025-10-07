@@ -10,6 +10,7 @@ data:
 
     ## State directory for maddy runtime data
     state_dir /data/state
+    runtime_dir /data/run
 
     ## Hostname used in SMTP greeting
     hostname {env:SMTP_DOMAIN}
