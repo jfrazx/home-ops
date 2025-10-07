@@ -111,6 +111,8 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /tmp
+          - path: /.cache
+          - path: /.yarn
 
     route:
       app:
