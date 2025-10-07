@@ -34,7 +34,6 @@ spec:
 
             env:
               TZ: "${TIMEZONE}"
-              PLAYWRIGHT_WS_URL: "ws://localhost:3001/chrome"
               NEXT_PUBLIC_DISABLE_REGISTRATION: true
               PAGINATION_TAKE_COUNT: 20
               AUTOSCROLL_TIMEOUT: 30
@@ -71,16 +70,19 @@ spec:
 
           browser:
             image:
-              repository: docker.io/browserless/chrome
-              tag: latest@sha256:57d19e414d9fe4ae9d2ab12ba768c97f38d51246c5b31af55a009205c136012f
+              repository: ghcr.io/browserless/chromium
+              tag: v2.37.0@sha256:615699913df92b5f0cdaa2873f92d70c87df43c14f6a54aabc53a418ba48fa86
               pullPolicy: IfNotPresent
 
             env:
-              - { name: CONNECTION_TIMEOUT, value: "300000" }
-              - { name: MAX_CONCURRENT_SESSIONS, value: "1" }
-              - { name: DATA_DIR, value: "/profile" }
-              - { name: PORT, value: "3001" }
-              - { name: CHROME_ARGS, value: "--disable-crash-reporter --disable-dev-shm-usage --no-sandbox" }
+              - { name: CONCURRENT, value: "5" }
+              - { name: TIMEOUT, value: "300000" }
+              - { name: PORT, value: "3000" }
+              - name: TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: linkwarden-secret
+                    key: browserless_token
 
             resources:
               requests:
@@ -134,6 +136,7 @@ spec:
           linkwarden:
             browser:
               - path: /tmp
+              - path: /dev/shm
 
     route:
       app:
