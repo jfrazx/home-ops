@@ -88,7 +88,7 @@ spec:
           smtp:
             port: *smtpPort
           submission:
-            port: 587
+            port: *serverPort
 
     serviceMonitor:
       app:
