@@ -127,8 +127,10 @@ spec:
       next-cache:
         enabled: true
         type: emptyDir
-        globalMounts:
-          - path: /tmp
+        advancedMounts:
+          linkwarden:
+            app:
+              - path: /tmp
 
       browser-tmp:
         type: emptyDir
