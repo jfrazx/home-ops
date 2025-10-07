@@ -12,7 +12,6 @@ data:
     openmetrics tcp://0.0.0.0:{env:SMTP_RELAY_METRICS_PORT} { }
 
     hostname {env:SMTP_RELAY_HOSTNAME}
-    primary_domain {env:SMTP_DOMAIN}
 
     tls file /data/tls/tls.crt /data/tls/tls.key {
         protocols tls1.2 tls1.3
