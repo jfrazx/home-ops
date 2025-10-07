@@ -14,7 +14,7 @@ data:
     hostname {env:SMTP_RELAY_HOSTNAME}
     primary_domain {env:SMTP_DOMAIN}
 
-    tls /data/tls/tls.crt /data/tls/tls.key {
+    tls file /data/tls/tls.crt /data/tls/tls.key {
         protocols tls1.2 tls1.3
         curves X25519
     }
