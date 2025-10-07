@@ -124,21 +124,21 @@ spec:
               - path: /profile
                 subPath: chrome
 
-            next-cache:
-              enabled: true
-              type: emptyDir
-              advancedMounts:
-                linkwarden:
-                  app:
-                    - path: /tmp
+      next-cache:
+        enabled: true
+        type: emptyDir
+        advancedMounts:
+          linkwarden:
+            app:
+              - path: /tmp
 
-            browser-tmp:
-              type: emptyDir
-              advancedMounts:
-                linkwarden:
-                  browser:
-                    - path: /tmp
-                    - path: /dev/shm
+      browser-tmp:
+        type: emptyDir
+        advancedMounts:
+          linkwarden:
+            browser:
+              - path: /tmp
+              - path: /dev/shm
 
     route:
       app:
