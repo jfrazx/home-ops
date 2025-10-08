@@ -30,8 +30,6 @@ spec:
               pullPolicy: Always
 
             command:
-              - uvx
-              - mcp-server-filesystem
               - /workspace
 
             env:
@@ -39,9 +37,11 @@ spec:
 
             probes:
               liveness:
-                enabled: true
+                enabled: false
               readiness:
-                enabled: true
+                enabled: false
+              startup:
+                enabled: false
 
             resources:
               requests:
