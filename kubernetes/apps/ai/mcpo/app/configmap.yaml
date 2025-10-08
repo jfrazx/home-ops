@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcpo-config
+data:
+  config.json: |
+    {
+      "mcpServers": {
+        "filesystem": {
+          "type": "sse",
+          "url": "http://mcp-filesystem.ai.svc.cluster.local:8001/mcp/sse"
+        },
+        "time": {
+          "type": "sse",
+          "url": "http://mcp-time.ai.svc.cluster.local:8002/mcp/sse"
+        }
+      }
+    }
