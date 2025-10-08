@@ -85,15 +85,6 @@ spec:
             port: 7860
 
     persistence:
-      app:
-        enabled: true
-        type: persistentVolumeClaim
-        storageClass: truenas-nfs
-        accessMode: ReadWriteMany
-        size: 5Gi
-        globalMounts:
-          - path: /app
-
       models:
         enabled: true
         type: persistentVolumeClaim
