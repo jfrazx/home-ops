@@ -29,10 +29,9 @@ spec:
               tag: latest
               pullPolicy: Always
 
-            command:
-              - uvx
-              - mcp-server-time
-              - --local-timezone=${TIMEZONE}
+            args:
+              - --local-timezone
+              - ${TIMEZONE}
 
             env:
               TZ: "${TIMEZONE}"
