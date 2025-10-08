@@ -25,6 +25,15 @@ spec:
         replicas: 1  # Scale to 2+ for load balancing
         strategy: RollingUpdate
 
+        initContainers:
+          init-perms:
+            image:
+              repository: busybox
+              tag: latest
+            command: ['sh', '-c', 'chmod -R 755 /app']
+            securityContext:
+              runAsUser: 0
+
         containers:
           app:
             image:
