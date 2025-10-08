@@ -29,6 +29,14 @@ spec:
               tag: latest
               pullPolicy: Always
 
+            args:
+              - --config
+              - /app/config/config.json
+              - --host
+              - 0.0.0.0
+              - --port
+              - "8000"
+
             env:
               TZ: "${TIMEZONE}"
 
