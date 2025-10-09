@@ -1,0 +1,22 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: toolhive-operator-crds
+  namespace: flux-system
+spec:
+  interval: 12h
+  url: oci://ghcr.io/stacklok/toolhive/toolhive-operator-crds
+  ref:
+    semver: "*"
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: toolhive-operator
+  namespace: flux-system
+spec:
+  interval: 12h
+  url: oci://ghcr.io/stacklok/toolhive/toolhive-operator
+  ref:
+    semver: "*"
