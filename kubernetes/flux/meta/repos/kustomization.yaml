@@ -23,6 +23,7 @@ resources:
   - ./percona.yaml
   - ./piraeus-charts.yaml
   - ./prometheus.yaml
+  - ./toolhive.yaml
   - ./traefik.yaml
   - ./trivy-charts.yaml
   - ./velero.yaml

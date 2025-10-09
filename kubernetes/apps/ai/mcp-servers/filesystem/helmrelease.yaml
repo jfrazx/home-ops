@@ -29,9 +29,6 @@ spec:
               tag: latest
               pullPolicy: Always
 
-            command:
-              - /workspace
-
             env:
               TZ: "${TIMEZONE}"
 

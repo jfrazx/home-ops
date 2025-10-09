@@ -8,8 +8,6 @@ components:
   - ../../components/common
 resources:
   - ./kokoro/ks.yaml
-  - ./mcp-servers/ks.yaml
-  - ./mcpo/ks.yaml
   - ./ollama/ks.yaml
   - ./open-webui/ks.yaml
   - ./paperless-ai/ks.yaml
