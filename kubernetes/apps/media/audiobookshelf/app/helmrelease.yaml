@@ -78,6 +78,12 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
                 drop:
                   - ALL
               readOnlyRootFilesystem: true
