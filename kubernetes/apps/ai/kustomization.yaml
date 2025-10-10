@@ -10,8 +10,9 @@ resources:
   - ./kokoro/ks.yaml
   - ./ollama/ks.yaml
   - ./open-webui/ks.yaml
+  - ./mcp-servers/ks.yaml
   - ./paperless-ai/ks.yaml
-  - ./sdnext/ks.yaml
+  # - ./sdnext/ks.yaml
   - ./searxng/ks.yaml
 patches:
   - target:

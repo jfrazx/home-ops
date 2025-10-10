@@ -78,8 +78,14 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
+                add:
+                - CHOWN
+                - SETUID
+                - SETGID
+                - FOWNER
+                - DAC_OVERRIDE
                 drop:
-                  - ALL
+                - ALL
               readOnlyRootFilesystem: true
               runAsUser: "${VOLSYNC_PUID}"
               runAsGroup: "${VOLSYNC_PGID}"

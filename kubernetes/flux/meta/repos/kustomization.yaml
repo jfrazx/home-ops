@@ -17,6 +17,7 @@ resources:
   - ./home-operations.yaml
   - ./influxdb.yaml
   - ./intel-charts.yaml
+  - ./k8tz.yaml
   - ./minio-operator.yaml
   - ./node-feature-discovery-charts.yaml
   - ./openbao.yaml

@@ -2,21 +2,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app mcp-filesystem
+  name: &app mcp-osv
   namespace: flux-system
 spec:
   targetNamespace: ai
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
-  dependsOn:
-    - name: democratic-csi
-      namespace: storage
-  path: ./kubernetes/apps/ai/mcp-servers/filesystem
+  path: ./kubernetes/apps/ai/mcp-servers/osv
   prune: true
   sourceRef:
     kind: GitRepository
@@ -25,38 +18,65 @@ spec:
   wait: false
   interval: 30m
   timeout: 5m
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &app mcp-time
-  namespace: flux-system
-spec:
-  targetNamespace: ai
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
-  dependsOn:
-    - name: democratic-csi
-      namespace: storage
-  path: ./kubernetes/apps/ai/mcp-servers/time
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  wait: false
-  interval: 30m
-  timeout: 5m
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &app mcp-filesystem
+#   namespace: flux-system
+# spec:
+#   targetNamespace: ai
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *app
+#   decryption:
+#     provider: sops
+#     secretRef:
+#       name: sops-age
+#   dependsOn:
+#     - name: democratic-csi
+#       namespace: storage
+#   path: ./kubernetes/apps/ai/mcp-servers/filesystem
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   wait: false
+#   interval: 30m
+#   timeout: 5m
+#   postBuild:
+#     substituteFrom:
+#       - name: cluster-secrets
+#         kind: Secret
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &app mcp-time
+#   namespace: flux-system
+# spec:
+#   targetNamespace: ai
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *app
+#   decryption:
+#     provider: sops
+#     secretRef:
+#       name: sops-age
+#   dependsOn:
+#     - name: democratic-csi
+#       namespace: storage
+#   path: ./kubernetes/apps/ai/mcp-servers/time
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   wait: false
+#   interval: 30m
+#   timeout: 5m
+#   postBuild:
+#     substituteFrom:
+#       - name: cluster-secrets
+#         kind: Secret
