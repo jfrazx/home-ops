@@ -16,6 +16,8 @@ spec:
       registry: quay.io
 
     serviceMonitor:
+      attachMetadata:
+        node: true
       enabled: true
       relabelings:
         - action: labeldrop
