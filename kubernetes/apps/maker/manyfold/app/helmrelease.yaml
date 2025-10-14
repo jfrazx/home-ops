@@ -146,8 +146,8 @@ spec:
         advancedMounts:
           manyfold:
             main:
-              - path: /data/libraries/main
-                subPath: libraries/main
+              - path: /data/libraries
+                subPath: libraries
 
       tmpfs:
         type: emptyDir

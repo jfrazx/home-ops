@@ -1,0 +1,62 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &app mealie-postgres
+  namespace: household
+  labels:
+    backup/database: "true"
+    kustomize.toolkit.fluxcd.io/name: *app
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    reloader.stakater.com/auto: "true"
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.0
+
+  bootstrap:
+    initdb:
+      database: mealie
+      owner: mealie
+      dataChecksums: true
+      encoding: "UTF8"
+      localeCType: "en_US.UTF-8"
+      localeCollate: "en_US.UTF-8"
+
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: "10GB"
+      max_connections: "200"
+      shared_buffers: "128MB"
+      effective_cache_size: "512MB"
+      maintenance_work_mem: "32MB"
+      work_mem: "2MB"
+
+  storage:
+    size: "5Gi"
+    storageClass: "ceph-block"
+
+  # plugins:
+  #   - name: barman-cloud.cloudnative-pg.io
+  #     isWALArchiver: true
+  #     parameters:
+  #       barmanObjectName: postgres-backup
+
+  monitoring:
+    enablePodMonitor: true
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  affinity:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule

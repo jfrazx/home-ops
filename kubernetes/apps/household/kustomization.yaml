@@ -2,11 +2,9 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: &namespace media
+namespace: household
 components:
   - ../../components/common
   - ../../components/flux/alerts
 resources:
-  - ./audiobookshelf/ks.yaml
-  - ./jellyfin/ks.yaml
-  - ./ytptube/ks.yaml
+  - ./mealie/ks.yaml

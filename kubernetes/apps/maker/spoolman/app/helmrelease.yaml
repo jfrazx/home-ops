@@ -81,7 +81,7 @@ spec:
         advancedMounts:
           spoolman:
             app:
-              - path: /home/app/.local/share/spoolman
+              - path: /.local/share/spoolman
 
     route:
       app:
