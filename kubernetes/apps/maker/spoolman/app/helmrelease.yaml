@@ -20,9 +20,9 @@ spec:
         pod:
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1001
-            runAsGroup: 1001
-            fsGroup: 1001
+            runAsUser: "${VOLSYNC_PUID}"
+            runAsGroup: "${VOLSYNC_GUID}"
+            fsGroup: "${VOLSYNC_GUID}"
             fsGroupChangePolicy: OnRootMismatch
 
         containers:
@@ -37,6 +37,12 @@ spec:
               - 0.0.0.0
             env:
               SPOOLMAN_PORT: &httpPort 8000
+              SPOOLMAN_METRICS_ENABLED: TRUE
+              SPOOLMAN_DIR_DATA: &dataDir "/.local/share/spoolman/data"
+              PUID: "${VOLSYNC_PUID}"
+              PGID: "${VOLSYNC_PGID}"
+              TZ: "${TIMEZONE}"
+
 
             probes:
               liveness: &probes
@@ -73,6 +79,16 @@ spec:
             port: *httpPort
 
     persistence:
+      config:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 2Gi
+        storageClass: ceph-block
+        advancedMounts:
+          spoolman:
+            app:
+              - path: /.local/share/spoolman
+
       data:
         type: persistentVolumeClaim
         accessMode: ReadWriteMany
@@ -81,7 +97,17 @@ spec:
         advancedMounts:
           spoolman:
             app:
-              - path: /.local/share/spoolman
+              - path: *dataDir
+
+      backups:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteMany
+        size: 20Gi
+        storageClass: truenas-nfs-backups
+        advancedMounts:
+          spoolman:
+            app:
+              - path:  /.local/share/spoolman/backups
 
     route:
       app:

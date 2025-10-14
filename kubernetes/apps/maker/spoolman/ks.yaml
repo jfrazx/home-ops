@@ -28,6 +28,6 @@ spec:
         kind: Secret
     substitute:
       APP: *app
-      VOLSYNC_PUID: "1000"
-      VOLSYNC_GUID: "1000"
+      VOLSYNC_PUID: "1001"
+      VOLSYNC_GUID: "1001"
       VOLSYNC_CLAIM: *app
