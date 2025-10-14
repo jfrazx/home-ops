@@ -164,3 +164,93 @@ spec:
     volumeAttributes:
       server: "${SECRET_NFS_SERVER}"
       share: "/mnt/${SECRET_NFS_SHARE}/media/shows"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-youtube-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-youtube-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/youtube"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-mp3-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-mp3-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/mp3"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-flac-pv
+spec:
+  capacity:
+    storage: 6Ti
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-csi
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+    - _netdev
+    - noatime
+    - nocto
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: nfs-flac-pv
+    volumeAttributes:
+      server: "${SECRET_NFS_SERVER}"
+      share: "/mnt/${SECRET_NFS_SHARE}/media/flac"

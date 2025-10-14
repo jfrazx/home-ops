@@ -1,0 +1,132 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app ytptube
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+
+
+  values:
+    controllers:
+      ytptube:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/arabcoders/ytptube
+              tag: "v1.0.0@sha256:1aa68d7b89ce961377347759723685bf11c09c76627aae3ed2caa6c6e4cf70af"
+            env:
+              TZ: ${TIMEZONE}
+              YTP_INSTANCE_TITLE: "YTP.TUBE"
+            # Resolve deprecation warning in v0.9.0
+            args: ["/opt/python/bin/python", "/app/app/main.py", "--ytp-process", "--socket-timeout", "30", "--download-archive", "/config/archive.log"]
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/ping
+                    port: &port 8081
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: false
+
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile: { type: RuntimeDefault }
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+        # className: internal
+        # # annotations:
+        # #   # See instructions at https://goauthentik.io/docs/providers/proxy/forward_auth
+        # #   nginx.ingress.kubernetes.io/auth-url: |-
+        # #     http://ak-outpost-authentik-embedded-outpost.default.svc.cluster.local:9000/outpost.goauthentik.io/auth/nginx
+        # #   nginx.ingress.kubernetes.io/auth-signin: |-
+        # #     https://{{ .Release.Name }}.${SECRET_DOMAIN}/outpost.goauthentik.io/start?rd=$scheme://$http_host$escaped_request_uri
+        # #   nginx.ingress.kubernetes.io/auth-response-headers: |-
+        # #     Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-entitlements
+        # #   nginx.ingress.kubernetes.io/auth-snippet: |
+        # #     proxy_set_header X-Forwarded-Host $http_host;
+        # hosts:
+        #   - host: "${GATUS_SUBDOMAIN}.${SECRET_DOMAIN}"
+        #     paths:
+        #       - path: /
+        #         service:
+        #           identifier: app
+        #           port: http
+
+    persistence:
+      config:
+        type: persistentVolumeClaim
+        size: 2Gi
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+        advancedMounts:
+          ytptube:
+            app:
+              - path: /config
+
+      media:
+        existingClaim: nfs-youtube-pvc
+        globalMounts:
+          - path: /downloads/library
+
+      downloads:
+        type: emptyDir
+        globalMounts:
+          - path: /downloads
+      tmp:
+        type: emptyDir
+
+    route:
+      app:
+        hostnames: ["ytdl.${SECRET_DOMAIN}"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
