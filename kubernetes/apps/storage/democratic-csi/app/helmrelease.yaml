@@ -626,7 +626,7 @@ spec:
         detachedVolumesFromSnapshots: 'false'
 
       mountOptions:
-        - nfsvers=4.1
+        - nfsvers=4.2
         - hard
         - timeo=600
         - retrans=2

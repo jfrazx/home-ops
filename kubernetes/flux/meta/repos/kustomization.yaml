@@ -28,4 +28,5 @@ resources:
   - ./traefik.yaml
   - ./trivy-charts.yaml
   - ./velero.yaml
+  - ./victoria-logs.yaml
   - ./weave.yaml

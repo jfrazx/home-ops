@@ -12,7 +12,7 @@ metadata:
     reloader.stakater.com/auto: "true"
 spec:
   instances: 3
-  imageName: ghcr.io/cloudnative-pg/postgresql:17.5
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.0
 
   bootstrap:
     initdb:
