@@ -85,17 +85,19 @@ datasources:
         jsonData:
           httpMethod: POST
           timeInterval: 30s
-      - name: Loki
-        type: loki
-        uid: loki
-        url: http://loki-distributed-gateway.observability.svc.cluster.local
+
+      - name: VictoriaLogs
+        type: victoriametrics-logs-datasource
         access: proxy
+        url: http://victoria-logs-server.observability.svc.cluster.local:9428
+
+      - name: Alertmanager
+        type: alertmanager
+        access: proxy
+        url: http://alertmanager-operated.observability.svc.cluster.local:9093
         jsonData:
-          derivedFields:
-            - datasourceUid: prometheus
-              matcherRegex: (?:traceID|traceId|trace_id)=(\w+)
-              name: TraceID
-              url: "$${__value.raw}"
+          implementation: prometheus
+
       - name: Mimir
         type: prometheus
         uid: mimir
@@ -181,5 +183,7 @@ sidecar:
 
 plugins:
   - grafana-clock-panel
+  - grafana-worldmap-panel
   - ae3e-plotly-panel
   - vonage-status-panel
+  - victoriametrics-logs-datasource
