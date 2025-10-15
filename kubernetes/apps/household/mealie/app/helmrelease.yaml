@@ -93,6 +93,9 @@ spec:
           - path: /app/data
 
       backups:
-        existingClaim: "{{ .Release.Name }}-backups"
+        type: persistentVolumeClaim
+        accessMode: ReadWriteMany
+        size: 50Gi
+        storageClass: truenas-nfs-backups
         globalMounts:
           - path: /app/data/backups

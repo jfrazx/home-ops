@@ -35,6 +35,7 @@ spec:
               - spoolman.main:app
               - --host
               - 0.0.0.0
+
             env:
               SPOOLMAN_PORT: &httpPort 8000
               SPOOLMAN_METRICS_ENABLED: TRUE
@@ -42,7 +43,6 @@ spec:
               PUID: "${VOLSYNC_PUID}"
               PGID: "${VOLSYNC_PGID}"
               TZ: "${TIMEZONE}"
-
 
             probes:
               liveness: &probes
@@ -100,10 +100,10 @@ spec:
               - path: *dataDir
 
       backups:
+        storageClass: truenas-nfs-backups
         type: persistentVolumeClaim
         accessMode: ReadWriteMany
         size: 20Gi
-        storageClass: truenas-nfs-backups
         advancedMounts:
           spoolman:
             app:

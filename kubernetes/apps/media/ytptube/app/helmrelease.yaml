@@ -20,7 +20,6 @@ spec:
       retries: 3
       strategy: rollback
 
-
   values:
     controllers:
       ytptube:
@@ -34,7 +33,8 @@ spec:
               tag: "v1.0.0@sha256:1aa68d7b89ce961377347759723685bf11c09c76627aae3ed2caa6c6e4cf70af"
             env:
               TZ: ${TIMEZONE}
-              YTP_INSTANCE_TITLE: "YTP.TUBE"
+              YTP_INSTANCE_TITLE: "YouTube Downloader"
+              YTP_STREAMER_VCODEC: "h264_vaapi"
             # Resolve deprecation warning in v0.9.0
             args: ["/opt/python/bin/python", "/app/app/main.py", "--ytp-process", "--socket-timeout", "30", "--download-archive", "/config/archive.log"]
 
@@ -59,7 +59,7 @@ spec:
                 cpu: 50m
                 memory: 256Mi
               limits:
-                memory: 512Mi
+                memory: 1024Mi
 
             securityContext:
               allowPrivilegeEscalation: false

@@ -44,25 +44,25 @@ mountOptions:
   - wsize=1048576
 ---
 # NFS storage class dedicated to application backups
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: truenas-nfs-backups
-  annotations:
-    description: "NFS storage for application backups with dynamic provisioning"
-provisioner: org.democratic-csi.truenas-nfs-backups
-parameters:
-  csi.storage.k8s.io/fstype: nfs
-reclaimPolicy: Retain
-volumeBindingMode: Immediate
-allowVolumeExpansion: true
-mountOptions:
-  - nfsvers=4.2
-  - hard
-  - timeo=600
-  - retrans=2
-  - rsize=1048576
-  - wsize=1048576
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: truenas-nfs-backups
+#   annotations:
+#     description: "NFS storage for application backups with dynamic provisioning"
+# provisioner: org.democratic-csi.truenas-nfs-backups
+# parameters:
+#   csi.storage.k8s.io/fstype: nfs
+# reclaimPolicy: Retain
+# volumeBindingMode: Immediate
+# allowVolumeExpansion: true
+# mountOptions:
+#   - nfsvers=4.2
+#   - hard
+#   - timeo=600
+#   - retrans=2
+#   - rsize=1048576
+#   - wsize=1048576
 ---
 # # iSCSI Storage Classes
 ---
@@ -80,22 +80,22 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 
----
-# iSCSI optimized for databases
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: truenas-iscsi-db
-  annotations:
-    description: "Optimized for database workloads"
-provisioner: org.democratic-csi.truenas-iscsi
-parameters:
-  csi.storage.k8s.io/fstype: ext4
-  # 8K blocksize for PostgreSQL, 16K for MySQL
-  # volblocksize: "8k"  # Set via PVC annotation
-reclaimPolicy: Retain
-volumeBindingMode: Immediate
-allowVolumeExpansion: true
+# ---
+# # iSCSI optimized for databases
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: truenas-iscsi-db
+#   annotations:
+#     description: "Optimized for database workloads"
+# provisioner: org.democratic-csi.truenas-iscsi
+# parameters:
+#   csi.storage.k8s.io/fstype: ext4
+#   # 8K blocksize for PostgreSQL, 16K for MySQL
+#   # volblocksize: "8k"  # Set via PVC annotation
+# reclaimPolicy: Retain
+# volumeBindingMode: Immediate
+# allowVolumeExpansion: true
 
 ---
 # SMB Storage Classes
