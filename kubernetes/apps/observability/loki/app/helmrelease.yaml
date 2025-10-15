@@ -22,14 +22,21 @@ spec:
       auth_enabled: false
       commonConfig:
         replication_factor: 1
+        ring:
+          kvstore:
+            store: inmemory
+
       compactor:
         working_directory: /var/loki/compactor/retention
         delete_request_store: filesystem
         retention_enabled: true
+
       ingester:
         chunk_encoding: snappy
+
       limits_config:
         retention_period: 14d
+
       schemaConfig:
         configs:
           - from: "2024-04-01"
@@ -39,12 +46,17 @@ spec:
             index:
               prefix: loki_index_
               period: 24h
+
       server:
         log_level: info
         grpc_server_max_recv_msg_size: 10485760 # 10 MiB
         grpc_server_max_send_msg_size: 10485760 # 10 MiB
       storage:
         type: filesystem
+
+      memberlist:
+        join_members: []
+
     backend:
       replicas: 0
     chunksCache:
@@ -57,6 +69,7 @@ spec:
       replicas: 0
     resultsCache:
       enabled: false
+
     sidecar:
       image:
         repository: ghcr.io/home-operations/k8s-sidecar
@@ -65,12 +78,14 @@ spec:
       rules:
         searchNamespace: ALL
         folder: /rules/fake
+
     singleBinary:
       replicas: 1
       persistence:
         enabled: true
         storageClass: ceph-block
         size: 50Gi
+
     test:
       enabled: false
     write:
