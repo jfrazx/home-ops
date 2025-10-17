@@ -31,11 +31,15 @@ spec:
               repository: joplin/server
               tag: 3.4.3
 
+            envFrom:
+              - secretRef:
+                  name: joplin-secret
+
             env:
               APP_BASE_URL: https://{{ .Release.Name }}.${SECRET_DOMAIN}
               APP_PORT: &port 8080
               MAILER_ENABLED: 1
-              MAILER_HOST: smtp-relay.network.svc.cluster.local.
+              MAILER_HOST: smtp-relay.network.svc.cluster.local
               MAILER_PORT: 25
               MAILER_SECURITY: none
               MAILER_NOREPLY_NAME: JoplinServer
@@ -54,6 +58,8 @@ spec:
               requests:
                 cpu: 50m
                 memory: 256Mi
+              limits:
+                memory: 512Mi
 
     service:
       app:

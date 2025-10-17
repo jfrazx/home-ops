@@ -28,7 +28,7 @@ spec:
           app:
             image:
               repository: jellyfin/jellyfin
-              tag: 10.11.0-rc8
+              tag: 10.11.0-rc9
               pullPolicy: IfNotPresent
             # envFrom:
             #   - secretRef:
