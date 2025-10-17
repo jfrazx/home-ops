@@ -9,6 +9,7 @@ spec:
   chartRef:
     kind: OCIRepository
     name: app-template
+    namespace: flux-system
   install:
     remediation:
       retries: 3
@@ -29,7 +30,7 @@ spec:
           app:
             image:
               repository: joplin/server
-              tag: 3.4.3
+              tag: 3.4.3@sha256:95b67dc6a4e77a974ac2bcc86818cbbfe5495e7b62d06a66f848a877878dce53
 
             envFrom:
               - secretRef:
