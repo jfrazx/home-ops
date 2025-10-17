@@ -118,8 +118,14 @@ spec:
                 config:
                   osdsPerDevice: "1"
                   deviceClass: "ssd"
+          - name: "shiftx-worker-01"
+            devices:
+              - name: "nvme1n1"
+                config:
+                  osdsPerDevice: "1"
+                  deviceClass: "ssd"
         config:
-          osdsPerDevice: "1"  # Default, can be overridden per device
+          osdsPerDevice: "1"
 
     # Block storage configuration
     cephBlockPools:

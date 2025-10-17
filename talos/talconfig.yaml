@@ -78,6 +78,24 @@ nodes:
         mtu: 1500
         vip:
           ip: "10.168.2.100"
+  - hostname: "shiftx-worker-01"
+    ipAddress: "10.168.2.94"
+    installDiskSelector:
+      serial: "241448234BFF"
+    machineSpec:
+      secureboot: false
+    talosImageURL: factory.talos.dev/installer/f4b1bb3c5c7b50639b99046fe6681275ebd18a0bc45a91430c26bb81fcf8023e
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "b0:41:6f:13:20:35"
+        dhcp: false
+        addresses:
+          - "10.168.2.94/24"
+        routes:
+          - network: "0.0.0.0/0"
+            gateway: "10.168.2.1"
+        mtu: 1500
 
 # Global patches
 patches:
@@ -87,7 +105,6 @@ patches:
   - "@./patches/global/machine-sysctls.yaml"
   - "@./patches/global/machine-time.yaml"
   - "@./patches/global/machine-kernel-modules.yaml"
-  - "@./patches/global/machine-api.yaml"
   - "@./patches/global/machine-openebs.yaml"
 
 # Controller patches
@@ -95,5 +112,9 @@ controlPlane:
   patches:
     - "@./patches/controller/admission-controller-patch.yaml"
     - "@./patches/controller/machine-labels.yaml"
+    - "@./patches/controller/machine-api.yaml"
     - "@./patches/controller/cluster.yaml"
 
+worker:
+  patches:
+    - "@./patches/worker/machine-labels.yaml"
