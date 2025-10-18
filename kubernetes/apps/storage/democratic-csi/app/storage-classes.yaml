@@ -79,24 +79,6 @@ parameters:
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
-
-# ---
-# # iSCSI optimized for databases
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: truenas-iscsi-db
-#   annotations:
-#     description: "Optimized for database workloads"
-# provisioner: org.democratic-csi.truenas-iscsi
-# parameters:
-#   csi.storage.k8s.io/fstype: ext4
-#   # 8K blocksize for PostgreSQL, 16K for MySQL
-#   # volblocksize: "8k"  # Set via PVC annotation
-# reclaimPolicy: Retain
-# volumeBindingMode: Immediate
-# allowVolumeExpansion: true
-
 ---
 # SMB Storage Classes
 ---
