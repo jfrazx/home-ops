@@ -3,18 +3,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app it-tools
-  namespace: &namespace development
+  name: &app networking-toolbox
+  namespace: &namespace it
 spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
   interval: 1h
-  path: ./kubernetes/apps/development/it-tools/app
+  path: ./kubernetes/apps/it/networking-toolbox/app
   postBuild:
     substituteFrom:
       - name: cluster-secrets
