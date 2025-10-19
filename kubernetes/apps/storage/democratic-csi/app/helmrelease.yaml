@@ -483,7 +483,6 @@ spec:
 
         iscsi:
           targetPortal: "${SECRET_NFS_SERVER}:3260"
-          interface: "enp129s0f1"
           namePrefix: csi-
           nameSuffix: "-cluster"
 
