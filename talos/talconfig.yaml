@@ -86,16 +86,8 @@ nodes:
       secureboot: false
     talosImageURL: factory.talos.dev/installer/f4b1bb3c5c7b50639b99046fe6681275ebd18a0bc45a91430c26bb81fcf8023e
     controlPlane: false
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "b0:41:6f:13:20:35"
-        dhcp: false
-        addresses:
-          - "10.168.2.94/24"
-        routes:
-          - network: "0.0.0.0/0"
-            gateway: "10.168.2.1"
-        mtu: 1500
+    patches:
+      - "@./patches/worker-01/bond-interface.yaml"
 
 # Global patches
 patches:

@@ -52,7 +52,7 @@ spec:
         hostnames:
           - "sheets.${SECRET_DOMAIN}"
         parentRefs:
-          - name: internal
+          - name: external
             namespace: kube-system
             sectionName: https
         rules:

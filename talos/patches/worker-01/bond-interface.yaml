@@ -3,24 +3,19 @@ machine:
   network:
     interfaces:
       - interface: bond0
+        dhcp: true
         bond:
           mode: 802.3ad
           lacpRate: fast
+          xmitHashPolicy: layer3+4
           miimon: 100
           updelay: 200
           downdelay: 200
           interfaces:
             - enp172s0
             - enp173s0
-        addresses:
-          - 10.168.2.94/24
         routes:
           - network: 0.0.0.0/0
             gateway: 10.168.2.1
         mtu: 1500
-      - interface: enp172s0
-        bond:
-          mode: 802.3ad
-      - interface: enp173s0
-        bond:
-          mode: 802.3ad
+
