@@ -110,3 +110,4 @@ controlPlane:
 worker:
   patches:
     - "@./patches/worker/machine-labels.yaml"
+    - "@./patches/worker/machine-kernel-args.yaml"
