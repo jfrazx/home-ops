@@ -27,7 +27,7 @@ spec:
         containers:
           app:
             image:
-              repository: jellyfin/jellyfin
+              repository: ghcr.io/jellyfin/jellyfin
               tag: 10.11.0@sha256:519b02989eafcc4bdb558bdc7014c2395c19608e5c2d7ed99a5f3edd0c75f7ef
               pullPolicy: IfNotPresent
             # envFrom:
@@ -38,7 +38,7 @@ spec:
               JELLYFIN_FFmpeg__probesize: 50000000
               JELLYFIN_FFmpeg__analyzeduration: 50000000
               JELLYFIN_PublishedServerUrl: https://jellyfin.${SECRET_DOMAIN}
-              TZ: America/Los_Angeles
+              TZ: "${TIMEZONE}"
 
             probes:
               liveness: &probes
