@@ -127,7 +127,7 @@ spec:
                   deviceClass: "ssd"
           - name: "shiftx-worker-02"
             devices:
-              - name: "nvme1n1"
+              - name: "nvme0n1"
                 config:
                   osdsPerDevice: "1"
                   deviceClass: "ssd"
