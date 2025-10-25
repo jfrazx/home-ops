@@ -84,10 +84,30 @@ nodes:
       serial: "241448234BFF"
     machineSpec:
       secureboot: false
-    talosImageURL: factory.talos.dev/installer/f4b1bb3c5c7b50639b99046fe6681275ebd18a0bc45a91430c26bb81fcf8023e
+    talosImageURL: factory.talos.dev/installer/be1c6cb3cff7811a8bcc49855be71042d67889154b5a83fddf024ec55316c46e
     controlPlane: false
     patches:
       - "@./patches/worker-01/bond-interface.yaml"
+
+  - hostname: "shiftx-worker-02"
+    ipAddress: "10.168.2.95"
+    installDiskSelector:
+      serial: "253151DE1B02"
+    machineSpec:
+      secureboot: false
+    talosImageURL: factory.talos.dev/installer/be1c6cb3cff7811a8bcc49855be71042d67889154b5a83fddf024ec55316c46e
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "88:ae:dd:74:a3:fc"
+        dhcp: false
+        addresses:
+          - "10.168.2.95/24"
+        routes:
+          - network: "0.0.0.0/0"
+            gateway: "10.168.2.1"
+        mtu: 1500
+
 
 # Global patches
 patches:
@@ -110,4 +130,4 @@ controlPlane:
 worker:
   patches:
     - "@./patches/worker/machine-labels.yaml"
-    - "@./patches/worker/machine-kernel-args.yaml"
+    # - "@./patches/worker/machine-kernel-args.yaml"

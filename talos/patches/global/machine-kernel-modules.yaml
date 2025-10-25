@@ -10,4 +10,3 @@ machine:
       - name: intel_agp
       - name: drm
       - name: drm_kms_helper
-

@@ -96,6 +96,7 @@ spec:
             memory: 128Mi
           limits:
             memory: 256Mi
+
       storage:
         useAllNodes: false
         useAllDevices: false
@@ -124,6 +125,13 @@ spec:
                 config:
                   osdsPerDevice: "1"
                   deviceClass: "ssd"
+          - name: "shiftx-worker-02"
+            devices:
+              - name: "nvme1n1"
+                config:
+                  osdsPerDevice: "1"
+                  deviceClass: "ssd"
+
         config:
           osdsPerDevice: "1"
 
@@ -182,6 +190,7 @@ spec:
                 memory: 1Gi
               limits:
                 memory: 3Gi
+
         storageClass:
           enabled: true
           isDefault: false
@@ -201,6 +210,7 @@ spec:
             csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
             csi.storage.k8s.io/node-stage-secret-namespace: "{{ .Release.Namespace }}"
             csi.storage.k8s.io/fstype: ext4
+
     cephFileSystemVolumeSnapshotClass:
       enabled: true
       name: csi-ceph-filesystem
@@ -219,6 +229,7 @@ spec:
             erasureCoded:
               dataChunks: 2
               codingChunks: 1
+
           preservePoolsOnDelete: true
           gateway:
             port: 80
