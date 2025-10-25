@@ -119,12 +119,12 @@ spec:
                 config:
                   osdsPerDevice: "1"
                   deviceClass: "ssd"
-          - name: "shiftx-worker-01"
-            devices:
-              - name: "nvme0n1"
-                config:
-                  osdsPerDevice: "1"
-                  deviceClass: "ssd"
+          # - name: "shiftx-worker-01"
+          #   devices:
+          #     - name: "nvme0n1"
+          #       config:
+          #         osdsPerDevice: "1"
+          #         deviceClass: "ssd"
           - name: "shiftx-worker-02"
             devices:
               - name: "nvme0n1"
