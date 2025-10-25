@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/lissy93/networking-toolbox
-              tag: 1.4.0@sha256:615e85137151b7b4216b73f72782e31cfe22e82c0ac811f5ffa6e8a2514eec87
+              tag: 1.5.0@sha256:a443b25874ddc822e1704b7cdb18cf404c79d647e51d474fe8f1bdc987bd9a48
 
             env:
               TZ: "${TIMEZONE}"
