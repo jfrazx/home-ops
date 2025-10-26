@@ -32,9 +32,11 @@ spec:
     remediation:
       strategy: rollback
       retries: 3
+
   values:
     crds:
       enabled: true
+
     csi:
       cephFSKernelMountOptions: ms_mode=prefer-crc
       enableCephfsDriver: true
@@ -42,9 +44,11 @@ spec:
       enableLiveness: true
       serviceMonitor:
         enabled: true
+
     enableDiscoveryDaemon: true
     image:
       repository: ghcr.io/rook/ceph
+
     monitoring:
       enabled: true
     resources:
