@@ -1,0 +1,182 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app karakeep
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  interval: 30m
+
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: "OnRootMismatch"
+        runAsGroup: 1001
+        runAsNonRoot: true
+        runAsUser: 1001
+
+    controllers:
+      karakeep:
+        forceRename: *app
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/karakeep-app/karakeep
+              tag: 0.27.1@sha256:abd7d6b11b1b8fa3593d1971f886a74850ba8d6a99291218b150207d5a60378e
+            env:
+              NEXTAUTH_URL: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+
+            envFrom:
+              - secretRef:
+                  name: karakeep-secret
+
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
+
+      chrome:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: gcr.io/zenika-hub/alpine-chrome
+              tag: 124@sha256:1a0046448e0bb6c275c88f86e01faf0de62b02ec8572901256ada0a8c08be23f
+            command:
+              - chromium-browser
+            args:
+              - --headless
+              - --no-sandbox
+              - --disable-gpu
+              - --disable-dev-shm-usage
+              - --remote-debugging-address=0.0.0.0
+              - --remote-debugging-port=9222
+              - --hide-scrollbars
+            securityContext:
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
+
+      meilisearch:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app.kubernetes.io/name
+                        operator: In
+                        values:
+                          - karakeep
+                      - key: app.kubernetes.io/controller
+                        operator: In
+                        values:
+                          - karakeep
+                  topologyKey: kubernetes.io/hostname
+
+        containers:
+          app:
+            image:
+              repository: docker.io/getmeili/meilisearch
+              tag: v1.24.0@sha256:d991eb07331e9d1f9cec7bc0f9523fd5d51aee3b223d997e0e66206361952056
+            args:
+              - /bin/meilisearch
+              - --experimental-dumpless-upgrade
+            env:
+              MEILI_NO_ANALYTICS: true
+              MEILI_MASTER_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: karakeep-secret
+                    key: MEILI_MASTER_KEY
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 4Gi
+
+    service:
+      app:
+        forceRename: *app
+        primary: true
+        controller: *app
+        ports:
+          http:
+            port: &httpPort 3000
+      chrome:
+        controller: chrome
+        ports:
+          http:
+            port: 9222
+      meilisearch:
+        controller: meilisearch
+        ports:
+          http:
+            port: 7700
+
+    persistence:
+      db:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        storageClass: ceph-block
+        size: 5Gi
+        advancedMounts:
+          karakeep:
+            app:
+              - path: /data
+                subPath: karakeep
+
+      data:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteMany
+        storageClass: truenas-nfs
+        size: 50Gi
+        advancedMounts:
+          karakeep:
+            app:
+              - path: /data/assets
+                subPath: karakeep
+          meilisearch:
+            app:
+              - path: /meili_data
+                subPath: meilisearch
+
+      tmp:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *httpPort
