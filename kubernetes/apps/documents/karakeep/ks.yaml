@@ -11,7 +11,7 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: democratic-csi-nfs
+    - name: democratic-csi
       namespace: storage
     - name: openbao
       namespace: external-secrets
