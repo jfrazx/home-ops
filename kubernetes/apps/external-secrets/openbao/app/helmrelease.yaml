@@ -126,6 +126,5 @@ spec:
       publishNotReadyAddresses: true
       activeVaultPodOnly: true
 
-    # Injector disabled (not needed for External Secrets)
     injector:
-      enabled: false
+      enabled: true

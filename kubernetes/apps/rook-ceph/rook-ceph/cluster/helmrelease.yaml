@@ -51,7 +51,7 @@ spec:
           mgr/crash/warn_recent_interval: "7200" # 2h
 
       crashCollector:
-        disable: true
+        disable: false
 
       csi:
         readAffinity:

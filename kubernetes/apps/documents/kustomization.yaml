@@ -10,6 +10,7 @@ resources:
   - ./excalidraw/ks.yaml
   - ./grist/ks.yaml
   - ./joplin/ks.yaml
+  - ./karakeep/ks.yaml
   - ./linkwarden/ks.yaml
   - ./paperless/ks.yaml
   - ./stirling-pdf/ks.yaml
