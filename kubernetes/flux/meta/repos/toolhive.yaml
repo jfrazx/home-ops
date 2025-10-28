@@ -8,7 +8,7 @@ spec:
   interval: 12h
   url: oci://ghcr.io/stacklok/toolhive/toolhive-operator-crds
   ref:
-    semver: "*"
+    semver: 0.0.47
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
@@ -19,4 +19,4 @@ spec:
   interval: 12h
   url: oci://ghcr.io/stacklok/toolhive/toolhive-operator
   ref:
-    semver: "*"
+    semver: 0.3.2
