@@ -5,7 +5,7 @@ metadata:
   namespace: ai
 spec:
   image: ghcr.io/stackloklabs/osv-mcp/server
-  transport: sse
+  transport: streamable-http
   targetPort: &port 8080
   port: *port
 

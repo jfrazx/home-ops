@@ -123,7 +123,7 @@ spec:
             app:
               - path: /data/config
                 subPath: linkwarden
-              - path: /data/.next/cache
+              - path: /data/apps/web/.next/cache
                 subPath: linkwarden_cache
               - path: /data/config/.cache
                 subPath: linkwarden_npm_cache
