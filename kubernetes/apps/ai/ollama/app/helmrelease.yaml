@@ -27,6 +27,7 @@ spec:
           reloader.stakater.com/auto: "true"
 
         pod:
+          priorityClassName: gpu-workload-high
           nodeSelector:
             intel.feature.node.kubernetes.io/gpu: "true"
 

@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/advplyr/audiobookshelf
-              tag: 2.22.0@sha256:af827f25120c7a76c5b20bfb34f230353d44920ef7c55a9d7f3ae2aac9c51c94
+              tag: 2.25.1@sha256:5154518d8215f8e795fde1c1561080b450af8a6bc0c0bd60c2a920084bf930d6
             env:
               AUDIOBOOKSHELF_UID: "${VOLSYNC_PUID}"
               AUDIOBOOKSHELF_GID: "${VOLSYNC_PGID}"
