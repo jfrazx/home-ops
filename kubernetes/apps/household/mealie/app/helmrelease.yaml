@@ -36,12 +36,22 @@ spec:
               tag: v3.3.2
               pullPolicy: IfNotPresent
 
+            securityContext:
+              runAsUser: 1001
+              runAsGroup: 1001
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+
+
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
             env:
               TZ: "${TIMEZONE}"
               BASE_URL: &baseUrl "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+              PUID: "1001"
+              PGID: "1001"
               POSTGRES_URL_OVERRIDE:
                 valueFrom:
                   secretKeyRef:
