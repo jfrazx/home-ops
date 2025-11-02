@@ -1,0 +1,71 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: &app ${APP}-database
+  namespace: ${NAMESPACE}
+  labels:
+    backup/database: "true"
+    kustomize.toolkit.fluxcd.io/name: *app
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+  annotations:
+    reloader.stakater.com/auto: "true"
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+
+spec:
+  instances: ${POSTGRES_INSTANCES:=2}
+  imageName: ghcr.io/cloudnative-pg/postgresql:${POSTGRES_VERSION:=18.0}
+
+  bootstrap:
+    initdb:
+      database: ${POSTGRES_DATABASE:=${APP}}
+      owner: ${POSTGRES_OWNER:=${APP}}
+      dataChecksums: true
+      encoding: "UTF8"
+      localeCType: "en_US.UTF-8"
+      localeCollate: "en_US.UTF-8"
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "256MB"
+      effective_cache_size: "1GB"
+      maintenance_work_mem: "64MB"
+      work_mem: "4MB"
+      log_statement: "all"
+      log_duration: "on"
+      log_lock_waits: "on"
+      log_min_duration_statement: "1000"
+      random_page_cost: "1.1"
+      effective_io_concurrency: "200"
+      wal_level: "replica"
+      max_wal_senders: "10"
+      max_replication_slots: "10"
+      wal_keep_size: "512MB"
+
+  storage:
+    size: ${POSTGRES_STORAGE_SIZE:=10Gi}
+    storageClass: ${POSTGRES_STORAGE_CLASS:=ceph-block}
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: postgres-backup
+
+  monitoring:
+    enablePodMonitor: true
+
+  resources:
+    requests:
+      cpu: ${POSTGRES_CPU_REQUEST:=100m}
+      memory: ${POSTGRES_MEMORY_REQUEST:=512Mi}
+    limits:
+      cpu: ${POSTGRES_CPU_LIMIT:=500m}
+      memory: ${POSTGRES_MEMORY_LIMIT:=1Gi}
+
+  affinity:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule

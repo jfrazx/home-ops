@@ -37,8 +37,8 @@ spec:
               pullPolicy: IfNotPresent
 
             securityContext:
-              runAsUser: 1001
-              runAsGroup: 1001
+              runAsUser: 911
+              runAsGroup: 911
               runAsNonRoot: true
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: false
@@ -50,8 +50,8 @@ spec:
             env:
               TZ: "${TIMEZONE}"
               BASE_URL: &baseUrl "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
-              PUID: "1001"
-              PGID: "1001"
+              PUID: "911"
+              PGID: "911"
               POSTGRES_URL_OVERRIDE:
                 valueFrom:
                   secretKeyRef:

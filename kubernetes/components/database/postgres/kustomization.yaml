@@ -1,0 +1,21 @@
+# kubernetes/components/database/postgres/kustomization.yaml
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./cluster.yaml
+
+configMapGenerator:
+  - name: postgres-defaults
+    literals:
+      - POSTGRES_VERSION=18.0
+      - POSTGRES_INSTANCES=2
+      - POSTGRES_STORAGE_SIZE=10Gi
+      - POSTGRES_STORAGE_CLASS=ceph-block
+      - POSTGRES_CPU_REQUEST=100m
+      - POSTGRES_MEMORY_REQUEST=512Mi
+      - POSTGRES_CPU_LIMIT=500m
+      - POSTGRES_MEMORY_LIMIT=1Gi
+      # POSTGRES_DATABASE defaults to ${APP}
+      # POSTGRES_OWNER defaults to ${APP}

@@ -33,6 +33,10 @@ spec:
             env:
               AUDIOBOOKSHELF_UID: "${VOLSYNC_PUID}"
               AUDIOBOOKSHELF_GID: "${VOLSYNC_PGID}"
+              ACCESS_TOKEN_EXPIRY: 43200
+              REFRESH_TOKEN_EXPIRY: 604800
+              RATE_LIMIT_AUTH_WINDOW: 600000
+              RATE_LIMIT_AUTH_MAX: 40
               PORT: &port 80
               CONFIG_PATH: /config
               METADATA_PATH: /metadata
@@ -175,35 +179,3 @@ spec:
         sizeLimit: 5Gi
         globalMounts:
           - path: /tmp
-
-    # networkPolicy:
-    #   app:
-    #     controller: *app
-    #     policyTypes:
-    #       - Ingress
-    #       - Egress
-    #     rules:
-    #       ingress:
-    #         - from:
-    #             - namespaceSelector:
-    #                 matchLabels:
-    #                   name: kube-system
-    #           ports:
-    #             - protocol: TCP
-    #               port: *port
-    #       egress:
-    #         - to:
-    #             - namespaceSelector:
-    #                 matchLabels:
-    #                   name: kube-system
-    #           ports:
-    #             - protocol: UDP
-    #               port: 53
-    #         - to: []
-    #           ports:
-    #             - protocol: TCP
-    #               port: 2049
-    #         - to: []
-    #           ports:
-    #             - protocol: TCP
-    #               port: 443
