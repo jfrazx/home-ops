@@ -2,7 +2,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: &app ${APP}-database
+  name: &app ${APP}-postgres
   namespace: ${NAMESPACE}
   labels:
     backup/database: "true"
