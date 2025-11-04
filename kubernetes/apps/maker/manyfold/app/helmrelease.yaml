@@ -29,9 +29,9 @@ spec:
 
         pod:
           securityContext:
-            runAsUser: 2000
-            runAsGroup: 2000
-            fsGroup: 2000
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
             fsGroupChangePolicy: "OnRootMismatch"
 
         initContainers:
@@ -54,7 +54,13 @@ spec:
               repository: ghcr.io/bjw-s-labs/manyfold
               tag: 0.128.1@sha256:4fb235dfaff754aca33fe4280b538ebb9b333f73cb869b41595e5bdf3932b90f
             env:
-              DATABASE_URL: sqlite3:/data/database/manyfold.sqlite3
+              DATABASE_ADAPTER: postgresql
+              DATABASE_URL:
+                valueFrom:
+                  secretKeyRef:
+                    name: manyfold-postgres-app
+                    key: uri
+
               MULTIUSER: true
               PORT: &httpPort 3214
               REDIS_URL: redis://manyfold-redis.maker.svc.cluster.local:6379
@@ -90,6 +96,12 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
                 drop:
                   - ALL
 

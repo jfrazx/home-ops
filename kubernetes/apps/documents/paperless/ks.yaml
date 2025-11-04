@@ -27,44 +27,44 @@ spec:
   timeout: 5m
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &app paperless
-  namespace: flux-system
-spec:
-  targetNamespace: documents
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
-  interval: 10m
-  path: ./kubernetes/apps/documents/paperless/app
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  wait: true
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
-  dependsOn:
-    - name: paperless-postgres
-    - name: dragonflydb-cluster
-      namespace: flux-system
-    - name: openbao
-      namespace: external-secrets
-  healthChecks:
-    - apiVersion: postgresql.cnpg.io/v1
-      kind: Cluster
-      name: paperless-postgres
-      namespace: documents
-    - apiVersion: external-secrets.io/v1
-      kind: ExternalSecret
-      name: paperless-secret
-      namespace: documents
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: &app paperless
+#   namespace: flux-system
+# spec:
+#   targetNamespace: documents
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: *app
+#   decryption:
+#     provider: sops
+#     secretRef:
+#       name: sops-age
+#   interval: 10m
+#   path: ./kubernetes/apps/documents/paperless/app
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   wait: true
+#   postBuild:
+#     substituteFrom:
+#       - name: cluster-secrets
+#         kind: Secret
+#   dependsOn:
+#     - name: paperless-postgres
+#     - name: dragonflydb-cluster
+#       namespace: flux-system
+#     - name: openbao
+#       namespace: external-secrets
+#   healthChecks:
+#     - apiVersion: postgresql.cnpg.io/v1
+#       kind: Cluster
+#       name: paperless-postgres
+#       namespace: documents
+#     - apiVersion: external-secrets.io/v1
+#       kind: ExternalSecret
+#       name: paperless-secret
+#       namespace: documents

@@ -2,6 +2,8 @@
 # yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
+components:
+  - ../../components/database/postgres
 metadata:
   name: &app manyfold
   namespace: &namespace maker
@@ -18,12 +20,13 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  wait: false
+  wait: true
   dependsOn:
     - name: openbao
       namespace: external-secrets
     - name: volsync
       namespace: system
+    - name: manyfold-postres
   postBuild:
     substituteFrom:
       - name: cluster-secrets
@@ -32,3 +35,4 @@ spec:
       APP: *app
       VOLSYNC_CLAIM: manyfold-data
       VOLSYNC_CAPACITY: 5Gi
+      NAMESPACE: *namespace
