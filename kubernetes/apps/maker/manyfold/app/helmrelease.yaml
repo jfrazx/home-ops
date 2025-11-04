@@ -65,11 +65,9 @@ spec:
               PORT: &httpPort 3214
               REDIS_URL: redis://manyfold-redis.maker.svc.cluster.local:6379
               REGISTRATION: true
-              SECRET_KEY_BASE:
-                valueFrom:
-                  secretKeyRef:
-                    name: manyfold-secret
-                    key: MANYFOLD_SECRET_KEY
+            envFrom:
+              - secretRef:
+                  name: manyfold-secret
 
             probes:
               liveness: &probes
