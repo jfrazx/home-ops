@@ -23,7 +23,7 @@ spec:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
               pullPolicy: IfNotPresent
-              tag: 2.19.2
+              tag: 2.19.3@sha256:321ca858e4b6ce9dc416dbcb7c0691d545e3e9b0f44cf420f75c22098854ca25
 
             # Configure application
             envFrom:
@@ -91,7 +91,7 @@ spec:
             resources:
               requests:
                 cpu: 25m
-                memory: 2Gi
+                memory: 1Gi
               limits:
                 memory: 6Gi
 
@@ -105,8 +105,8 @@ spec:
 
           tika:
             image:
-              repository: ghcr.io/paperless-ngx/tika
-              tag: 2.9.1-full
+              repository: docker.io/apache/tika
+              tag: 3.2.3.0-full@sha256:21d8052de04e491ccf66e8680ade4da6f3d453a56d59f740b4167e54167219b7
               pullPolicy: IfNotPresent
 
     service:
