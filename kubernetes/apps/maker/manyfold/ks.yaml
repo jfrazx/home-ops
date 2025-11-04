@@ -2,12 +2,12 @@
 # yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
-components:
-  - ../../components/database/postgres
 metadata:
   name: &app manyfold
   namespace: &namespace maker
 spec:
+  components:
+    - ../../components/database/postgres
   targetNamespace: *namespace
   commonMetadata:
     labels:
