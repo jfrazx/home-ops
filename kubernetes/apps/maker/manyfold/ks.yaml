@@ -7,7 +7,7 @@ metadata:
   namespace: &namespace maker
 spec:
   components:
-    - ../../components/database/postgres
+    - ../../../../components/database/postgres
   targetNamespace: *namespace
   commonMetadata:
     labels:
