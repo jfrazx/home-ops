@@ -61,8 +61,10 @@ spec:
                     name: manyfold-postgres-app
                     key: uri
 
+              PUBLIC_HOSTNAME: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+              PUBLIC_PORT: &httpPort 3214
               MULTIUSER: true
-              PORT: &httpPort 3214
+              PORT: *httpPort
               REDIS_URL: redis://manyfold-redis.maker.svc.cluster.local:6379
               REGISTRATION: true
               SECRET_KEY_BASE:
