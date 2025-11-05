@@ -182,147 +182,147 @@ spec:
           shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: democratic-csi-smb
-  namespace: storage
-spec:
-  interval: 1h
-  chart:
-    spec:
-      chart: democratic-csi
-      version: 0.15.0
-      sourceRef:
-        kind: HelmRepository
-        name: democratic-csi
-        namespace: flux-system
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
-  values:
-    csiDriver:
-      name: org.democratic-csi.truenas-smb
-      attachRequired: false
+# apiVersion: helm.toolkit.fluxcd.io/v2
+# kind: HelmRelease
+# metadata:
+#   name: democratic-csi-smb
+#   namespace: storage
+# spec:
+#   interval: 1h
+#   chart:
+#     spec:
+#       chart: democratic-csi
+#       version: 0.15.0
+#       sourceRef:
+#         kind: HelmRepository
+#         name: democratic-csi
+#         namespace: flux-system
+#   install:
+#     remediation:
+#       retries: 3
+#   upgrade:
+#     cleanupOnFail: true
+#     remediation:
+#       retries: 3
+#   values:
+#     csiDriver:
+#       name: org.democratic-csi.truenas-smb
+#       attachRequired: false
 
-    controller:
-      enabled: true
-      strategy: deployment
-      externalAttacher:
-        enabled: false
-      externalProvisioner:
-        extraArgs:
-          - --leader-election=false
-          - --node-deployment=false
-          - --enable-capacity=true
-          - --capacity-poll-interval=30s
-      externalResizer:
-        enabled: true
-      externalSnapshotter:
-        enabled: true
-        extraArgs:
-          - --leader-election=false
-          - --node-deployment=false
+#     controller:
+#       enabled: true
+#       strategy: deployment
+#       externalAttacher:
+#         enabled: false
+#       externalProvisioner:
+#         extraArgs:
+#           - --leader-election=false
+#           - --node-deployment=false
+#           - --enable-capacity=true
+#           - --capacity-poll-interval=30s
+#       externalResizer:
+#         enabled: true
+#       externalSnapshotter:
+#         enabled: true
+#         extraArgs:
+#           - --leader-election=false
+#           - --node-deployment=false
 
-      driver:
-        image:
-          registry: democraticcsi/democratic-csi
-          tag: v1.9.3
+#       driver:
+#         image:
+#           registry: democraticcsi/democratic-csi
+#           tag: v1.9.3
 
-    node:
-      enabled: true
-      hostPID: false  # Not needed for SMB
+#     node:
+#       enabled: true
+#       hostPID: false  # Not needed for SMB
 
-      driver:
-        image:
-          registry: democraticcsi/democratic-csi
-          tag: v1.9.3
+#       driver:
+#         image:
+#           registry: democraticcsi/democratic-csi
+#           tag: v1.9.3
 
-        readinessProbe:
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          failureThreshold: 5
+#         readinessProbe:
+#           initialDelaySeconds: 30
+#           periodSeconds: 10
+#           failureThreshold: 5
 
-    storageClasses:
-    - name: truenas-smb
-      defaultClass: false
-      reclaimPolicy: Retain
-      volumeBindingMode: Immediate
-      allowVolumeExpansion: true
-      parameters:
-        csi.storage.k8s.io/fstype: cifs
+#     storageClasses:
+#     - name: truenas-smb
+#       defaultClass: false
+#       reclaimPolicy: Retain
+#       volumeBindingMode: Immediate
+#       allowVolumeExpansion: true
+#       parameters:
+#         csi.storage.k8s.io/fstype: cifs
 
-      mountOptions:
-        - dir_mode=0777
-        - file_mode=0777
-        - uid=1001
-        - gid=1001
-        - iocharset=utf8
-        - nobrl  # Disable byte range locks
+#       mountOptions:
+#         - dir_mode=0777
+#         - file_mode=0777
+#         - uid=1001
+#         - gid=1001
+#         - iocharset=utf8
+#         - nobrl  # Disable byte range locks
 
-      secrets:
-        provisioner-secret:
-        controller-publish-secret:
-        node-stage-secret:
-        node-publish-secret:
-        controller-expand-secret:
+#       secrets:
+#         provisioner-secret:
+#         controller-publish-secret:
+#         node-stage-secret:
+#         node-publish-secret:
+#         controller-expand-secret:
 
-    volumeSnapshotClasses:
-    - name: truenas-smb-snapshots
-      parameters:
-        snapshotPrefix: "snapshot-"
-      secrets:
-        snapshotter-secret:
+#     volumeSnapshotClasses:
+#     - name: truenas-smb-snapshots
+#       parameters:
+#         snapshotPrefix: "snapshot-"
+#       secrets:
+#         snapshotter-secret:
 
-    driver:
-      config:
-        driver: freenas-api-smb
-        instance_id: "truenas-smb"
+#     driver:
+#       config:
+#         driver: freenas-api-smb
+#         instance_id: "truenas-smb"
 
-        httpConnection:
-          protocol: https
-          host: "${SECRET_NFS_SERVER}"
-          port: 443
-          apiKey: "${SECRET_NAS_API_KEY}"
-          allowInsecure: true
-          apiVersion: 2
+#         httpConnection:
+#           protocol: https
+#           host: "${SECRET_NFS_SERVER}"
+#           port: 443
+#           apiKey: "${SECRET_NAS_API_KEY}"
+#           allowInsecure: true
+#           apiVersion: 2
 
-        zfs:
-          datasetParentName: "${SECRET_NFS_SHARE}/smb/volumes"
-          detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/smb/snapshots"
+#         zfs:
+#           datasetParentName: "${SECRET_NFS_SHARE}/smb/volumes"
+#           detachedSnapshotsDatasetParentName: "${SECRET_NFS_SHARE}/smb/snapshots"
 
-          datasetProperties:
-            "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+#           datasetProperties:
+#             "org.freenas:description": "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
 
-          datasetEnableQuotas: true
-          datasetEnableReservation: false
-          datasetPermissionsMode: "0770"
-          datasetPermissionsUser: 0
-          datasetPermissionsGroup: 0
+#           datasetEnableQuotas: true
+#           datasetEnableReservation: false
+#           datasetPermissionsMode: "0770"
+#           datasetPermissionsUser: 0
+#           datasetPermissionsGroup: 0
 
-        smb:
-          shareHost: "${SECRET_NFS_SERVER}"
+#         smb:
+#           shareHost: "${SECRET_NFS_SERVER}"
 
-          shareAuxiliaryConfiguration: |
-            vfs objects = catia fruit streams_xattr
-            fruit:metadata = stream
-            fruit:model = MacStor
-            fruit:veto_appledouble = no
-            fruit:posix_rename = yes
-            fruit:zero_file_id = yes
-            fruit:wipe_intentionally_left_blank_rfork = yes
-            fruit:delete_empty_adfiles = yes
+#           shareAuxiliaryConfiguration: |
+#             vfs objects = catia fruit streams_xattr
+#             fruit:metadata = stream
+#             fruit:model = MacStor
+#             fruit:veto_appledouble = no
+#             fruit:posix_rename = yes
+#             fruit:zero_file_id = yes
+#             fruit:wipe_intentionally_left_blank_rfork = yes
+#             fruit:delete_empty_adfiles = yes
 
-          shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
-          shareEnabled: true
-          shareAllowedHosts: []
-          shareAllowedNetworks: []
-          shareMaprootUser: nfs
-          shareMaprootGroup: nfs
+#           shareCommentTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+#           shareEnabled: true
+#           shareAllowedHosts: []
+#           shareAllowedNetworks: []
+#           shareMaprootUser: nfs
+#           shareMaprootGroup: nfs
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2

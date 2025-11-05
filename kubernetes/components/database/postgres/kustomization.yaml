@@ -12,7 +12,7 @@ configMapGenerator:
   - name: postgres-defaults
     literals:
       - POSTGRES_VERSION=18.0
-      - POSTGRES_INSTANCES=2
+      - POSTGRES_INSTANCES=3
       - POSTGRES_STORAGE_SIZE=10Gi
       - POSTGRES_STORAGE_CLASS=ceph-block
       - POSTGRES_CPU_REQUEST=100m

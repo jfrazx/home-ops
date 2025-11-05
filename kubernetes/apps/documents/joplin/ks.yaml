@@ -6,7 +6,7 @@ metadata:
   name: &app joplin-postgres
   namespace: flux-system
 spec:
-  targetNamespace: documents
+  targetNamespace: &namespace documents
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -25,6 +25,10 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
+  postBuild:
+    substitute:
+      APP: joplin
+      NAMESPACE: *namespace
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1

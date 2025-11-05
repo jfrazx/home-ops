@@ -51,7 +51,7 @@ spec:
 
   storage:
     size: "20Gi"
-    storageClass: "truenas-iscsi-db"
+    storageClass: "truenas-iscsi"
 
   monitoring:
     enablePodMonitor: true
