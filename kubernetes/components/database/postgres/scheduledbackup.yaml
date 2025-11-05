@@ -1,0 +1,13 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: ${APP}-postgres-backup
+  namespace: ${NAMESPACE}
+spec:
+  schedule: ${POSTGRES_BACKUP_SCHEDULE:=0 2 * * *}
+  backupOwnerReference: self
+  cluster:
+    name: ${APP}-postgres
+  method: barmanObjectStore
+  immediate: true

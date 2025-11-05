@@ -1,0 +1,29 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: postgres-backup
+  namespace: ${NAMESPACE}
+spec:
+  method: barmanObjectStore
+  cluster:
+    name: ${APP}-postgres
+  target: prefer-standby
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+  barmanObjectStore:
+    destinationPath: ${POSTGRES_BACKUP_PATH:=s3://cnpg-backups/${APP}}
+    endpointURL: ${POSTGRES_BACKUP_ENDPOINT:=http://minio.storage.svc.cluster.local:9000}
+    s3Credentials:
+      accessKeyId:
+        name: ${APP}-postgres-minio
+        key: MINIO_ACCESS_KEY
+      secretAccessKey:
+        name: ${APP}-postgres-minio
+        key: MINIO_SECRET_KEY
+    wal:
+      compression: gzip
+      maxParallel: 2
+    data:
+      compression: gzip
+      jobs: 2
