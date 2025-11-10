@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: docker.io/clusterzx/paperless-ai
-              tag: 3.0.7
+              tag: 3.0.9
 
             env:
               PAPERLESS_API_URL: http://paperless.documents.svc.cluster.local:8000/api
