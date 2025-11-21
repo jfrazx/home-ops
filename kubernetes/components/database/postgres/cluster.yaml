@@ -42,7 +42,6 @@ spec:
       data:
         compression: gzip
         jobs: 2
-      retentionPolicy: ${POSTGRES_BACKUP_RETENTION:=20d}
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io
