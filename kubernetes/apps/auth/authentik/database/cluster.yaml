@@ -33,13 +33,16 @@ spec:
       shared_buffers: "256MB"
       effective_cache_size: "1GB"
       maintenance_work_mem: "64MB"
-      work_mem: "4MB"
+      work_mem: "8MB"
+
       log_statement: "all"
       log_duration: "on"
       log_lock_waits: "on"
       log_min_duration_statement: "1000"
+
       random_page_cost: "1.1"
       effective_io_concurrency: "200"
+
       wal_level: "replica"
       max_wal_senders: "10"
       max_replication_slots: "10"
@@ -60,11 +63,11 @@ spec:
 
   resources:
     requests:
-      cpu: "100m"
-      memory: "512Mi"
-    limits:
-      cpu: "1"
+      cpu: "250m"
       memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
 
   affinity:
     tolerations:
