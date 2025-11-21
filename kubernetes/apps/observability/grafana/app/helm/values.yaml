@@ -138,6 +138,15 @@ dashboardProviders:
         options:
           path: /var/lib/grafana/dashboards/storage
 
+      - name: ceph
+        orgId: 1
+        folder: Ceph
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/ceph
+
 dashboards:
   default:
     blackbox-exporter:
