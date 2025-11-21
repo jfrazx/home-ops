@@ -29,6 +29,7 @@ spec:
     substitute:
       APP: joplin
       NAMESPACE: *namespace
+      POSTGRES_BACKUP_SCHEDULE: "30 2 * * *"
 ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1

@@ -17,7 +17,7 @@ spec:
       excalidraw:
         annotations:
           reloader.stakater.com/auto: "true"
-        replicas: 2
+        replicas: 1
         strategy: RollingUpdate
         containers:
           app:

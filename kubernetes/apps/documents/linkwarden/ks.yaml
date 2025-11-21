@@ -6,7 +6,7 @@ metadata:
   name: &app linkwarden-database
   namespace: flux-system
 spec:
-  targetNamespace: documents
+  targetNamespace: &namespace documents
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -25,6 +25,11 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
+  postBuild:
+    substitute:
+      APP: linkwarden
+      NAMESPACE: *namespace
+      POSTGRES_BACKUP_SCHEDULE: "15 1 * * *"
 ---
 # yaml-language-server: $schema=https://datreeio.github.io/CRDs-catalog/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1

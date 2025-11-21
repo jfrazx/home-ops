@@ -25,27 +25,24 @@ spec:
       localeCType: "en_US.UTF-8"
       localeCollate: "en_US.UTF-8"
 
-  postgresql:
-    parameters:
-      max_connections: "200"
-      shared_buffers: "256MB"
-      effective_cache_size: "1GB"
-      maintenance_work_mem: "64MB"
-      work_mem: "4MB"
-      log_statement: "all"
-      log_duration: "on"
-      log_lock_waits: "on"
-      log_min_duration_statement: "1000"
-      random_page_cost: "1.1"
-      effective_io_concurrency: "200"
-      wal_level: "replica"
-      max_wal_senders: "10"
-      max_replication_slots: "10"
-      wal_keep_size: "512MB"
-
-  storage:
-    size: ${POSTGRES_STORAGE_SIZE:=10Gi}
-    storageClass: ${POSTGRES_STORAGE_CLASS:=ceph-block}
+  backup:
+    barmanObjectStore:
+      destinationPath: ${POSTGRES_BACKUP_PATH:=s3://postgresql-backups/${APP}}
+      endpointURL: ${POSTGRES_BACKUP_ENDPOINT:=http://minio.storage.svc.cluster.local:9000}
+      s3Credentials:
+        accessKeyId:
+          name: ${APP}-postgres-minio
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: ${APP}-postgres-minio
+          key: MINIO_SECRET_KEY
+      wal:
+        compression: gzip
+        maxParallel: 2
+      data:
+        compression: gzip
+        jobs: 2
+      retentionPolicy: ${POSTGRES_BACKUP_RETENTION:=20d}
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io
@@ -53,16 +50,39 @@ spec:
       parameters:
         barmanObjectName: postgres-backup
 
+  postgresql:
+    parameters:
+      max_connections: "50"
+      shared_buffers: "256MB"
+      effective_cache_size: "768MB"
+      maintenance_work_mem: "64MB"
+      work_mem: "8MB"
+      log_statement: "ddl"
+      log_duration: "off"
+      log_lock_waits: "on"
+      log_min_duration_statement: "5000"
+
+      random_page_cost: "1.1"
+      effective_io_concurrency: "200"
+      wal_level: "replica"
+      max_wal_senders: "5"
+      max_replication_slots: "5"
+      wal_keep_size: "512MB"
+
+  storage:
+    size: ${POSTGRES_STORAGE_SIZE:=10Gi}
+    storageClass: ${POSTGRES_STORAGE_CLASS:=ceph-block}
+
   monitoring:
     enablePodMonitor: true
 
   resources:
     requests:
-      cpu: ${POSTGRES_CPU_REQUEST:=100m}
-      memory: ${POSTGRES_MEMORY_REQUEST:=512Mi}
+      cpu: ${POSTGRES_CPU_REQUEST:=250m}
+      memory: ${POSTGRES_MEMORY_REQUEST:=1Gi}
     limits:
-      cpu: ${POSTGRES_CPU_LIMIT:=500m}
-      memory: ${POSTGRES_MEMORY_LIMIT:=1Gi}
+      cpu: ${POSTGRES_CPU_LIMIT:=2}
+      memory: ${POSTGRES_MEMORY_LIMIT:=2Gi}
 
   affinity:
     tolerations:

@@ -6,7 +6,7 @@ metadata:
   name: &app paperless-postgres
   namespace: flux-system
 spec:
-  targetNamespace: documents
+  targetNamespace: &namespace documents
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -25,6 +25,11 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
+  postBuild:
+    substitute:
+      APP: paperless
+      NAMESPACE: *namespace
+      POSTGRES_BACKUP_SCHEDULE: "0 3 * * *"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
 # apiVersion: kustomize.toolkit.fluxcd.io/v1
