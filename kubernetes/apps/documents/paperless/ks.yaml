@@ -29,7 +29,9 @@ spec:
     substitute:
       APP: paperless
       NAMESPACE: *namespace
+      POSTGRES_VERSION: "17.5"
       POSTGRES_BACKUP_SCHEDULE: "0 3 * * *"
+      POSTGRES_STORAGE_SIZE: "20Gi"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
 # apiVersion: kustomize.toolkit.fluxcd.io/v1
