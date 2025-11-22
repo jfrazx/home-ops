@@ -13,6 +13,8 @@ spec:
     - namespace: database
     - namespace: documents
     - namespace: external-secrets
+    - namespace: finance
+    - namespace: household
     - namespace: media
     - namespace: network
     - namespace: observability

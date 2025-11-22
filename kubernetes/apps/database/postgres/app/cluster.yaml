@@ -14,12 +14,6 @@ spec:
   instances: 3
   imageName: ghcr.io/cloudnative-pg/postgresql:17.5
 
-  plugins:
-    - name: barman-cloud.cloudnative-pg.io
-      isWALArchiver: true
-      parameters:
-        barmanObjectName: postgres-backup
-
   bootstrap:
     initdb:
       database: shiftx-cluster
@@ -30,6 +24,24 @@ spec:
       encoding: "UTF8"
       localeCType: "en_US.UTF-8"
       localeCollate: "en_US.UTF-8"
+
+  backup:
+    barmanObjectStore:
+      destinationPath: ${POSTGRES_BACKUP_PATH:=s3://postgresql-backups/${APP}}
+      endpointURL: ${POSTGRES_BACKUP_ENDPOINT:=http://minio.storage.svc.cluster.local:9000}
+      s3Credentials:
+        accessKeyId:
+          name: ${APP}-postgres-minio
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: ${APP}-postgres-minio
+          key: MINIO_SECRET_KEY
+      wal:
+        compression: gzip
+        maxParallel: 2
+      data:
+        compression: gzip
+        jobs: 2
 
   postgresql:
     parameters:
