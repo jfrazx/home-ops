@@ -83,7 +83,7 @@ spec:
       app:
         hostnames: ["budget.${SECRET_DOMAIN}"]
         parentRefs:
-          - name: internal
+          - name: external
             namespace: kube-system
         rules:
           - backendRefs:
