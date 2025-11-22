@@ -16,6 +16,12 @@ spec:
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
+    substitute:
+      APP: *app
+      NAMESPACE: *namespace
+      POSTGRES_VERSION: "17.5"
+      POSTGRES_STORAGE_SIZE: "20Gi"
+      POSTGRES_STORAGE_CLASS: "truenas-iscsi"
   sourceRef:
     kind: GitRepository
     name: flux-system

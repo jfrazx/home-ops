@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app actual-auto-sync
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  interval: 1h
+
+  values:
+    controllers:
+      actual-auto-sync:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: docker.io/seriouslag/actual-auto-sync
+              tag: latest@sha256:c0bbdf3e1e4b1f6c913798f331cb3453588e6dab8021f6c1700634b52e896b63
+
+            env:
+              TZ: ${TIMEZONE}
+              ACTUAL_SERVER_URL: "http://actual.finance.svc.cluster.local:5006"
+              CRON_SCHEDULE: "0 7 * * *"
+              LOG_LEVEL: "info"
+
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+
+    persistence:
+      tmp:
+        type: emptyDir

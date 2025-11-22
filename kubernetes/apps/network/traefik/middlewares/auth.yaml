@@ -13,6 +13,8 @@ spec:
     - namespace: default
     - namespace: documents
     - namespace: external-secrets
+    - namespace: finance
+    - namespace: household
     - namespace: kube-system
     - namespace: media
     - namespace: network
