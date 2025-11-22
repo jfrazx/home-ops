@@ -93,9 +93,7 @@ spec:
     persistence:
       config:
         type: persistentVolumeClaim
-        accessMode: ReadWriteOnce
-        size: 15Gi
-        storageClass: ceph-block
+        existingClaim: *app
         globalMounts:
           - path: /data
 
