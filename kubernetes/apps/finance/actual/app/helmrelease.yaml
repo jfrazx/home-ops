@@ -94,7 +94,7 @@ spec:
       config:
         type: persistentVolumeClaim
         accessMode: ReadWriteOnce
-        volumeName: *app
+        name: *app
         size: 15Gi
         storageClass: ceph-block
         globalMounts:
