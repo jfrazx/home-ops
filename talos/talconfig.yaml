@@ -122,7 +122,7 @@ patches:
 # Controller patches
 controlPlane:
   patches:
-    - "@./patches/controller/admission-controller-patch.yaml"
+    # - "@./patches/controller/admission-controller-patch.yaml"
     - "@./patches/controller/machine-labels.yaml"
     - "@./patches/controller/machine-api.yaml"
     - "@./patches/controller/cluster.yaml"
