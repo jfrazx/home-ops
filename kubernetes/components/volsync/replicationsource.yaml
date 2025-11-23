@@ -8,7 +8,7 @@ spec:
   sourcePVC: "${VOLSYNC_CLAIM:=${APP}}"
   trigger:
     schedule: "${VOLSYNC_SCHEDULE:=0 2 * * *}"
-  restic:
+  kopia:
     copyMethod: "${VOLSYNC_COPYMETHOD:=Snapshot}"
     pruneIntervalDays: 14
     repository: "${APP}-volsync-secret"
@@ -18,11 +18,13 @@ spec:
     cacheAccessModes: ["${VOLSYNC_CACHE_ACCESSMODES:=ReadWriteOnce}"]
     storageClassName: "${VOLSYNC_STORAGECLASS:=ceph-block}"
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:=ReadWriteOnce}"]
+    compression: zstd-fastest
     moverSecurityContext:
       runAsUser: ${VOLSYNC_PUID:=1001}
       runAsGroup: ${VOLSYNC_PGID:=1001}
       fsGroup: ${VOLSYNC_PGID:=1001}
       supplementalGroups: [100]
+    parallelism: 2
     retain:
       hourly: 24
       daily: 14

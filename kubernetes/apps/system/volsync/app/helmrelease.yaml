@@ -5,32 +5,35 @@ kind: OCIRepository
 metadata:
   name: volsync
 spec:
-  interval: 5m
+  interval: 15m
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 0.14.0
-  url: oci://ghcr.io/home-operations/charts-mirror/volsync
+    tag: 0.17.15
+  url: oci://ghcr.io/home-operations/charts-mirror/volsync-perfectra1n
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: volsync
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: volsync
-  install:
-    remediation:
-      retries: -1
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 30m
   values:
+    fullnameOverride: volsync # Required for volsync-perfectra1n fork
+    image: &image
+      repository: ghcr.io/perfectra1n/volsync
+      tag: v0.16.13
+    kopia: *image
+    rclone: *image
+    restic: *image
+    rsync: *image
+    rsync-tls: *image
+    syncthing: *image
     manageCRDs: true
     metrics:
       disableAuth: true
