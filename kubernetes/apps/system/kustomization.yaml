@@ -6,6 +6,8 @@ namespace: system
 resources:
   - ./intel-device-plugins/ks.yaml
   - ./k8tz/ks.yaml
+  - ./kopia/ks.yaml
+  - ./ksgate/ks.yaml
   - ./node-feature-discovery/ks.yaml
   - ./volsync/ks.yaml
 components:
