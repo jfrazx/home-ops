@@ -12,15 +12,15 @@ spec:
     name: app-template
     namespace: flux-system
 
-  install:
-    createNamespace: true
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
-      strategy: rollback
+  # install:
+  #   createNamespace: true
+  #   remediation:
+  #     retries: 3
+  # upgrade:
+  #   cleanupOnFail: true
+  #   remediation:
+  #     retries: 3
+  #     strategy: rollback
 
   values:
     configMaps:
