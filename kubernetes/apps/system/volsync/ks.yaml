@@ -28,6 +28,9 @@ spec:
   postBuild:
     substitute:
       APP: *app
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   prune: true
   retryInterval: 2m
   sourceRef:
@@ -53,6 +56,9 @@ spec:
   postBuild:
     substitute:
       APP: volsync
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
   prune: true
   sourceRef:
     kind: GitRepository
