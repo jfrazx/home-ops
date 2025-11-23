@@ -39,6 +39,7 @@ spec:
               "description": "volsync",
               "enableActions": false
             }
+
     controllers:
       kopia:
         pod:
