@@ -10,7 +10,6 @@ spec:
     schedule: "${VOLSYNC_SCHEDULE:=0 2 * * *}"
   kopia:
     copyMethod: "${VOLSYNC_COPYMETHOD:=Snapshot}"
-    pruneIntervalDays: 14
     repository: "${APP}-volsync-secret"
     volumeSnapshotClassName: "${VOLSYNC_SNAPSHOTCLASS:=truenas-iscsi-snapshots}"
     cacheCapacity: "${VOLSYNC_CACHE_CAPACITY:=10Gi}"
