@@ -181,7 +181,7 @@ spec:
             memory: 512Mi
 
     grafana:
-      enabled: true
+      enabled: false
 
     kube-state-metrics:
       livenessProbe:
