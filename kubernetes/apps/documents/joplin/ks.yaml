@@ -59,6 +59,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      POSTGRES_STORAGE_SIZE: 15Gi
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
