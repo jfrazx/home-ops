@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: system
+namespace: &namespace system
 resources:
   - ./intel-device-plugins/ks.yaml
   - ./k8tz/ks.yaml
@@ -21,3 +21,13 @@ patches:
         path: /metadata/labels
         value:
           k8tz.io~1controller-namespace: true
+  - target:
+      kind: Namespace
+      name: *namespace
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged

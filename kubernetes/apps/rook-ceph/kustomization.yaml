@@ -2,8 +2,19 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: rook-ceph
+namespace: &namespace rook-ceph
 components:
   - ../../components/common
 resources:
   - ./rook-ceph/ks.yaml
+patches:
+  - target:
+      kind: Namespace
+      name: *namespace
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
