@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app seerr-postgres
+  namespace: flux-system
+spec:
+  targetNamespace: &namespace downloads
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: cnpg-operator
+      namespace: flux-system
+  path: ./kubernetes/apps/downloads/seerr/database
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+  postBuild:
+    substitute:
+      APP: seerr
+      NAMESPACE: *namespace
+      POSTGRES_STORAGE_CLASS: truenas-iscsi
+      POSTGRES_BACKUP_SCHEDULE: "30 3 * * *"
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app seerr
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  components:
+    - ../../../../components/volsync
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: seerr-postgres
+  interval: 1h
+  path: ./kubernetes/apps/downloads/seerr/app
+  postBuild:
+    substitute:
+      APP: *app
+      VOLSYNC_REPOSITORY_NAMESPACE: &namespace downloads
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: *namespace
+  timeout: 5m
+  wait: false

@@ -3,7 +3,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app sabnzbd
+  name: &app bazarr
 spec:
   commonMetadata:
     labels:
@@ -14,14 +14,12 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: openebs
-      namespace: openebs
   interval: 1h
-  path: "./kubernetes/apps/downloads/sabnzbd/app"
+  path: "./kubernetes/apps/downloads/bazarr/app"
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CLAIM: sabnzbd-config
+      VOLSYNC_CLAIM: bazarr-config
       VOLSYNC_REPOSITORY_NAMESPACE: &namespace downloads
     substituteFrom:
       - kind: Secret
