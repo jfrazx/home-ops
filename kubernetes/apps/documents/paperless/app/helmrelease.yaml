@@ -36,7 +36,7 @@ spec:
               # PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: true
               PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: true
 
-              PAPERLESS_URL: https://paperless.${SECRET_DOMAIN}
+              PAPERLESS_URL: https://{{ .Release.Name }}.${SECRET_DOMAIN}
               PAPERLESS_TIME_ZONE: "${TIMEZONE}"
               PAPERLESS_PORT: &port 8000
               PAPERLESS_WEBSERVER_WORKERS: 2
@@ -55,10 +55,14 @@ spec:
 
               # Database settings
               PAPERLESS_DBENGINE: postgresql
-              PAPERLESS_DBHOST: "paperless-postgres-rw.documents.svc.cluster.local"
               PAPERLESS_DBPORT: "5432"
               PAPERLESS_DBNAME: "paperless"
               PAPERLESS_DBUSER: "paperless"
+              PAPERLESS_DBHOST:
+                valueFrom:
+                  secretKeyRef:
+                    name: paperless-postgres-app
+                    key: host
               PAPERLESS_DBPASS:
                 valueFrom:
                   secretKeyRef:
@@ -119,11 +123,8 @@ spec:
             port: *port
 
     persistence:
-      data:
-        type: persistentVolumeClaim
-        accessMode: ReadWriteOnce
-        size: 10Gi
-        storageClass: ceph-block
+      config:
+        existingClaim: "${VOLSYNC_CLAIM}"
         advancedMounts:
           paperless:
             app:
@@ -139,7 +140,7 @@ spec:
     route:
       app:
         hostnames:
-          - paperless.${SECRET_DOMAIN}
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
           - name: internal
             namespace: kube-system
