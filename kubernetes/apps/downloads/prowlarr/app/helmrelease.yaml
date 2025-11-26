@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app radarr
+  name: &app prowlarr
 spec:
   interval: 1h
   maxHistory: 2
@@ -12,26 +12,16 @@ spec:
     name: app-template
     namespace: flux-system
 
-  install:
-    createNamespace: true
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
-      strategy: rollback
-
   values:
     controllers:
-      radarr:
+      prowlarr:
         annotations:
           reloader.stakater.com/auto: "true"
 
         pod:
           securityContext:
             fsGroup: 1001
-            fsGroupChangePolicy: "OnRootMismatch"
+            fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 1001
             runAsNonRoot: true
             runAsUser: 1001
@@ -39,17 +29,16 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/home-operations/radarr
-              tag: 6.0.4.10291@sha256:73fbdba72dcde5fec16264e63a9daba7829b5c2806a75615463a67117b100de3
+              repository: ghcr.io/home-operations/prowlarr
+              tag: 2.3.0.5236
 
             env:
-              RADARR__APP__INSTANCENAME: Radarr
-              RADARR__AUTH__METHOD: External
-              RADARR__AUTH__REQUIRED: DisabledForLocalAddresses
-              RADARR__LOG__DBENABLED: "False"
-              RADARR__LOG__LEVEL: info
-              RADARR__SERVER__PORT: &port 7878
-              RADARR__UPDATE__BRANCH: develop
+              PROWLARR__APP__INSTANCENAME: Prowlarr
+              PROWLARR__AUTH__METHOD: External
+              PROWLARR__LOG__DBENABLED: "False"
+              PROWLARR__LOG__LEVEL: info
+              PROWLARR__SERVER__PORT: &port 9696
+              PROWLARR__UPDATE__BRANCH: develop
 
             envFrom:
               - secretRef:
@@ -71,10 +60,10 @@ spec:
 
             resources:
               requests:
-                cpu: 20m
-                memory: 384Mi
+                cpu: 18m
+                memory: 128Mi
               limits:
-                memory: 2Gi
+                memory: 512Mi
 
             securityContext:
               allowPrivilegeEscalation: false
@@ -91,19 +80,7 @@ spec:
 
     persistence:
       config:
-        existingClaim: radarr-config
-      media:
-        type: nfs
-        path: "/mnt/${SECRET_NFS_SHARE}/media"
-        server: "${SECRET_NFS_SERVER}"
-        globalMounts:
-          - path: /data/nas-media
-
-      tmpfs:
-        type: emptyDir
-        globalMounts:
-          - path: /tmp
-            subPath: tmp
+        existingClaim: prowlarr-config
 
     route:
       app:
