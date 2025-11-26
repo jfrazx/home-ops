@@ -5,10 +5,11 @@ kind: HelmRelease
 metadata:
   name: sabnzbd
 spec:
+  interval: 30m
   chartRef:
     kind: OCIRepository
-    name: sabnzbd
-  interval: 30m
+    name: app-template
+    namespace: flux-system
 
   values:
     controllers:

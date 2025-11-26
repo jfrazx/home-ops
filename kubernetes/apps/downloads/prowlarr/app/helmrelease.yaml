@@ -10,6 +10,7 @@ spec:
   chartRef:
     kind: OCIRepository
     name: app-template
+    namespace: flux-system
 
   values:
     controllers:
@@ -84,7 +85,8 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ Release.Name }}.${SECRET_DOMAIN}"
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
           - name: internal
             namespace: kube-system
+            sectionName: https

@@ -5,10 +5,11 @@ kind: HelmRelease
 metadata:
   name: &app qbittorrent
 spec:
+  interval: 30m
   chartRef:
     kind: OCIRepository
-    name: *app
-  interval: 30m
+    name: app-template
+    namespace: flux-system
 
   values:
     controllers:

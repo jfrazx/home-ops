@@ -5,10 +5,11 @@ kind: HelmRelease
 metadata:
   name: &app cross-seed
 spec:
+  interval: 30m
   chartRef:
     kind: OCIRepository
-    name: cross-seed
-  interval: 30m
+    name: app-template
+    namespace: flux-system
 
   values:
     controllers:
