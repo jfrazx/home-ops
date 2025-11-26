@@ -11,7 +11,7 @@ spec:
   kopia:
     copyMethod: "${VOLSYNC_COPYMETHOD:=Snapshot}"
     repository: "${APP}-volsync-secret"
-    volumeSnapshotClassName: "${VOLSYNC_SNAPSHOTCLASS:=truenas-iscsi-snapshots}"
+    volumeSnapshotClassName: "${VOLSYNC_SNAPSHOTCLASS:=csi-ceph-blockpool}"
     cacheCapacity: "${VOLSYNC_CACHE_CAPACITY:=10Gi}"
     cacheStorageClassName: "${VOLSYNC_CACHE_STORAGECLASS:=truenas-iscsi}"
     cacheAccessModes: ["${VOLSYNC_CACHE_ACCESSMODES:=ReadWriteOnce}"]
