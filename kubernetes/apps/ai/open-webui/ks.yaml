@@ -10,10 +10,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
+  # components:
+  #   - ../../../../components/volsync
   dependsOn:
     - name: searxng
       namespace: *namespace
@@ -38,5 +36,7 @@ spec:
         kind: Secret
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 5Gi
-      VOLSYNC_START_MINUTE: "48"
+      VOLSYNC_CLAIM: open-webui-config
+      VOLSYNC_CAPACITY: 20Gi
+      VOLSYNC_REPOSITORY_NAMESPACE: *namespace
+      VOLSYNC_CACHE_CAPACITY: 60Gi

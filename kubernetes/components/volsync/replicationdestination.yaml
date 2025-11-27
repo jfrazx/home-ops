@@ -25,7 +25,7 @@ spec:
       runAsUser: ${VOLSYNC_PUID:=1001}
       runAsGroup: ${VOLSYNC_PGID:=1001}
       fsGroup: ${VOLSYNC_PGID:=1001}
-      supplementalGroups: [100]
+      supplementalGroups: [100,568]
       fsGroupChangePolicy: "OnRootMismatch"
     enableFileDeletion: true
     cleanupCachePVC: true

@@ -8,16 +8,17 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
+  components:
+    - ../../../../components/volsync
   path: ./kubernetes/apps/documents/stirling-pdf/app
+  targetNamespace: &namespace documents
   postBuild:
+    substitute:
+      APP: *app
+      VOLSYNC_REPOSITORY_NAMESPACE: *namespace
     substituteFrom:
       - name: cluster-secrets
         kind: Secret
-  targetNamespace: &namespace documents
   prune: true
   sourceRef:
     kind: GitRepository
