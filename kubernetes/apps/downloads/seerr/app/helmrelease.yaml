@@ -28,11 +28,7 @@ spec:
               TZ: ${TIMEZONE}
 
               DB_TYPE: postgres
-              DB_HOST:
-                valueFrom:
-                  secretKeyRef:
-                    name: seerr-postgres-app
-                    key: host
+              DB_HOST: seerr-postgres-rw.downloads.svc.cluster.local
               DB_PORT:
                 valueFrom:
                   secretKeyRef:
@@ -48,7 +44,7 @@ spec:
                   secretKeyRef:
                     name: seerr-postgres-app
                     key: username
-              DB_PASSWORD:
+              DB_PASS:
                 valueFrom:
                   secretKeyRef:
                     name: seerr-postgres-app
@@ -66,10 +62,10 @@ spec:
                   httpGet:
                     path: /api/v1/status
                     port: *port
-                  initialDelaySeconds: 0
+                  initialDelaySeconds: 30
                   periodSeconds: 10
-                  timeoutSeconds: 1
-                  failureThreshold: 3
+                  timeoutSeconds: 5
+                  failureThreshold: 6
               readiness: *probes
 
             resources:
