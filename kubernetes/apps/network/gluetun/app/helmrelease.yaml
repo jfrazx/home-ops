@@ -71,14 +71,12 @@ spec:
                   failureThreshold: 5
 
             securityContext:
-              allowPrivilegeEscalation: false
               capabilities:
                 add:
                   - NET_ADMIN
 
     defaultPodOptions:
       securityContext:
-        runAsNonRoot: true
         runAsUser: 1001
         runAsGroup: 1001
         fsGroup: 1001
