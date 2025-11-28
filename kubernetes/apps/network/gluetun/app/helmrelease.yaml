@@ -43,6 +43,11 @@ spec:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
 
+            requests:
+                kernel.org/tun: 1
+            limits:
+              kernel.org/tun: 1
+
             probes:
               liveness:
                 enabled: true
