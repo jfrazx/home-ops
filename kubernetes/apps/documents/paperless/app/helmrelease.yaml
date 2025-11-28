@@ -102,7 +102,7 @@ spec:
           gotenberg:
             image:
               repository: gotenberg/gotenberg
-              tag: 8.24.0
+              tag: 8.25.0
               pullPolicy: IfNotPresent
             env:
               - {name: DISABLE_GOOGLE_CHROME, value: '1'}
