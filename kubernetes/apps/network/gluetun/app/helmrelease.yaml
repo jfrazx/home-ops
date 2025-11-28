@@ -24,32 +24,51 @@ spec:
   values:
     controllers:
       gluetun:
-        type: cronjob
-        cronjob:
-          schedule: "@daily"
-          suspend: true
-          successfulJobsHistory: 1
-          failedJobsHistory: 1
-
         containers:
           gluetun:
             image:
               repository: ghcr.io/qdm12/gluetun
               tag: v3.40.3@sha256:ef4a44819a60469682c7b5e69183e6401171891feaa60186652d292c59e41b30
-            args:
-              - update
-              - -enduser
+
             env:
               TZ: ${TIMEZONE}
+              FIREWALL_INPUT_PORTS: "8388,8888,9999"
+              FIREWALL_OUTBOUND_SUBNETS: 10.168.0.0/16,10.244.0.0/16
+              HEALTH_SERVER_ADDRESS: ":9999"
+              HTTPPROXY: "on"
+              HTTPPROXY_LISTENING_ADDRESS: :8888
+              HTTPPROXY_LOG: "on"
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
+
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: &healthPort 9999
+                  timeoutSeconds: 10
+                  periodSeconds: 30
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *healthPort
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  failureThreshold: 5
 
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
-                # drop: ["ALL"]
+                drop: ["ALL"]
                 add:
                   - NET_ADMIN
 
@@ -66,7 +85,6 @@ spec:
         controller: *app
         type: LoadBalancer
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: "vpn.${SECRET_DOMAIN}"
           io.cilium/lb-ipam-ips: "10.168.2.104"
         ports:
           http:
@@ -77,3 +95,8 @@ spec:
         existingClaim: *app
         globalMounts:
           - path: /gluetun
+
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
