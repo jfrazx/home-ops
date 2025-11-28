@@ -49,7 +49,7 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
-                drop: ["ALL"]
+                # drop: ["ALL"]
                 add:
                   - NET_ADMIN
 
@@ -66,7 +66,7 @@ spec:
         controller: *app
         type: LoadBalancer
         annotations:
-          # external-dns.alpha.kubernetes.io/hostname: "vpn.${SECRET_DOMAIN}"
+          external-dns.alpha.kubernetes.io/hostname: "vpn.${SECRET_DOMAIN}"
           io.cilium/lb-ipam-ips: "10.168.2.104"
         ports:
           http:
