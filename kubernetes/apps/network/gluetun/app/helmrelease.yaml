@@ -38,6 +38,7 @@ spec:
               HTTPPROXY: "on"
               HTTPPROXY_LISTENING_ADDRESS: :8888
               HTTPPROXY_LOG: "on"
+              DOT: "off"
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
@@ -66,9 +67,7 @@ spec:
 
             securityContext:
               allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
               capabilities:
-                drop: ["ALL"]
                 add:
                   - NET_ADMIN
 
