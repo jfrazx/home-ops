@@ -100,11 +100,11 @@ spec:
             port: 7860
 
     persistence:
-    app:
-      enabled: true
-      existingClaim: sdnext-config
-      globalMounts:
-        - path: /app
+      app:
+        enabled: true
+        existingClaim: sdnext-config
+        globalMounts:
+          - path: /app
 
       models:
         enabled: true
