@@ -35,11 +35,11 @@ spec:
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
-            resources:
-              requests:
-                kernel.org/tun: 1
-              limits:
-                kernel.org/tun: 1
+            # resources:
+            #   requests:
+            #     kernel.org/tun: 1
+            #   limits:
+            #     kernel.org/tun: 1
 
             probes:
               liveness:
