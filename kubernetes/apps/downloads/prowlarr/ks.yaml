@@ -5,6 +5,7 @@ kind: Kustomization
 metadata:
   name: &app prowlarr
 spec:
+  targetNamespace: &namespace downloads
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -19,7 +20,7 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CLAIM: prowlarr-config
-      VOLSYNC_REPOSITORY_NAMESPACE: &namespace downloads
+      VOLSYNC_REPOSITORY_NAMESPACE: *namespace
     substituteFrom:
       - kind: Secret
         name: cluster-secrets
@@ -28,6 +29,5 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  targetNamespace: *namespace
   timeout: 5m
   wait: false

@@ -23,7 +23,7 @@ spec:
     controllers:
       sdnext:
         replicas: 1
-        strategy: RollingUpdate
+        strategy: Recreate
 
         # Remove the init container - fsGroup will handle permissions
         # initContainers:
@@ -40,7 +40,7 @@ spec:
             image:
               repository: disty0/sdnext-ipex
               tag: latest
-              pullPolicy: Always
+              pullPolicy: IfNotPresent
 
             env:
               TZ: "${TIMEZONE}"
@@ -100,6 +100,12 @@ spec:
             port: 7860
 
     persistence:
+    app:
+      enabled: true
+      existingClaim: sdnext-config
+      globalMounts:
+        - path: /app
+
       models:
         enabled: true
         type: persistentVolumeClaim
@@ -112,9 +118,9 @@ spec:
       data:
         enabled: true
         type: persistentVolumeClaim
-        storageClass: truenas-nfs
-        accessMode: ReadWriteMany
-        size: 100Gi
+        storageClass: truenas-iscsi
+        accessMode: ReadWriteOnce
+        size: 20Gi
         globalMounts:
           - path: /mnt/data
 
