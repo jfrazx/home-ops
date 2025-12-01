@@ -35,11 +35,6 @@ spec:
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
-            # resources:
-            #   requests:
-            #     kernel.org/tun: 1
-            #   limits:
-            #     kernel.org/tun: 1
 
             probes:
               liveness:
@@ -70,8 +65,6 @@ spec:
 
     defaultPodOptions:
       securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
         fsGroup: 1001
         fsGroupChangePolicy: OnRootMismatch
 
