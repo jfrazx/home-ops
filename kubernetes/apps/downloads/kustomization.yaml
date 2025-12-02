@@ -9,6 +9,7 @@ components:
 resources:
   - ./bazarr/ks.yaml
   - ./cross-seed/ks.yaml
+  - ./lidarr/ks.yaml
   - ./prowlarr/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./radarr/ks.yaml
