@@ -93,15 +93,11 @@ spec:
 
       downloads:
         type: nfs
-        path: "/mnt/${SECRET_NFS_SHARE}/media/downloads/usenet"
+        path: "/mnt/${SECRET_NFS_SHARE}/media"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /data/media/downloads/usenet/incomplete
-            subPath: incomplete
-          - path: /data/media/downloads/usenet/complete
-            subPath: complete
-          - path: /data/media/downloads/usenet/watch
-            subPath: watch
+          - path: /data/media/downloads/usenet
+            subPath: downloads/usenet
 
       scripts:
         type: configMap
