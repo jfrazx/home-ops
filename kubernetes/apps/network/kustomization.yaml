@@ -23,13 +23,6 @@ patches:
         path: /metadata/labels
         value:
           k8tz.io~1controller-namespace: true
-  - target:
-      kind: Namespace
-      name: *namespace
-    patch: |
-      - op: add
-        path: /metadata/labels
-        value:
           pod-security.kubernetes.io/enforce: privileged
           pod-security.kubernetes.io/audit: privileged
           pod-security.kubernetes.io/warn: privileged

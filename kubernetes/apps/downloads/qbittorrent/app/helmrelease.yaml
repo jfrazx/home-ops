@@ -14,21 +14,17 @@ spec:
   values:
     controllers:
       qbittorrent:
+        dependsOn:
+          - name: gluetun
+            namespace: network
+
         annotations:
           reloader.stakater.com/auto: "true"
 
         pod:
-          # annotations:
-          #   k8s.v1.cni.cncf.io/networks: |-
-          #     [{
-          #       "name": "multus-vpn",
-          #       "namespace": "network",
-          #       "ips": ["10.1.5.10/24"],
-          #       "mac": "2e:54:30:22:3f:74"
-          #     }]
-
           securityContext:
             fsGroup: 1001
+            supplementalGroups: [568]
             fsGroupChangePolicy: "OnRootMismatch"
 
         containers:
@@ -41,7 +37,11 @@ spec:
               QBT_WEBUI_PORT: &port 8080
               QBT_TORRENTING_PORT: 51478
 
-            nameOverride: qbittorrent
+              HTTP_PROXY: "http://gluetun.network.svc.cluster.local:8888"
+              HTTPS_PROXY: "http://gluetun.network.svc.cluster.local:8888"
+              NO_PROXY: "localhost,127.0.0.1,10.0.0.0/8"
+
+            nameOverride: *app
 
             probes:
               liveness:
