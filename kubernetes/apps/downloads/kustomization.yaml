@@ -15,3 +15,14 @@ resources:
   - ./sabnzbd/ks.yaml
   - ./seerr/ks.yaml
   - ./sonarr/ks.yaml
+patches:
+  - target:
+      kind: Namespace
+      name: downloads
+    patch: |
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: baseline
+          pod-security.kubernetes.io/audit: baseline
+          pod-security.kubernetes.io/warn: baseline
