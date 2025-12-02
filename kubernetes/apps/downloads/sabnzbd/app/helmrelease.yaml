@@ -100,7 +100,7 @@ spec:
       scripts:
         type: configMap
         defaultMode: 0775
-        name: sabnzbd-scripts
+        name: volsync-sabnzbd-scripts
 
       tmpfs:
         type: emptyDir
