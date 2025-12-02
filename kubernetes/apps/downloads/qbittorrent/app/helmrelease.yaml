@@ -14,10 +14,6 @@ spec:
   values:
     controllers:
       qbittorrent:
-        dependsOn:
-          - name: gluetun
-            namespace: network
-
         annotations:
           reloader.stakater.com/auto: "true"
 
