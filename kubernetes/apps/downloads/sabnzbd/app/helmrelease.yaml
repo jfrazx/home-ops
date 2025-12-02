@@ -96,8 +96,7 @@ spec:
         path: "/mnt/${SECRET_NFS_SHARE}/media"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /data/nas-media/downloads/usenet
-            subPath: downloads/usenet
+          - path: /data/media
 
       scripts:
         type: configMap
