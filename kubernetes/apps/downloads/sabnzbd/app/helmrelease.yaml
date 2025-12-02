@@ -96,7 +96,12 @@ spec:
         path: "/mnt/${SECRET_NFS_SHARE}/media/downloads/usenet"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /data/media/downloads/usenet
+          - path: /data/media/downloads/usenet/incomplete
+            subPath: incomplete
+          - path: /data/media/downloads/usenet/complete
+            subPath: complete
+          - path: /data/media/downloads/usenet/watch
+            subPath: watch
 
       scripts:
         type: configMap
