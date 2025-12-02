@@ -83,11 +83,10 @@ spec:
 
       downloads:
         type: nfs
-        path: "/mnt/${SECRET_NFS_SHARE}/media"
+        path: "/mnt/${SECRET_NFS_SHARE}/media/downloads/torrents"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /data/nas-media/downloads/torrents
-            subPath: downloads/torrents
+          - path: /data/media/downloads/torrents
 
       qbrr:
         type: image

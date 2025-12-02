@@ -74,7 +74,7 @@ spec:
         path: "/mnt/${SECRET_NFS_SHARE}/media"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /data/nas-media
+          - path: /data/media
 
     route:
       app:
