@@ -113,7 +113,7 @@ spec:
         type: persistentVolumeClaim
         existingClaim: jellyfin-backups
         globalMounts:
-          - path: /backups
+          - path: /config/data/backups
 
       movies:
         type: persistentVolumeClaim
