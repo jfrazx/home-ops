@@ -3,26 +3,26 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app qbittorrent
+  name: &app navidrome
 spec:
-  targetNamespace: &namespace downloads
+  targetNamespace: &namespace media
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   components:
     - ../../../../components/volsync
-    - ../../../../components/keda/nfs-scaler
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: gluetun
-      namespace: network
+    - name: volsync
+      namespace: system
   interval: 1h
-  path: ./kubernetes/apps/downloads/qbittorrent/app
+  path: "./kubernetes/apps/media/navidrome/app"
   postBuild:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 2Gi
+      VOLSYNC_CLAIM: navidrome-config
       VOLSYNC_REPOSITORY_NAMESPACE: *namespace
     substituteFrom:
       - kind: Secret
@@ -33,4 +33,4 @@ spec:
     name: flux-system
     namespace: flux-system
   timeout: 5m
-  wait: false
+  wait: true

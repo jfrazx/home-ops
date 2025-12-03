@@ -22,7 +22,6 @@ spec:
       jellyfin:
         annotations:
           reloader.stakater.com/auto: "true"
-          # secret.reloader.stakater.com/reload: "jellyfin-secret"
 
         containers:
           app:
@@ -30,14 +29,12 @@ spec:
               repository: ghcr.io/jellyfin/jellyfin
               tag: 10.11.3@sha256:fab30d85f4ec3e19556ca1d91b82b12329fc4a6d2a4b330673354af9218e1d28
               pullPolicy: IfNotPresent
-            # envFrom:
-            #   - secretRef:
-            #       name: jellyfin-secret
+
             env:
               DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
               JELLYFIN_FFmpeg__probesize: 50000000
               JELLYFIN_FFmpeg__analyzeduration: 50000000
-              JELLYFIN_PublishedServerUrl: https://jellyfin.${SECRET_DOMAIN}
+              JELLYFIN_PublishedServerUrl: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
               TZ: "${TIMEZONE}"
 
             probes:
@@ -60,6 +57,7 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
+
             resources:
               requests:
                 gpu.intel.com/i915: 1
@@ -71,12 +69,11 @@ spec:
 
         pod:
           securityContext:
-            runAsUser: "${VOLSYNC_PUID}"
-            runAsGroup: "${VOLSYNC_PGID}"
-            fsGroup: 568
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
             fsGroupChangePolicy: "OnRootMismatch"
             runAsNonRoot: true
-            supplementalGroups: [44, 568, 10000, 65539]
 
     service:
       app:
@@ -87,13 +84,10 @@ spec:
 
     persistence:
       config:
-        suffix: config
-        type: persistentVolumeClaim
-        storageClass: ceph-block
-        accessMode: ReadWriteOnce
-        size: 50Gi
+        existingClaim: "{{ .Release.Name }}-config"
         globalMounts:
           - path: /config
+
       cache:
         type: emptyDir
         sizeLimit: 10Gi
@@ -115,22 +109,30 @@ spec:
         globalMounts:
           - path: /backups
 
-      movies:
-        type: persistentVolumeClaim
-        existingClaim: nfs-movies-pvc
+      media:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media"
+        server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /movies
-
-      shows:
-        type: persistentVolumeClaim
-        existingClaim: nfs-shows-pvc
-        globalMounts:
-          - path: /shows
+          - path: /media/movies
+            subPath: movies
+          - path: /media/movies-4k
+            subPath: movies-4k
+          - path: /media/shows
+            subPath: shows
+          - path: /media/shows-4k
+            subPath: shows-4k
+          - path: /media/mp3
+            subPath: mp3
+          - path: /media/flac
+            subPath: flac
+          - path: /media/music-videos
+            subPath: music-videos
 
     route:
       app:
         hostnames:
-          - jellyfin.${SECRET_DOMAIN}
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
           - name: internal
             namespace: kube-system
