@@ -34,10 +34,9 @@ spec:
 
             env:
               DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
-              JELLYFIN_FFmpeg__probesize: 50000000
-              JELLYFIN_FFmpeg__analyzeduration: 50000000
+              JELLYFIN_FFmpeg__probesize: "50000000"
+              JELLYFIN_FFmpeg__analyzeduration: "50000000"
               JELLYFIN_PublishedServerUrl: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
-              TZ: "${TIMEZONE}"
 
             probes:
               liveness: &probes
