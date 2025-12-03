@@ -25,6 +25,21 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
 
+        initContainers:
+          init-permissions:
+            image:
+              repository: busybox
+              tag: latest
+            command:
+              - /bin/sh
+              - -c
+              - |
+                echo "Fixing permissions on /config..."
+                chown -R 1001:1001 /config
+                echo "Permissions fixed"
+            securityContext:
+              runAsUser: 0
+
         containers:
           app:
             image:
