@@ -9,6 +9,8 @@ spec:
   chartRef:
     kind: OCIRepository
     name: app-template
+    namespace: flux-system
+
   install:
     remediation:
       retries: 3
@@ -84,7 +86,7 @@ spec:
 
     persistence:
       config:
-        existingClaim: *app
+        existingClaim: "{{ .Release.Name }}-config"
         globalMounts:
           - path: /config
 
