@@ -101,7 +101,7 @@ spec:
 
       entrypoint:
         type: configMap
-        name: bookshelf-entrypoint
+        name: volsync-bookshelf-entrypoint
         defaultMode: 0755
         advancedMounts:
           bookshelf:
