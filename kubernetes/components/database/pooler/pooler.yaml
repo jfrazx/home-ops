@@ -45,27 +45,30 @@ spec:
       labels:
         app.kubernetes.io/name: &name pgbouncer
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+
       containers:
       - name: *name
+        resources:
+          requests:
+            cpu: ${POOLER_CPU_REQUEST:=100m}
+            memory: ${POOLER_MEMORY_REQUEST:=128Mi}
+          limits:
+            cpu: ${POOLER_CPU_LIMIT:=500m}
+            memory: ${POOLER_MEMORY_LIMIT:=256Mi}
+
         securityContext:
           allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 999
-          runAsGroup: 999
           readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL
-          seccompProfile:
-            type: RuntimeDefault
-
-  resources:
-    requests:
-      cpu: ${POOLER_CPU_REQUEST:="100m"}
-      memory: ${POOLER_MEMORY_REQUEST:="128Mi"}
-    limits:
-      cpu: ${POOLER_CPU_LIMIT:="500m"}
-      memory: ${POOLER_MEMORY_LIMIT:="256Mi"}
 
   affinity:
     tolerations:
