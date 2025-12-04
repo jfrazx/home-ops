@@ -21,15 +21,15 @@ spec:
   pgbouncer:
     poolMode: ${POOLER_POOL_MODE:=transaction}
     parameters:
-      max_client_conn: "${POOLER_MAX_CLIENT_CONN:=200}"
-      default_pool_size: "${POOLER_DEFAULT_POOL_SIZE:=25}"
-      max_db_connections: "${POOLER_MAX_DB_CONNECTIONS:=20}"
-      max_user_connections: "${POOLER_MAX_USER_CONNECTIONS:=0}"
-      reserve_pool_size: "${POOLER_RESERVE_POOL_SIZE:=5}"
-      reserve_pool_timeout: "${POOLER_RESERVE_POOL_TIMEOUT:=5}"
-      log_connections: "0"
-      log_disconnections: "0"
-      application_name_add_host: "1"
+      max_client_conn: ${POOLER_MAX_CLIENT_CONN:="200"}
+      default_pool_size: ${POOLER_DEFAULT_POOL_SIZE:="25"}
+      max_db_connections: ${POOLER_MAX_DB_CONNECTIONS:="20"}
+      max_user_connections: ${POOLER_MAX_USER_CONNECTIONS:="0"}
+      reserve_pool_size: ${POOLER_RESERVE_POOL_SIZE:="5"}
+      reserve_pool_timeout: ${POOLER_RESERVE_POOL_TIMEOUT:="5"}
+      log_connections: ${POOLER_LOG_CONNECTIONS:="0"}
+      log_disconnections: ${POOLER_LOG_DISCONNECTIONS:="0"}
+      application_name_add_host: ${POOLER_APPLICATION_NAME_ADD_HOST:="1"}
 
   monitoring:
     enablePodMonitor: true
@@ -61,11 +61,11 @@ spec:
 
   resources:
     requests:
-      cpu: ${POOLER_CPU_REQUEST:=100m}
-      memory: ${POOLER_MEMORY_REQUEST:=128Mi}
+      cpu: ${POOLER_CPU_REQUEST:="100m"}
+      memory: ${POOLER_MEMORY_REQUEST:="128Mi"}
     limits:
-      cpu: ${POOLER_CPU_LIMIT:=500m}
-      memory: ${POOLER_MEMORY_LIMIT:=256Mi}
+      cpu: ${POOLER_CPU_LIMIT:="500m"}
+      memory: ${POOLER_MEMORY_LIMIT:="256Mi"}
 
   affinity:
     tolerations:
