@@ -1,0 +1,197 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cnpg-cluster-alerts
+  namespace: database
+spec:
+  groups:
+    - name: cnpg.cluster.rules
+      interval: 30s
+      rules:
+        # Cluster Health
+        - alert: CNPGClusterDown
+          expr: |
+            cnpg_pg_replication_in_recovery >= 1 and cnpg_pg_replication_slots_active == 0
+          for: 5m
+          annotations:
+            summary: "CNPG cluster {{ $labels.namespace }}/{{ $labels.cluster }} has no active instances (replication expected)"
+            description: "PostgreSQL cluster {{ $labels.namespace }}/{{ $labels.cluster }} has been down for 5 minutes (replication expected)"
+          labels:
+            severity: critical
+
+        - alert: CNPGReplicationLag
+          expr: |
+            cnpg_pg_replication_lag_seconds > 300
+          for: 5m
+          annotations:
+            summary: "CNPG replication lag on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Replication lag is {{ $value }}s on {{ $labels.namespace }}/{{ $labels.cluster }}"
+          labels:
+            severity: warning
+
+        - alert: CNPGReplicationBroken
+          expr: |
+            cnpg_pg_replication_in_recovery == 0 and cnpg_pg_replication_slots_active == 0
+          for: 5m
+          annotations:
+            summary: "CNPG replication broken on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Cluster {{ $labels.namespace }}/{{ $labels.cluster }} has no active replication"
+          labels:
+            severity: critical
+
+        # Connection Limits
+        - alert: CNPGHighConnectionUsage
+          expr: |
+            (cnpg_pg_stat_database_numbackends / cnpg_pg_settings_max_connections) * 100 > 80
+          for: 5m
+          annotations:
+            summary: "High connection usage on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Connection usage is {{ $value }}% on database {{ $labels.datname }}"
+          labels:
+            severity: warning
+
+        - alert: CNPGConnectionLimit
+          expr: |
+            (cnpg_pg_stat_database_numbackends / cnpg_pg_settings_max_connections) * 100 > 95
+          for: 2m
+          annotations:
+            summary: "Connection limit approaching on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Connection usage is {{ $value }}% on database {{ $labels.datname }}"
+          labels:
+            severity: critical
+
+        # Storage
+        - alert: CNPGHighDiskUsage
+          expr: |
+            (cnpg_pg_database_size_bytes / cnpg_pg_tablespace_size_bytes) * 100 > 80
+          for: 5m
+          annotations:
+            summary: "High disk usage on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Disk usage is {{ $value }}% on {{ $labels.namespace }}/{{ $labels.cluster }}"
+          labels:
+            severity: warning
+
+        - alert: CNPGWALArchiveFailing
+          expr: |
+            cnpg_pg_stat_archiver_failed_count > 0
+          for: 15m
+          annotations:
+            summary: "WAL archive failing on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "{{ $value }} WAL segments failed to archive"
+          labels:
+            severity: warning
+
+        # Backup Status
+        - alert: CNPGBackupFailed
+          expr: |
+            cnpg_backup_status{status!="success"} == 1
+          for: 5m
+          annotations:
+            summary: "CNPG backup failed on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Last backup status: {{ $labels.status }}"
+          labels:
+            severity: critical
+
+        - alert: CNPGBackupStale
+          expr: |
+            time() - cnpg_backup_last_completed_timestamp > 86400
+          for: 1h
+          annotations:
+            summary: "CNPG backup is stale on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Last successful backup was {{ $value | humanizeDuration }} ago"
+          labels:
+            severity: warning
+
+        # Performance
+        - alert: CNPGSlowQueries
+          expr: |
+            rate(cnpg_pg_stat_database_tup_returned[5m]) > 10000 and
+            rate(cnpg_pg_stat_database_tup_fetched[5m]) / rate(cnpg_pg_stat_database_tup_returned[5m]) < 0.1
+          for: 10m
+          annotations:
+            summary: "Slow queries detected on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "Low fetch/return ratio on database {{ $labels.datname }}"
+          labels:
+            severity: warning
+
+        - alert: CNPGDeadlocks
+          expr: |
+            rate(cnpg_pg_stat_database_deadlocks[5m]) > 0
+          for: 5m
+          annotations:
+            summary: "Deadlocks detected on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            description: "{{ $value }} deadlocks/sec on database {{ $labels.datname }}"
+          labels:
+            severity: warning
+
+    - name: cnpg.pooler.rules
+      interval: 30s
+      rules:
+        # PgBouncer Health
+        - alert: PgBouncerDown
+          expr: |
+            up{job="pgbouncer-metrics"} == 0
+          for: 5m
+          annotations:
+            summary: "PgBouncer is down in {{ $labels.namespace }}"
+            description: "PgBouncer instance {{ $labels.pod }} is not responding"
+          labels:
+            severity: critical
+
+        # Connection Pool Saturation
+        - alert: PgBouncerPoolSaturation
+          expr: |
+            (pgbouncer_pools_server_active / pgbouncer_pools_max_connections) * 100 > 80
+          for: 5m
+          annotations:
+            summary: "PgBouncer pool saturation in {{ $labels.namespace }}"
+            description: "Pool {{ $labels.database }} is {{ $value }}% saturated"
+          labels:
+            severity: warning
+
+        - alert: PgBouncerPoolExhaustion
+          expr: |
+            (pgbouncer_pools_server_active / pgbouncer_pools_max_connections) * 100 > 95
+          for: 2m
+          annotations:
+            summary: "PgBouncer pool exhaustion in {{ $labels.namespace }}"
+            description: "Pool {{ $labels.database }} is {{ $value }}% full"
+          labels:
+            severity: critical
+
+        # Pooler vs Cluster Connection Coordination Alert
+        - alert: PgBouncerExceedingPostgresLimit
+          expr: |
+            pgbouncer_pools_max_connections
+            > on(namespace) group_left
+            cnpg_pg_settings_max_connections * 0.85
+          for: 5m
+          annotations:
+            summary: "PgBouncer pool limits exceed PostgreSQL capacity"
+            description: "Pool configured for {{ $value }} connections but PostgreSQL max is lower"
+          labels:
+            severity: warning
+
+        # Client Wait Time
+        - alert: PgBouncerHighWaitTime
+          expr: |
+            pgbouncer_stats_avg_wait_time > 1
+          for: 5m
+          annotations:
+            summary: "High client wait time in {{ $labels.namespace }}"
+            description: "Average wait time is {{ $value }}s for database {{ $labels.database }}"
+          labels:
+            severity: warning
+
+        # Queue Buildup
+        - alert: PgBouncerQueueBacklog
+          expr: |
+            pgbouncer_pools_client_waiting > 10
+          for: 5m
+          annotations:
+            summary: "PgBouncer queue backlog in {{ $labels.namespace }}"
+            description: "{{ $value }} clients waiting for connections to {{ $labels.database }}"
+          labels:
+            severity: warning
