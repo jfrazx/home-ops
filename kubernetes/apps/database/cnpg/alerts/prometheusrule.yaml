@@ -13,11 +13,11 @@ spec:
         # Cluster Health
         - alert: CNPGClusterDown
           expr: |
-            cnpg_pg_replication_slots_active == 0
+            cnpg_pg_replication_in_recovery >= 1 and cnpg_pg_replication_slots_active == 0
           for: 5m
           annotations:
-            summary: "CNPG cluster {{ $labels.namespace }}/{{ $labels.cluster }} has no active instances"
-            description: "PostgreSQL cluster {{ $labels.namespace }}/{{ $labels.cluster }} has been down for 5 minutes"
+            summary: "CNPG cluster {{ $labels.namespace }}/{{ $labels.cluster }} has no active instances (replication expected)"
+            description: "PostgreSQL cluster {{ $labels.namespace }}/{{ $labels.cluster }} has been down for 5 minutes (replication expected)"
           labels:
             severity: critical
 
