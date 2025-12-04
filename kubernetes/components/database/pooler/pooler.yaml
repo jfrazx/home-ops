@@ -1,0 +1,74 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: &app ${APP}-postgres-pooler
+  namespace: &namespace ${NAMESPACE}
+  labels:
+    kustomize.toolkit.fluxcd.io/name: *app
+    kustomize.toolkit.fluxcd.io/namespace: *namespace
+  annotations:
+    reloader.stakater.com/auto: "true"
+    kustomize.toolkit.fluxcd.io/substitute: "true"
+
+spec:
+  cluster:
+    name: ${APP}-postgres
+
+  instances: ${POOLER_INSTANCES:=2}
+  type: ${POOLER_TYPE:=rw}
+
+  pgbouncer:
+    poolMode: ${POOLER_POOL_MODE:=transaction}
+    parameters:
+      max_client_conn: "${POOLER_MAX_CLIENT_CONN:=200}"
+      default_pool_size: "${POOLER_DEFAULT_POOL_SIZE:=25}"
+      max_db_connections: "${POOLER_MAX_DB_CONNECTIONS:=20}"
+      max_user_connections: "${POOLER_MAX_USER_CONNECTIONS:=0}"
+      reserve_pool_size: "${POOLER_RESERVE_POOL_SIZE:=5}"
+      reserve_pool_timeout: "${POOLER_RESERVE_POOL_TIMEOUT:=5}"
+      log_connections: "0"
+      log_disconnections: "0"
+      application_name_add_host: "1"
+
+  monitoring:
+    enablePodMonitor: true
+
+  deployment:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: &name pgbouncer
+    spec:
+      containers:
+      - name: *name
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 999
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+
+  resources:
+    requests:
+      cpu: ${POOLER_CPU_REQUEST:=100m}
+      memory: ${POOLER_MEMORY_REQUEST:=128Mi}
+    limits:
+      cpu: ${POOLER_CPU_LIMIT:=500m}
+      memory: ${POOLER_MEMORY_LIMIT:=256Mi}
+
+  affinity:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule

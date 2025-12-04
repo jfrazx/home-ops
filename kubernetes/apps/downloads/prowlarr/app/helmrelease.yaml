@@ -82,6 +82,12 @@ spec:
       config:
         existingClaim: prowlarr-config
 
+      tmp:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+
     route:
       app:
         hostnames:

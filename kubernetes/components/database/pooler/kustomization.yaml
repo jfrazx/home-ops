@@ -1,0 +1,38 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./pooler.yaml
+
+configMapGenerator:
+  - name: pooler-defaults
+    literals:
+      - POOLER_INSTANCES=2
+      - POOLER_TYPE=rw
+      - POOLER_POOL_MODE=transaction
+
+      # Connection Limit Coordination:
+      #
+      # POOLER_MAX_DB_CONNECTIONS must be < POSTGRES_MAX_CONNECTIONS
+      # Recommended: POOLER_MAX_DB_CONNECTIONS = 0.8 * POSTGRES_MAX_CONNECTIONS
+      #
+      # Example calculations:
+      # - POSTGRES_MAX_CONNECTIONS=100 → POOLER_MAX_DB_CONNECTIONS=80
+      # - POSTGRES_MAX_CONNECTIONS=200 → POOLER_MAX_DB_CONNECTIONS=160
+      # - POSTGRES_MAX_CONNECTIONS=500 → POOLER_MAX_DB_CONNECTIONS=400
+      #
+      # Memory sizing:
+      # POOLER_MEMORY_REQUEST ≈ (POOLER_MAX_CLIENT_CONN * 0.25MB) + 50MB overhead
+
+      - POOLER_MAX_DB_CONNECTIONS=80
+      - POOLER_DEFAULT_POOL_SIZE=25
+      - POOLER_MAX_CLIENT_CONN=500
+      - POOLER_MAX_USER_CONNECTIONS=0
+      - POOLER_RESERVE_POOL_SIZE=5
+      - POOLER_RESERVE_POOL_TIMEOUT=5
+
+      # Resources
+      - POOLER_CPU_REQUEST=100m
+      - POOLER_MEMORY_REQUEST=128Mi
+      - POOLER_CPU_LIMIT=500m
+      - POOLER_MEMORY_LIMIT=256Mi

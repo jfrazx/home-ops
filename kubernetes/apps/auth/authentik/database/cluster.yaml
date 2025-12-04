@@ -35,10 +35,10 @@ spec:
       maintenance_work_mem: "64MB"
       work_mem: "8MB"
 
-      log_statement: "all"
-      log_duration: "on"
+      log_statement: "ddl"
+      log_duration: "off"
       log_lock_waits: "on"
-      log_min_duration_statement: "1000"
+      log_min_duration_statement: "5000"
 
       random_page_cost: "1.1"
       effective_io_concurrency: "200"
@@ -49,7 +49,7 @@ spec:
       wal_keep_size: "512MB"
 
   storage:
-    size: "10Gi"
+    size: "15Gi"
     storageClass: "ceph-block"
 
   monitoring:
