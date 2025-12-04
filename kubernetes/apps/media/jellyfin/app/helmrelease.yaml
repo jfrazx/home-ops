@@ -75,6 +75,7 @@ spec:
             fsGroup: 1001
             fsGroupChangePolicy: "OnRootMismatch"
             runAsNonRoot: true
+            supplementalGroups: [568]
 
     service:
       app:
@@ -115,20 +116,31 @@ spec:
         path: "/mnt/${SECRET_NFS_SHARE}/media"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
-          - path: /media/movies
-            subPath: movies
-          - path: /media/movies-4k
-            subPath: movies-4k
-          - path: /media/shows
-            subPath: shows
-          - path: /media/shows-4k
-            subPath: shows-4k
-          - path: /media/mp3
-            subPath: mp3
-          - path: /media/flac
-            subPath: flac
-          - path: /media/music-videos
-            subPath: music-videos
+          - path: /media
+          # /audiobooks
+          #   subPath: audiobooks
+          # - path: /media/comics
+          #   subPath: comics
+          # - path: /media/ebooks
+          #   subPath: ebooks
+          # - path: /media/anime
+          #   subPath: anime
+          # - path: /media/anime-4k
+          #   subPath: anime-4k
+          # - path: /media/movies
+          #   subPath: movies
+          # - path: /media/movies-4k
+          #   subPath: movies-4k
+          # - path: /media/shows
+          #   subPath: shows
+          # - path: /media/shows-4k
+          #   subPath: shows-4k
+          # - path: /media/mp3
+          #   subPath: mp3
+          # - path: /media/flac
+          #   subPath: flac
+          # - path: /media/music-videos
+          #   subPath: music-videos
 
     route:
       app:
