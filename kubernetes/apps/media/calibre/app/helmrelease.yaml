@@ -89,6 +89,11 @@ spec:
       tmp:
         type: emptyDir
 
+      run:
+        type: emptyDir
+        globalMounts:
+          - path: /run
+
     route:
       calibre:
         hostnames:
