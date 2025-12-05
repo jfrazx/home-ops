@@ -48,8 +48,6 @@ spec:
                 memory: 250M
 
             securityContext:
-              # allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
               capabilities:
                 drop:
                   - ALL
@@ -57,13 +55,8 @@ spec:
     defaultPodOptions:
       securityContext:
         fsGroup: 1001
-        runAsGroup: 1001
-        # runAsNonRoot: true
-        runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
-
-    enableServiceLinks: false
 
     service:
       calibre:
@@ -88,11 +81,6 @@ spec:
 
       tmp:
         type: emptyDir
-
-      # run:
-      #   type: emptyDir
-      #   globalMounts:
-      #     - path: /run
 
     route:
       calibre:
