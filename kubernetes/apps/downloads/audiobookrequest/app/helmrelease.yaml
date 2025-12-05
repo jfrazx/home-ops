@@ -1,0 +1,114 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app audiobookrequest
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    controllers:
+      audiobookrequest:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.1.0@sha256:866f15038ed5185a2b8118821f470bb7ca0df8c4231b8e277446e681ebb1ed84
+
+            env:
+              INIT_POSTGRES_SUPER_PASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: downloads-postgres-superuser
+                    key: password
+
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+
+        containers:
+          app:
+            image:
+              repository: markbeep/audiobookrequest
+              tag: 1.8.0@sha256:42a76015746f1ac60c11afbf0805edff799b36bae8e0e1e94990875dbf057bd6
+            env:
+              LOG_LEVEL: "info"
+              ABR_APP__PORT: &port 8000
+              ABR_DB__USE_POSTGRES: true
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+            resources:
+              requests:
+                cpu: 15m
+                memory: 145M
+              limits:
+                memory: 196M
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}-config"
+        globalMounts:
+          - path: /config
+
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
