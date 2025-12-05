@@ -84,7 +84,7 @@ spec:
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
           - path: /data/media/ebooks
-            subPath: ebooks
+            subPath: ebook
 
       tmp:
         type: emptyDir
