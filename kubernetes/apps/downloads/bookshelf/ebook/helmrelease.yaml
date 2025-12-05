@@ -51,6 +51,7 @@ spec:
             command: ["/usr/bin/catatonit", "--", "/entrypoint.sh"]
 
             env:
+              READARR__APP__INSTANCENAME: eBookshelf
               READARR__AUTH__METHOD: External
               READARR__AUTH__REQUIRED: DisabledForLocalAddresses
               READARR__LOG__DBENABLED: "False"
