@@ -1,0 +1,103 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app calibre
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    controllers:
+      calibre:
+        containers:
+          app:
+            image:
+              repository: ghcr.io/linuxserver/calibre
+              tag: 8.15.0@sha256:364083f5bee4290a8decf0d3a0480260eb24347509e82a79d08e1c2c723ed431
+
+            env:
+              PUID: "1001"
+              PGID: "1001"
+
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+
+            resources:
+              limits:
+                cpu: 800m
+                memory: 800M
+              requests:
+                cpu: 15m
+                memory: 250M
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
+
+    enableServiceLinks: false
+
+    service:
+      calibre:
+        controller: *app
+        ports:
+          http:
+            port: &port 8081
+
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}-config"
+        globalMounts:
+          - path: /config
+
+      media:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media"
+        server: "${SECRET_NFS_SERVER}"
+        globalMounts:
+          - path: /data/media/ebooks
+            subPath: ebooks
+
+      tmp:
+        type: emptyDir
+
+    route:
+      calibre:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: *app
+                port: *port
