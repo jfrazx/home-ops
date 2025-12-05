@@ -48,7 +48,7 @@ spec:
                 memory: 250M
 
             securityContext:
-              allowPrivilegeEscalation: false
+              # allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
                 drop:
@@ -58,7 +58,7 @@ spec:
       securityContext:
         fsGroup: 1001
         runAsGroup: 1001
-        runAsNonRoot: true
+        # runAsNonRoot: true
         runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
@@ -89,10 +89,10 @@ spec:
       tmp:
         type: emptyDir
 
-      run:
-        type: emptyDir
-        globalMounts:
-          - path: /run
+      # run:
+      #   type: emptyDir
+      #   globalMounts:
+      #     - path: /run
 
     route:
       calibre:
