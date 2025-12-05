@@ -52,6 +52,9 @@ spec:
               LOG_LEVEL: "info"
               ABR_APP__PORT: &port 8000
               ABR_DB__USE_POSTGRES: true
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
 
             probes:
               liveness: &probes
