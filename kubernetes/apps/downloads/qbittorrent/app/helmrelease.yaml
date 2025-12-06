@@ -140,6 +140,15 @@ spec:
       tmp:
         type: emptyDir
 
+  tun:
+    type: hostPath
+    hostPath: /dev/net/tun
+    hostPathType: CharDevice
+    advancedMounts:
+      qbittorrent:
+        gluetun:
+          - path: /dev/net/tun
+
     route:
       app:
         hostnames:
