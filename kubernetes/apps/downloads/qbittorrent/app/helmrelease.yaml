@@ -55,6 +55,9 @@ spec:
               repository: ghcr.io/home-operations/qbittorrent
               tag: 5.1.4
 
+            dependsOn:
+              - gluetun
+
             env:
               QBT_WEBUI_PORT: &webPort 8080
               QBT_TORRENTING_PORT: &torrentPort 51478
