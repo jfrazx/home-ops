@@ -32,16 +32,17 @@ spec:
               tag: v3.40.3@sha256:ef4a44819a60469682c7b5e69183e6401171891feaa60186652d292c59e41b30
 
             securityContext:
+              privileged: true
               runAsUser: 0
               runAsGroup: 0
               runAsNonRoot: false
               allowPrivilegeEscalation: true
+              readOnlyRootFilesystem: false
               capabilities:
                 drop:
                   - ALL
                 add:
                   - NET_ADMIN
-              readOnlyRootFilesystem: false
 
             env:
               TZ: ${TIMEZONE}
@@ -63,8 +64,8 @@ spec:
               # QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELIST: "10.168.0.0/16"
               # QBT_PREFERENCES__WEBUI__LOCALHOSTAUTH: "false"
 
-              # QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACE: "eth0"
-              # QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACENAME: "eth0"
+              QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACE: "eth0"
+              QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACENAME: "eth0"
 
             nameOverride: *app
 
@@ -140,14 +141,14 @@ spec:
       tmp:
         type: emptyDir
 
-  tun:
-    type: hostPath
-    hostPath: /dev/net/tun
-    hostPathType: CharDevice
-    advancedMounts:
-      qbittorrent:
-        gluetun:
-          - path: /dev/net/tun
+      # tun:
+      #   type: hostPath
+      #   hostPath: /dev/net/tun
+      #   hostPathType: CharDevice
+      #   advancedMounts:
+      #     qbittorrent:
+      #       gluetun:
+      #         - path: /dev/net/tun
 
     route:
       app:
