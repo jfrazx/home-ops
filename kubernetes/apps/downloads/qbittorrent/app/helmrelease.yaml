@@ -41,6 +41,7 @@ spec:
                   - NET_ADMIN
                 drop:
                   - ALL
+              readOnlyRootFilesystem: false
 
             env:
               TZ: ${TIMEZONE}
