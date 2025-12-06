@@ -37,10 +37,10 @@ spec:
               runAsNonRoot: false
               allowPrivilegeEscalation: false
               capabilities:
-                add:
-                  - NET_ADMIN
                 drop:
                   - ALL
+                add:
+                  - NET_ADMIN
               readOnlyRootFilesystem: false
 
             env:
