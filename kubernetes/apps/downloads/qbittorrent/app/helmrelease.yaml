@@ -26,6 +26,17 @@ spec:
               type: RuntimeDefault
 
         containers:
+          gluetun:
+            image:
+              repository: ghcr.io/qdm12/gluetun
+              tag: v3.40.3@sha256:ef4a44819a60469682c7b5e69183e6401171891feaa60186652d292c59e41b30
+
+            env:
+              TZ: ${TIMEZONE}
+            envFrom:
+              - secretRef:
+                  name: gluetun-secret
+
           app:
             image:
               repository: ghcr.io/home-operations/qbittorrent
@@ -35,13 +46,13 @@ spec:
               QBT_WEBUI_PORT: &webPort 8080
               QBT_TORRENTING_PORT: &torrentPort 51478
 
-              QBT_PREFERENCES__WEBUI__ALTERNATIVEUIENABLED: "false"
-              QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELISTENABLED: "true"
-              QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELIST: "10.168.0.0/16"
-              QBT_PREFERENCES__WEBUI__LOCALHOSTAUTH: "false"
+              # QBT_PREFERENCES__WEBUI__ALTERNATIVEUIENABLED: "false"
+              # QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELISTENABLED: "true"
+              # QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELIST: "10.168.0.0/16"
+              # QBT_PREFERENCES__WEBUI__LOCALHOSTAUTH: "false"
 
-              QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACE: "eth0"
-              QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACENAME: "eth0"
+              # QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACE: "eth0"
+              # QBT_PREFERENCES__BITTORRENT__SESSION__INTERFACENAME: "eth0"
 
             nameOverride: *app
 
@@ -81,19 +92,19 @@ spec:
             port: *webPort
         primary: true
 
-      torrents:
-        controller: *app
-        type: LoadBalancer
-        annotations:
-          io.cilium/lb-ipam-ips: "10.168.2.105"
-        externalTrafficPolicy: Local
-        ports:
-          bittorrent-tcp:
-            port: *torrentPort
-            protocol: TCP
-          bittorrent-udp:
-            port: *torrentPort
-            protocol: UDP
+      # torrents:
+      #   controller: *app
+      #   type: LoadBalancer
+      #   annotations:
+      #     io.cilium/lb-ipam-ips: "10.168.2.105"
+      #   externalTrafficPolicy: Local
+      #   ports:
+      #     bittorrent-tcp:
+      #       port: *torrentPort
+      #       protocol: TCP
+      #     bittorrent-udp:
+      #       port: *torrentPort
+      #       protocol: UDP
 
     persistence:
       config:
