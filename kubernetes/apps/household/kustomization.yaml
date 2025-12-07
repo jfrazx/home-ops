@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: household
 components:
   - ../../components/common
+  - ../../components/common/secrets
   - ../../components/flux/alerts
 resources:
   - ./mealie/ks.yaml

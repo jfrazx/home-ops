@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./cluster.yaml
+  - ./externalsecret.yaml
+
+configMapGenerator:
+  - name: percona-mysql-defaults
+    literals:
+      - MYSQL_VERSION="8.0.44-35"
+      - MYSQL_INSTANCES="2"
+      - MYSQL_STORAGE_SIZE="10Gi"
+      - MYSQL_STORAGE_CLASS="ceph-block"
+
+      # HAProxy Configuration (built-in connection pooling)
+      - MYSQL_HAPROXY_ENABLED="true"
+      - MYSQL_HAPROXY_INSTANCES="1"
+      - MYSQL_HAPROXY_CPU_REQUEST="50m"
+      - MYSQL_HAPROXY_MEMORY_REQUEST="64Mi"
+      - MYSQL_HAPROXY_CPU_LIMIT="500m"
+      - MYSQL_HAPROXY_MEMORY_LIMIT="256Mi"
+
+      # MySQL Configuration
+      - MYSQL_MAX_CONNECTIONS="200"
+      - MYSQL_INNODB_BUFFER_POOL_SIZE="256M"
+      - MYSQL_INNODB_LOG_FILE_SIZE="256M"
+
+      # Resources
+      - MYSQL_CPU_REQUEST="100m"
+      - MYSQL_MEMORY_REQUEST="256Mi"
+      - MYSQL_CPU_LIMIT="1000m"
+      - MYSQL_MEMORY_LIMIT="1Gi"
+
+      # Backup Configuration
+      - MYSQL_BACKUP_ENABLED="true"
+      - MYSQL_BACKUP_SCHEDULE="0 2 * * *"
+      - MYSQL_BACKUP_KEEP="7"
+      - MYSQL_BACKUP_STORAGE="s3"
+      - MYSQL_BACKUP_ENDPOINT="http://minio.storage.svc.cluster.local:9000"
+      - MYSQL_BACKUP_BUCKET="mysql-backups"
+
+      # Monitoring
+      - MYSQL_MONITORING_ENABLED="true"
