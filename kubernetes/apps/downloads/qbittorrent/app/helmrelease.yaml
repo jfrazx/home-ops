@@ -60,7 +60,7 @@ spec:
 
             env:
               QBT_WEBUI_PORT: &webPort 8080
-              QBT_TORRENTING_PORT: &torrentPort 51478
+              QBT_TORRENTING_PORT: &torrentPort 53712
 
               # QBT_PREFERENCES__WEBUI__ALTERNATIVEUIENABLED: "false"
               # QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELISTENABLED: "true"
