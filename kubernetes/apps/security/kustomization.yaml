@@ -11,7 +11,7 @@ patches:
   - target:
       kind: Namespace
       name: security
-    patch: |
+    patch: |-
       - op: add
         path: /metadata/labels
         value:

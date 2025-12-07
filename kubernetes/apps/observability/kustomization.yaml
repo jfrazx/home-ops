@@ -17,7 +17,7 @@ patches:
   - target:
       kind: Namespace
       name: *namespace
-    patch: |
+    patch: |-
       - op: add
         path: /metadata/labels
         value:
