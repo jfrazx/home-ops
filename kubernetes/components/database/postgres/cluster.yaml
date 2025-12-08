@@ -48,9 +48,9 @@ spec:
   postgresql:
     parameters:
       # Connection limits
-      max_connections: ${POSTGRES_MAX_CONNECTIONS:="100"}
-      max_wal_senders: ${POSTGRES_MAX_WAL_SENDERS:="5"}
-      max_replication_slots: ${POSTGRES_MAX_REPLICATION_SLOTS:="5"}
+      max_connections: "${POSTGRES_MAX_CONNECTIONS:='100'}"
+      max_wal_senders: "${POSTGRES_MAX_WAL_SENDERS:='5'}"
+      max_replication_slots: "${POSTGRES_MAX_REPLICATION_SLOTS:='5'}"
 
       # Memory
       shared_buffers: ${POSTGRES_SHARED_BUFFERS:="256MB"}
@@ -59,8 +59,8 @@ spec:
       work_mem: ${POSTGRES_WORK_MEM:="8MB"}
 
       # Performance
-      random_page_cost: ${POSTGRES_RANDOM_PAGE_COST:="1.1"}
-      effective_io_concurrency: ${POSTGRES_EFFECTIVE_IO_CONCURRENCY:="200"}
+      random_page_cost: "${POSTGRES_RANDOM_PAGE_COST:='1.1'}"
+      effective_io_concurrency: "${POSTGRES_EFFECTIVE_IO_CONCURRENCY:='200'}"
 
       # WAL
       wal_level: ${POSTGRES_WAL_LEVEL:="replica"}
@@ -70,7 +70,7 @@ spec:
       log_statement: ${POSTGRES_LOG_STATEMENT:="ddl"}
       log_duration: "off"
       log_lock_waits: ${POSTGRES_LOG_LOCK_WAITS:="on"}
-      log_min_duration_statement: ${POSTGRES_LOG_MIN_DURATION_STATEMENT:="5000"}
+      log_min_duration_statement: "${POSTGRES_LOG_MIN_DURATION_STATEMENT:='5000'}"
 
   storage:
     size: ${POSTGRES_STORAGE_SIZE:="10Gi"}
@@ -84,7 +84,7 @@ spec:
       cpu: ${POSTGRES_CPU_REQUEST:="250m"}
       memory: ${POSTGRES_MEMORY_REQUEST:="1Gi"}
     limits:
-      cpu: ${POSTGRES_CPU_LIMIT:="2"}
+      cpu: "${POSTGRES_CPU_LIMIT:='2'}"
       memory: ${POSTGRES_MEMORY_LIMIT:="2Gi"}
 
   affinity:
