@@ -10,10 +10,10 @@ configMapGenerator:
   - name: database-config-overrides
     behavior: create
     literals:
-      - max_db_connections="${POOLER_MAX_DB_CONNECTIONS:=20}"
-      - max_client_conn="${POOLER_MAX_CLIENT_CONN:=200}"
-      - default_pool_size="${POOLER_DEFAULT_POOL_SIZE:=25}"
-      - max_connections="${POSTGRES_MAX_CONNECTIONS:=100}"
+      - max_db_connections="${POOLER_MAX_DB_CONNECTIONS:='20'}"
+      - max_client_conn="${POOLER_MAX_CLIENT_CONN:='200'}"
+      - default_pool_size="${POOLER_DEFAULT_POOL_SIZE:='25'}"
+      - max_connections="${POSTGRES_MAX_CONNECTIONS:='100'}"
 
 replacements:
   - source:
