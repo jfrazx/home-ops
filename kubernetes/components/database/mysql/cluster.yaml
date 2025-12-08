@@ -92,7 +92,7 @@ spec:
 
   pmm:
     enabled: ${MYSQL_MONITORING_ENABLED:=false}
-    image: percona/pmm-client:2.43.2
+    image: percona/pmm-client:2.44.1
     serverHost: ${MYSQL_PMM_SERVER:=}
     serverUser: ${MYSQL_PMM_USER:=admin}
 
