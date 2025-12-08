@@ -1,0 +1,48 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+components:
+  - ../postgres
+  - ../pooler
+
+configMapGenerator:
+  - name: database-config-overrides
+    behavior: create
+    literals:
+      - max_db_connections=${POOLER_MAX_DB_CONNECTIONS:=20}
+      - max_client_conn=${POOLER_MAX_CLIENT_CONN:=200}
+      - default_pool_size=${POOLER_DEFAULT_POOL_SIZE:=25}
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:=100}
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: database-config-overrides
+      fieldPath: data.max_db_connections
+    targets:
+      - select:
+          kind: Pooler
+          name: ${APP}-postgres-pooler
+        fieldPaths:
+          - spec.pgbouncer.parameters.max_db_connections
+  - source:
+      kind: ConfigMap
+      name: database-config-overrides
+      fieldPath: data.max_client_conn
+    targets:
+      - select:
+          kind: Pooler
+          name: ${APP}-postgres-pooler
+        fieldPaths:
+          - spec.pgbouncer.parameters.max_client_conn
+  - source:
+      kind: ConfigMap
+      name: database-config-overrides
+      fieldPath: data.max_connections
+    targets:
+      - select:
+          kind: Cluster
+          name: ${APP}-postgres
+        fieldPaths:
+          - spec.postgresql.parameters.max_connections
