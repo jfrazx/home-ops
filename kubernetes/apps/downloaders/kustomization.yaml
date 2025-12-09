@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: &namespace downloaders
+components:
+  - ../../components/common
+  - ../../components/flux/alerts
+resources:
+  - ./nzbget/ks.yaml
+  - ./qbittorrent/ks.yaml
+patches:
+  - target:
+      kind: Namespace
+      name: *namespace
+    patch: |-
+      - op: add
+        path: /metadata/labels
+        value:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
