@@ -66,9 +66,9 @@ spec:
       config:
         existingClaim: "{{ .Release.Name }}"
 
-      media:
+      downloads:
         type: nfs
-        path: "/mnt/${SECRET_NFS_SHARE}/media/downloads/torrents"
+        path: "/mnt/${SECRET_NFS_SHARE}/media"
         server: "${SECRET_NFS_SERVER}"
         globalMounts:
           - path: /data/media/downloads/usenet
