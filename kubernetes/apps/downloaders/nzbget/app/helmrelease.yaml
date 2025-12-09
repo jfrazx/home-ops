@@ -64,7 +64,7 @@ spec:
 
     persistence:
       config:
-        existingClaim: "{{ .Release.Name }}"
+        existingClaim: "{{ .Release.Name }}-config"
 
       downloads:
         type: nfs
