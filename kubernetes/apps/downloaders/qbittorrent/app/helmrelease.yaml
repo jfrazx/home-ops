@@ -92,6 +92,28 @@ spec:
               runAsNonRoot: true
               runAsUser: 1001
 
+          mousehole:
+            image:
+              repository: tmmrtn/mousehole
+              tag: 0.2@sha256:9adfcfddb3395d33f0fbef50a6dc52a930769c57f2c0af2b3b9d6f7bfda6195c
+
+            dependsOn:
+              - gluetun
+
+            env:
+              MOUSEHOLE_PORT: &mousePort 5010
+              MOUSEHOLE_STATE_DIR_PATH: /config
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+              runAsGroup: 1001
+              runAsNonRoot: true
+              runAsUser: 1001
+
     service:
       app:
         controller: *app
@@ -99,6 +121,11 @@ spec:
           http:
             port: *webPort
         primary: true
+      mousehole:
+        controller: *app
+        ports:
+          http:
+            port: *mousePort
 
     persistence:
       config:
@@ -107,6 +134,9 @@ spec:
           qbittorrent:
             app:
               - path: /config
+            mousehole:
+              - path: /config
+                subPath: mousehole
 
       downloads:
         type: nfs
@@ -134,3 +164,14 @@ spec:
           - backendRefs:
               - identifier: app
                 port: *webPort
+      mousehole:
+        hostnames:
+          - "mousehole.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: mousehole
+                port: *mousePort
