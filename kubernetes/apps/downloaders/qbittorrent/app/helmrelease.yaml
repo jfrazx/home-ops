@@ -117,12 +117,14 @@ spec:
     service:
       app:
         controller: *app
+        forceRename: *app
         ports:
           http:
             port: *webPort
         primary: true
       mousehole:
         controller: *app
+        forceRename: mousehole
         ports:
           http:
             port: *mousePort
