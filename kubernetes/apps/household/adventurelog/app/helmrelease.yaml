@@ -1,0 +1,141 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app adventurelog
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  uninstall:
+    keepHistory: false
+
+  values:
+    controllers:
+      adventurelog:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.1.0@sha256:866f15038ed5185a2b8118821f470bb7ca0df8c4231b8e277446e681ebb1ed84
+              pullPolicy: IfNotPresent
+
+            envFrom: &secret
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            env:
+              INIT_POSTGRES_SUPER_PASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: household-postgres-superuser
+                    key: password
+
+        containers:
+          frontend:
+            image:
+              repository: ghcr.io/seanmorley15/adventurelog-frontend
+              tag: latest@sha256:ebf515de0ff344fe8c6c30d0eb2033ac4de3f2d5e89ad29c91f1c3727883339e
+
+            env:
+              PUBLIC_SERVER_URL: "https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}"
+              BODY_SIZE_LIMIT: Infinity
+
+            probes:
+              liveness: &probes
+                enabled: false
+              readiness: *probes
+              startup: *probes
+            resources:
+              requests:
+                cpu: 50m
+                memory: 100Mi
+
+          server:
+            image:
+              repository: ghcr.io/seanmorley15/adventurelog-backend
+              tag: latest@sha256:f385c8158aec211097e64c3130cef5ad2ba05f0643a653f2aae82aeadff24fd0
+
+            env:
+              PUBLIC_URL: https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}
+              FRONTEND_URL: https://adventure.${SECRET_DOMAIN}
+              CSRF_TRUSTED_ORIGINS: https://{{ .Release.Name }}-backend.${SECRET_DOMAIN},https://adventure.${SECRET_DOMAIN}
+              DEBUG: "true"
+              DJANGO_ADMIN_USERNAME: admin
+            envFrom: *secret
+
+            probes:
+              liveness: &probes
+                enabled: false
+              readiness: *probes
+              startup: *probes
+            resources:
+              requests:
+                cpu: 125m
+                memory: 500Mi
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: &frontendPort 3000
+          base:
+            port: &serverPort 8000
+
+    persistence:
+      config:
+        enabled: true
+        existingClaim: "{{ .Release.Name }}-config"
+        globalMounts:
+          - path: /code/media
+
+    route:
+      frontend:
+        enabled: true
+        kind: HTTPRoute
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        hostnames:
+          - "adventure.${SECRET_DOMAIN}"
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *frontendPort
+            matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+
+      server:
+        enabled: true
+        kind: HTTPRoute
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        hostnames:
+          - "{{ .Release.Name }}-backend.${SECRET_DOMAIN}"
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *serverPort
+            matches:
+              - path:
+                  type: PathPrefix
+                  value: /

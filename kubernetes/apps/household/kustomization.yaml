@@ -8,4 +8,6 @@ components:
   - ../../components/common/secrets
   - ../../components/flux/alerts
 resources:
+  - ./adventurelog/ks.yaml
+  - ./database/ks.yaml
   - ./mealie/ks.yaml

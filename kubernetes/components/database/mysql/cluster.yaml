@@ -10,29 +10,41 @@ metadata:
     kustomize.toolkit.fluxcd.io/namespace: flux-system
   annotations:
     reloader.stakater.com/auto: "true"
-    kustomize.toolkit.fluxcd.io/substitute: "true"
 
 spec:
   crVersion: 1.16.1
   allowUnsafeConfigurations: false
 
   secretsName: ${APP}-mysql-secrets
-  sslSecretName: ${APP}-mysql-ssl-secrets
+  sslSecretName: ${APP}-mysql-ssl
   sslInternalSecretName: ${APP}-mysql-ssl-internal
 
+  updateStrategy: SmartUpdate
+  upgradeOptions:
+    versionServiceEndpoint: https://check.percona.com
+    apply: disabled
+    schedule: "0 4 * * *"
+
   pxc:
-    size: ${MYSQL_INSTANCES:=1}
-    image: percona/percona-xtradb-cluster:${MYSQL_VERSION:=8.0.44-35}
+    size: ${{MYSQL_INSTANCES}}
+    image: percona/percona-xtradb-cluster:${{MYSQL_VERSION}}
 
     imagePullPolicy: IfNotPresent
 
+    autoRecovery: true
+
+    expose:
+      enabled: false
+
+    replicasServiceEnabled: true
+
     resources:
       requests:
-        cpu: ${MYSQL_CPU_REQUEST:=100m}
-        memory: ${MYSQL_MEMORY_REQUEST:=256Mi}
+        cpu: ${{MYSQL_CPU_REQUEST}}
+        memory: ${{MYSQL_MEMORY_REQUEST}}
       limits:
-        cpu: ${MYSQL_CPU_LIMIT:=1000m}
-        memory: ${MYSQL_MEMORY_LIMIT:=1Gi}
+        cpu: ${{MYSQL_CPU_LIMIT}}
+        memory: ${{MYSQL_MEMORY_LIMIT}}
 
     affinity:
       antiAffinityTopologyKey: kubernetes.io/hostname
@@ -42,17 +54,17 @@ spec:
 
     volumeSpec:
       persistentVolumeClaim:
-        storageClassName: ${MYSQL_STORAGE_CLASS:=ceph-block}
+        storageClassName: ${{MYSQL_STORAGE_CLASS}}
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: ${MYSQL_STORAGE_SIZE:=10Gi}
+            storage: ${{MYSQL_STORAGE_SIZE}}
 
     configuration: |
       [mysqld]
-      max_connections=${MYSQL_MAX_CONNECTIONS:=200}
-      innodb_buffer_pool_size=${MYSQL_INNODB_BUFFER_POOL_SIZE:=256M}
-      innodb_log_file_size=${MYSQL_INNODB_LOG_FILE_SIZE:=256M}
+      max_connections=${{MYSQL_MAX_CONNECTIONS}}
+      innodb_buffer_pool_size=${{MYSQL_INNODB_BUFFER_POOL_SIZE}}
+      innodb_log_file_size=${{MYSQL_INNODB_LOG_FILE_SIZE}}
       innodb_flush_log_at_trx_commit=2
       innodb_flush_method=O_DIRECT
       innodb_file_per_table=1
@@ -70,52 +82,125 @@ spec:
       character_set_server=utf8mb4
       collation_server=utf8mb4_unicode_ci
 
+    # Security context - run as non-root
+    containerSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
+    podSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+
+    livenessProbes:
+      initialDelaySeconds: 300
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+
+    readinessProbes:
+      initialDelaySeconds: 15
+      periodSeconds: 30
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 5
+
   haproxy:
-    enabled: ${MYSQL_HAPROXY_ENABLED:=true}
-    size: ${MYSQL_HAPROXY_INSTANCES:=1}
-    image: percona/percona-xtradb-cluster-operator:1.18.0-haproxy
+    enabled: ${{MYSQL_HAPROXY_ENABLED}}
+    size: ${{MYSQL_HAPROXY_INSTANCES}}
+    image: percona/percona-xtradb-cluster-operator:1.16.1-haproxy
 
     imagePullPolicy: IfNotPresent
 
     resources:
       requests:
-        cpu: ${MYSQL_HAPROXY_CPU_REQUEST:=50m}
-        memory: ${MYSQL_HAPROXY_MEMORY_REQUEST:=64Mi}
+        cpu: ${{MYSQL_HAPROXY_CPU_REQUEST}}
+        memory: ${{MYSQL_HAPROXY_MEMORY_REQUEST}}
       limits:
-        cpu: ${MYSQL_HAPROXY_CPU_LIMIT:=500m}
-        memory: ${MYSQL_HAPROXY_MEMORY_LIMIT:=256Mi}
+        cpu: ${{MYSQL_HAPROXY_CPU_LIMIT}}
+        memory: ${{MYSQL_HAPROXY_MEMORY_LIMIT}}
 
     serviceType: ClusterIP
 
     affinity:
       antiAffinityTopologyKey: kubernetes.io/hostname
 
+    podDisruptionBudget:
+      maxUnavailable: 1
+
+    # Security context for HAProxy
+    containerSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
+    podSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+
+    livenessProbes:
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 4
+
+    readinessProbes:
+      initialDelaySeconds: 15
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
   pmm:
-    enabled: ${MYSQL_MONITORING_ENABLED:=false}
-    image: percona/pmm-client:3.5.0
-    serverHost: ${MYSQL_PMM_SERVER:=}
-    serverUser: ${MYSQL_PMM_USER:=admin}
+    enabled: false
+    image: percona/pmm-client:2
+    serverHost: ""
 
   backup:
-    enabled: ${MYSQL_BACKUP_ENABLED:=true}
+    enabled: ${{MYSQL_BACKUP_ENABLED}}
     image: percona/percona-xtradb-cluster-operator:1.16.1-pxc8.0-backup
 
     imagePullPolicy: IfNotPresent
 
+    # Security context for backups
+    containerSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
     schedule:
       - name: daily
-        schedule: ${MYSQL_BACKUP_SCHEDULE:=0 2 * * *}
-        keep: ${MYSQL_BACKUP_KEEP:=7}
-        storageName: ${MYSQL_BACKUP_STORAGE:=s3}
+        schedule: ${{MYSQL_BACKUP_SCHEDULE}}
+        keep: ${{MYSQL_BACKUP_KEEP}}
+        storageName: s3
 
     storages:
       s3:
         type: s3
-        endpointUrl: ${MYSQL_BACKUP_ENDPOINT:=http://minio.storage.svc.cluster.local:9000}
-        bucket: ${MYSQL_BACKUP_BUCKET:=mysql-backups}
-        prefix: ${APP}
+        endpointUrl: ${{MYSQL_BACKUP_ENDPOINT}}
+        bucket: ${{MYSQL_BACKUP_BUCKET}}
+        prefix: ${{MYSQL_BACKUP_PREFIX}}
         credentialsSecret: ${APP}-mysql-backup-s3
-
-        # Optional: configure storage class for backups
-        # region: us-east-1
-        # storageClass: STANDARD
+        region: us-west-1
