@@ -56,7 +56,7 @@ spec:
 
             probes:
               liveness: &probes
-                enabled: false
+                enabled: true
               readiness: *probes
               startup: *probes
             resources:
@@ -73,13 +73,13 @@ spec:
               PUBLIC_URL: https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}
               FRONTEND_URL: https://adventure.${SECRET_DOMAIN}
               CSRF_TRUSTED_ORIGINS: https://{{ .Release.Name }}-backend.${SECRET_DOMAIN},https://adventure.${SECRET_DOMAIN}
-              DEBUG: "true"
+              DEBUG: "false"
               DJANGO_ADMIN_USERNAME: admin
             envFrom: *secret
 
             probes:
               liveness: &probes
-                enabled: false
+                enabled: true
               readiness: *probes
               startup: *probes
             resources:
