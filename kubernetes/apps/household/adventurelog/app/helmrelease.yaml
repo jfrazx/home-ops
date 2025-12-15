@@ -98,14 +98,14 @@ spec:
 
     persistence:
       config:
-        enabled: false
+        enabled: true
         existingClaim: "{{ .Release.Name }}-config"
         globalMounts:
           - path: /code/media
 
     route:
       frontend:
-        enabled: false
+        enabled: true
         kind: HTTPRoute
         parentRefs:
           - name: internal
@@ -123,7 +123,7 @@ spec:
                   value: /
 
       server:
-        enabled: false
+        enabled: true
         kind: HTTPRoute
         parentRefs:
           - name: internal
