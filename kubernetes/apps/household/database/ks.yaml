@@ -29,8 +29,9 @@ spec:
     substitute:
       APP: *namespace
       NAMESPACE: *namespace
-      POSTGRES_VERSION: "18.1"
+      POSTGRES_VERSION: "18.1-3.6.1-system-trixie@sha256:2ed181bc7e5e6a66b3b4718bd08617fca258d2f28b9c75b2e69e753840edc818"
       POSTGRES_MEMORY_LIMIT: "4Gi"
+      POSTGRES_IMAGE_NAME: "postgis"
       POSTGRES_ENABLE_SUPERUSER: "true"
       POSTGRES_STORAGE_CLASS: truenas-iscsi
       POSTGRES_BACKUP_SCHEDULE: "30 5 * * *"

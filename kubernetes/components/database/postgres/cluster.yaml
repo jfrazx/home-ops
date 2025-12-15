@@ -16,7 +16,7 @@ spec:
   enableSuperuserAccess: ${POSTGRES_ENABLE_SUPERUSER:=false}
 
   instances: ${POSTGRES_INSTANCES:=3}
-  imageName: ghcr.io/cloudnative-pg/postgresql:${POSTGRES_VERSION:=18.0}
+  imageName: ghcr.io/cloudnative-pg/${POSTGRES_IMAGE_NAME:=postgresql}:${POSTGRES_VERSION:=18.0}
 
   bootstrap:
     initdb:

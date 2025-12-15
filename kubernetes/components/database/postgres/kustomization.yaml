@@ -11,7 +11,8 @@ resources:
 configMapGenerator:
   - name: postgres-defaults
     literals:
-      - POSTGRES_VERSION="18.0"
+      - POSTGRES_IMAGE_NAME="postgresql"
+      - POSTGRES_VERSION="18.1"
       - POSTGRES_INSTANCES="2"
       - POSTGRES_STORAGE_SIZE="10Gi"
       - POSTGRES_ENABLE_SUPERUSER="false"
