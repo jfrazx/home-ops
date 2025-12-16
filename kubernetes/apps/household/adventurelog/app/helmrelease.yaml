@@ -74,7 +74,6 @@ spec:
               FRONTEND_URL: https://adventure.${SECRET_DOMAIN}
               CSRF_TRUSTED_ORIGINS: https://{{ .Release.Name }}-backend.${SECRET_DOMAIN},https://adventure.${SECRET_DOMAIN}
               DEBUG: "false"
-              DJANGO_ADMIN_USERNAME: admin
             envFrom: *secret
 
             probes:
