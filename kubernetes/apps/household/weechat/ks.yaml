@@ -27,7 +27,7 @@ spec:
   timeout: 5m
   postBuild:
     substitute:
-      APP: "{{ .Release.Name }}-config"
+      APP: "weechat-config"
       VOLSYNC_CAPACITY: 1Gi
       VOLSYNC_CACHE_CAPACITY: 3Gi
       NAMESPACE: *namespace
