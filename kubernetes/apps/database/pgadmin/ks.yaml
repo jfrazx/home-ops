@@ -16,9 +16,6 @@ spec:
     provider: sops
     secretRef:
       name: sops-age
-  dependsOn:
-    - name: postgres-cluster
-      namespace: flux-system
   interval: 1h
   path: ./kubernetes/apps/database/pgadmin/app
   postBuild:
