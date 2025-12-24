@@ -90,3 +90,8 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /home/user/.cache/weechat
+
+      state:
+        type: emptyDir
+        globalMounts:
+          - path: /home/user/.local/state/weechat
