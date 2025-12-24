@@ -81,6 +81,7 @@ spec:
                 enabled: false
               readiness: *probes
               startup: *probes
+
             resources:
               requests:
                 cpu: 125m

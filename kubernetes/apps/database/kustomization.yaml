@@ -8,5 +8,4 @@ resources:
   - ./influxdb/ks.yaml
   - ./pgadmin/ks.yaml
   - ./percona-mongodb/ks.yaml
-  - ./postgres/ks.yaml
   - ./namespace.yaml
