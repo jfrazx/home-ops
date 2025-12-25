@@ -69,7 +69,7 @@ spec:
         controller: *app
         ports:
           relay:
-            port: 9001
+            port: &port 9001
             protocol: TCP
 
     persistence:
@@ -95,3 +95,15 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /home/user/.local/state/weechat
+
+    route:
+      relay:
+        hostnames: ["weechat-relay.${SECRET_DOMAIN}"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - name: *app
+                port: *port
