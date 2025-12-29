@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: j33r/glowing-bear
-              tag: latest@sha256:442434cd851a63d0153c17a238ae2d3d361dc6d03e98581a83e11af8dd1bf7bd
+              tag: latest@sha256:2e60b1162e0dc5c57e8d80c9c8fda1e412dbf26b5376f76e20ede09dab5651ea
 
             probes:
               liveness:
