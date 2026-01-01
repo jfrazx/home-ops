@@ -10,7 +10,5 @@ components:
 resources:
   - ./adventurelog/ks.yaml
   - ./database/ks.yaml
-  # - ./glowing-bear/ks.yaml
   - ./mealie/ks.yaml
   - ./thelounge/ks.yaml
-  # - ./weechat/ks.yaml
