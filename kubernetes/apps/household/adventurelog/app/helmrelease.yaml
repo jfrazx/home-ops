@@ -51,7 +51,7 @@ spec:
               tag: latest@sha256:ebf515de0ff344fe8c6c30d0eb2033ac4de3f2d5e89ad29c91f1c3727883339e
 
             env:
-              PUBLIC_SERVER_URL: "https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}:443"
+              PUBLIC_SERVER_URL: "https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}"
               BODY_SIZE_LIMIT: Infinity
 
             probes:
@@ -108,7 +108,7 @@ spec:
         enabled: true
         kind: HTTPRoute
         parentRefs:
-          - name: internal
+          - name: &httpAccess external
             namespace: kube-system
             sectionName: https
         hostnames:
@@ -126,7 +126,7 @@ spec:
         enabled: true
         kind: HTTPRoute
         parentRefs:
-          - name: internal
+          - name: *httpAccess
             namespace: kube-system
             sectionName: https
         hostnames:
