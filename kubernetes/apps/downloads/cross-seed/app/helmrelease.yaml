@@ -24,7 +24,7 @@ spec:
                 "apiVersion": "apps/v1",
                 "kind": "Deployment",
                 "name": "qbittorrent",
-                "namespace": "downloads",
+                "namespace": "downloaders",
                 "expression": "resource.status.readyReplicas >= 1"
               }
             k8s.ksgate.org/prowlarr-deployment: |-
