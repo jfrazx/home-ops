@@ -11,7 +11,7 @@ spec:
   hostnames:
     - "jellyfin.${SECRET_DOMAIN}"
   parentRefs:
-    - name: internal
+    - name: external
       namespace: kube-system
       sectionName: https
   rules:
@@ -22,4 +22,4 @@ spec:
       backendRefs:
         - name: *app
           port: 8096
-          namespace: auth
+          namespace: *namespace
