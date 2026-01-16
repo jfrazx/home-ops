@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: authentik
-      version: 2025.10.2
+      version: 2025.12.1
       sourceRef:
         kind: HelmRepository
         name: authentik
@@ -66,11 +66,6 @@ spec:
             name: authentik-secret
 
     authentik:
-      redis:
-        host: dragonflydb.database.svc.cluster.local
-        port: 6379
-        db: 1
-
       postgresql:
         host: authentik-database-rw.auth.svc.cluster.local
         port: 5432
