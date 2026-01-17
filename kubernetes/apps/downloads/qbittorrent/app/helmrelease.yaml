@@ -108,20 +108,6 @@ spec:
             port: *webPort
         primary: true
 
-      # torrents:
-      #   controller: *app
-      #   type: LoadBalancer
-      #   annotations:
-      #     io.cilium/lb-ipam-ips: "10.168.2.105"
-      #   externalTrafficPolicy: Local
-      #   ports:
-      #     bittorrent-tcp:
-      #       port: *torrentPort
-      #       protocol: TCP
-      #     bittorrent-udp:
-      #       port: *torrentPort
-      #       protocol: UDP
-
     persistence:
       config:
         existingClaim: *app
@@ -143,15 +129,6 @@ spec:
 
       tmp:
         type: emptyDir
-
-      # tun:
-      #   type: hostPath
-      #   hostPath: /dev/net/tun
-      #   hostPathType: CharDevice
-      #   advancedMounts:
-      #     qbittorrent:
-      #       gluetun:
-      #         - path: /dev/net/tun
 
     route:
       app:

@@ -11,5 +11,6 @@ resources:
   - ./grist/ks.yaml
   - ./karakeep/ks.yaml
   - ./linkwarden/ks.yaml
+  - ./pairdrop/ks.yaml
   - ./paperless/ks.yaml
   - ./stirling-pdf/ks.yaml

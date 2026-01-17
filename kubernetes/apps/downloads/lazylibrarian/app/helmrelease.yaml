@@ -1,0 +1,87 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app lazylibrarian
+spec:
+  interval: 1h
+  maxHistory: 2
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+
+  values:
+    controllers:
+      lazylibrarian:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: linuxserver/lazylibrarian
+              tag: latest@sha256:fff118bb120062e460f46c2f87ff8ddc6622774d980a0219d11ea37b1c089598
+
+            env:
+              PUID: 1001
+              GUID: 1001
+              TZ: ${TIMEZONE}
+              DOCKER_MODS: linuxserver/mods:universal-calibre|linuxserver/mods:lazylibrarian-ffmpeg
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities: { drop: ["ALL"] }
+
+            resources:
+              requests:
+                cpu: 200m
+                memory: 300Mi
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: false
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: &port 5299
+
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}-config"
+
+      tmp:
+        type: emptyDir
+
+      media:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media"
+        server: "${SECRET_NFS_SERVER}"
+        globalMounts:
+          - path: /data/media
+
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
