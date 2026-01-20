@@ -61,7 +61,7 @@ spec:
                     name: manyfold-postgres-app
                     key: uri
 
-              PUBLIC_HOSTNAME: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+              PUBLIC_HOSTNAME: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
               PUBLIC_PORT: &httpPort 3214
               MULTIUSER: true
               HTTPS_ONLY: enabled

@@ -22,7 +22,7 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 2Gi
-      VOLSYNC_CLAIM: "{{ .Release.Name }}-config"
+      VOLSYNC_CLAIM: "vikunja-config"
       VOLSYNC_REPOSITORY_NAMESPACE: *namespace
     substituteFrom:
       - kind: Secret
