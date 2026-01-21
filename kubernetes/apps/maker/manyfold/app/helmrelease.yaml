@@ -84,7 +84,7 @@ spec:
                 spec:
                   httpGet:
                     path: /health
-                    port: *httpPort
+                    port: 3214
                   initialDelaySeconds: 0
                   periodSeconds: 10
                   timeoutSeconds: 1
