@@ -62,7 +62,6 @@ spec:
                     key: uri
 
               PUBLIC_HOSTNAME: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-              PUBLIC_PORT: &httpPort 443
               MULTIUSER: true
               HTTPS_ONLY: enabled
               REDIS_URL: redis://manyfold-redis.maker.svc.cluster.local:6379
@@ -84,7 +83,7 @@ spec:
                 spec:
                   httpGet:
                     path: /health
-                    port: 3214
+                    port: &httpPort 3214
                   initialDelaySeconds: 0
                   periodSeconds: 10
                   timeoutSeconds: 1
