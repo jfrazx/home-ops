@@ -126,7 +126,7 @@ spec:
 
     persistence:
       files:
-        existingClaim: "${VOLSYNC_CLAIM}"
+        existingClaim: vikunja-config
         globalMounts:
           - path: /app/vikunja/files
 

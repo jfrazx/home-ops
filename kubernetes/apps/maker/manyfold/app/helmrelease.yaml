@@ -62,10 +62,9 @@ spec:
                     key: uri
 
               PUBLIC_HOSTNAME: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-              PUBLIC_PORT: &httpPort 3214
+              PUBLIC_PORT: &httpPort 443
               MULTIUSER: true
               HTTPS_ONLY: enabled
-              PORT: *httpPort
               REDIS_URL: redis://manyfold-redis.maker.svc.cluster.local:6379
               REGISTRATION: true
               SECRET_KEY_BASE:
