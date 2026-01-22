@@ -191,9 +191,9 @@ spec:
     route:
       app:
         hostnames:
-          - "manyfold.${SECRET_DOMAIN}"
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
-          - name: internal
+          - name: external
             namespace: kube-system
             sectionName: https
         rules:
