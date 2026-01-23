@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: linuxserver/lazylibrarian
-              tag: latest@sha256:2664be65b64232b64a22668e6a1d421232da2e16f3aa1d327262e5329602785c
+              tag: latest@sha256:eca1f9dcaa6df1c0619110a06c92de5e1305a8f7dc736ece646a0f9880888adf
 
             env:
               PUID: 1001
