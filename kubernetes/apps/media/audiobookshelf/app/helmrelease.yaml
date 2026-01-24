@@ -109,31 +109,6 @@ spec:
           http:
             port: *port
 
-    # ingress:
-    #   app:
-    #     hostnames:
-    #       - "audiobookshelf.${SECRET_DOMAIN}"
-    #       - "abs.${SECRET_DOMAIN}"
-    #     parentRefs:
-    #       - name: external
-    #         namespace: kube-system
-    #         sectionName: https
-    #     rules:
-    #       - matches:
-    #           - path:
-    #               type: PathPrefix
-    #               value: /
-    #         filters:
-    #           - extensionRef:
-    #               group: traefik.io
-    #               kind: Middleware
-    #               name: authentik-outpost
-    #               namespace: *namespace
-    #             type: ExtensionRef
-    #         backendRefs:
-    #           - name: audiobookshelf
-    #             port: *port
-
     persistence:
       config:
         suffix: config
