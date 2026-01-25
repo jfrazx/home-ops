@@ -60,9 +60,6 @@ spec:
               INVITATIONS_ALLOWED: 'false'
               ORG_EVENTS_ENABLED: 'true'
               PASSWORD_ITERATIONS: "321000"
-              PUSH_ENABLED: 'true'
-              PUSH_INSTALLATION_ID: "${VAULTWARDEN_PUSH_ID}"
-              PUSH_INSTALLATION_KEY: "${VAULTWARDEN_PUSH_KEY}"
               EVENTS_DAYS_RETAIN: "730" # organizational events, 2 yrs: 365 * 2
               WEBSOCKET_ENABLED: 'true'
               WEBSOCKET_ADDRESS: 0.0.0.0
