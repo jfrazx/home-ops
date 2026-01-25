@@ -62,7 +62,7 @@ spec:
                     key: uri
 
               PUBLIC_HOSTNAME: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-              MULTIUSER: true
+              MULTIUSER: enabled
               HTTPS_ONLY: enabled
               REDIS_URL: redis://manyfold-redis.maker.svc.cluster.local:6379
               REGISTRATION: true
