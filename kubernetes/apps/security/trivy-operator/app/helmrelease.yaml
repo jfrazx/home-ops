@@ -25,8 +25,12 @@ spec:
     crds: CreateReplace
     remediation:
       retries: 3
+
   values:
     excludeNamespaces: "kube-system"
+    podAnnotations:
+      k8tz.io/inject: "false"
+
     operator:
       replicas: 1
       scanJobsConcurrentLimit: 3
@@ -37,6 +41,7 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
       webhookBroadcastURL: ${TRIVY_WEBHOOK_URL}
+
     trivy:
       slow: true # flag is to use less CPU/memory for scanning though it takes more time than normal scanning
       ignoreUnfixed: true
@@ -47,6 +52,7 @@ spec:
         limits:
           cpu: 500m
           memory: 1Gi
+
     trivyOperator:
       excludeImages: "quay.io/backube/*"
       skipResourceByLabels: "app.kubernetes.io/created-by=volsync"
