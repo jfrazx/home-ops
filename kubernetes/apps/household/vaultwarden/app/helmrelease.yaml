@@ -107,7 +107,7 @@ spec:
             #   tar -xJvf ./backup/data.tar.xz -C /data/
             image:
               repository: bruceforce/vaultwarden-backup
-              tag: 2.1.3@sha256:498379ab68cbd7f31a007bedbd906108c65e186d38eb8602e198d83e6616dd69
+              tag: 2.1.4@sha256:ede1b229a2dd54af59cda87c086707274ae4073ecd2bde1a8ed9b1281ddc553e
 
             env:
               TIMESTAMP: true
