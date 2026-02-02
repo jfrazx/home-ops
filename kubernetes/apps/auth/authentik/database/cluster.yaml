@@ -46,7 +46,8 @@ spec:
       wal_level: "replica"
       max_wal_senders: "10"
       max_replication_slots: "10"
-      wal_keep_size: "512MB"
+      wal_keep_size: "1GB"
+      max_slot_wal_keep_size: "2GB"
 
   storage:
     size: "30Gi"

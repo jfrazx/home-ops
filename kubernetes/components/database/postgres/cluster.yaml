@@ -65,6 +65,7 @@ spec:
       # WAL
       wal_level: ${POSTGRES_WAL_LEVEL:="replica"}
       wal_keep_size: ${POSTGRES_WAL_KEEP_SIZE:="512MB"}
+      max_slot_wal_keep_size: "${POSTGRES_MAX_SLOT_WAL_KEEP_SIZE:='2GB'}"
 
       # Logging
       log_statement: ${POSTGRES_LOG_STATEMENT:="ddl"}
