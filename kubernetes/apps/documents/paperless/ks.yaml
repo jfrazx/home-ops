@@ -30,6 +30,7 @@ spec:
       APP: paperless
       NAMESPACE: *namespace
       POSTGRES_VERSION: "17.5"
+      POSTGRES_INSTANCES: "2"
       POSTGRES_BACKUP_SCHEDULE: "0 3 * * *"
       POSTGRES_STORAGE_SIZE: "20Gi"
 ---

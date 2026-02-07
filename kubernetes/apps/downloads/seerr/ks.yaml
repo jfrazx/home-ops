@@ -29,6 +29,7 @@ spec:
     substitute:
       APP: seerr
       NAMESPACE: *namespace
+      POSTGRES_INSTANCES: "2"
       POSTGRES_STORAGE_CLASS: truenas-iscsi
       POSTGRES_BACKUP_SCHEDULE: "30 3 * * *"
 ---
