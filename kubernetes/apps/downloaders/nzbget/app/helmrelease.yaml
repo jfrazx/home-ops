@@ -24,19 +24,19 @@ spec:
               NZBGET__PORT: &port 6789
               NZBGET__WRITELOG: rotate
 
-            probes:
-              liveness: &probes
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /jsonrpc/status
-                    port: *port
-                  initialDelaySeconds: 30
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-              readiness: *probes
+            # probes:
+            #   liveness: &probes
+            #     enabled: true
+            #     custom: true
+            #     spec:
+            #       httpGet:
+            #         path: /jsonrpc/status
+            #         port: *port
+            #       initialDelaySeconds: 30
+            #       periodSeconds: 10
+            #       timeoutSeconds: 5
+            #       failureThreshold: 3
+            #   readiness: *probes
 
             securityContext:
               allowPrivilegeEscalation: false
