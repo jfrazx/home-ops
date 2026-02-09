@@ -22,6 +22,7 @@ spec:
 
             env:
               NZBGET__PORT: &port 6789
+              NZBGET__WRITELOG: rotate
 
             probes:
               liveness: &probes
