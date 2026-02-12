@@ -29,7 +29,7 @@ spec:
           main:
             image:
               repository: ghcr.io/stirling-tools/stirling-pdf
-              tag:  1.5.0@sha256:bfe2b8dd378c4f3d5fc1d2fc7649a357d0916b3a713022aa70ac3f08d6302cbc
+              tag:  2.4.6@sha256:073023f9829b96a5e64ec3cdbf2f441e65feb8b89bfbebeae217b96564b546e9
             env:
               TZ: ${TIMEZONE}
               DOCKER_ENABLE_SECURITY: false
