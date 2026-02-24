@@ -7,17 +7,20 @@ metadata:
   namespace: external-secrets
 spec:
   interval: 1h
+  driftDetection:
+    mode: enabled
   chart:
     spec:
       chart: openbao
-      version: 0.25.2
+      version: 0.25.5
       sourceRef:
         kind: HelmRepository
         name: openbao
         namespace: flux-system
+
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -33,7 +36,7 @@ spec:
       image:
         registry: quay.io
         repository: openbao/openbao
-        tag: 2.5.0@sha256:d24890f589bc57658a43c18faab2afc4fbedaadad3806d5a638e1adaed2dff8d
+        tag: 2.5.1@sha256:87d715029a47328172774638cabfeb04d5b356678d660621b796b6a671f93581
 
       updateStrategy: RollingUpdate
       logLevel: "info"
