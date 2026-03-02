@@ -58,7 +58,7 @@ spec:
           app:
             image:
               repository: markbeep/audiobookrequest
-              tag: 1.9.0@sha256:7f399de9283236390cd35d1f22577727f761749de2abe8c1ecf4700a88f5b749
+              tag: 1.10.2@sha256:d9d8877232eb65ffefef9268aed5f1ee4c10dfad7d8a99b462c28cedafa51de1
             env:
               LOG_LEVEL: "info"
               ABR_APP__PORT: &port 8000
