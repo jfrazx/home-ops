@@ -21,7 +21,7 @@ spec:
           app:
             image:
               repository: docker.io/seriouslag/actual-auto-sync
-              tag: latest@sha256:85581ddcd458b2f22a9a0571e97414ca336d0852d335f1755541d148c2347a92
+              tag: latest@sha256:c2edb96bc7729dbd7f7deeeafefcabc5eb14d35648432bceb3840bf376dc9c0f
 
             env:
               TZ: ${TIMEZONE}
