@@ -12,8 +12,8 @@ spec:
     namespace: flux-system
 
   install:
-      remediation:
-        retries: 3
+    remediation:
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -111,11 +111,14 @@ spec:
                   - ALL
 
       redis:
+        strategy: RollingUpdate
         pod:
           securityContext:
-            runAsUser: 65534
-            runAsGroup: 65534
-        strategy: RollingUpdate
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
+            fsGroup: 999
+            fsGroupChangePolicy: OnRootMismatch
         containers:
           redis:
             image:
@@ -133,6 +136,9 @@ spec:
               limits:
                 memory: 128Mi
             securityContext:
+              runAsUser: 999
+              runAsGroup: 999
+              runAsNonRoot: true
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
