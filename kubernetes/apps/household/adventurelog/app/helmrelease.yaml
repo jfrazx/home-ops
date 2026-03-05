@@ -52,6 +52,7 @@ spec:
 
             env:
               PUBLIC_SERVER_URL: "https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}"
+              ORIGIN: "http://localhost:3000"
               BODY_SIZE_LIMIT: Infinity
 
             probes:
