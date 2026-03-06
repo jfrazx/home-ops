@@ -159,6 +159,13 @@ spec:
           http:
             port: &port 6379
 
+      redis-data:
+        type: emptyDir
+        advancedMounts:
+          redis:
+            redis:
+              - path: /data
+
     persistence:
       database:
         type: persistentVolumeClaim
