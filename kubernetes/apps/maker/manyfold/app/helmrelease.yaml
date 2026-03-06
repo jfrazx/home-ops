@@ -114,11 +114,8 @@ spec:
         strategy: RollingUpdate
         pod:
           securityContext:
-            runAsUser: 999
-            runAsGroup: 999
-            runAsNonRoot: true
-            fsGroup: 999
-            fsGroupChangePolicy: OnRootMismatch
+            runAsUser: 65534
+            runAsGroup: 65534
         containers:
           redis:
             image:
@@ -136,9 +133,6 @@ spec:
               limits:
                 memory: 128Mi
             securityContext:
-              runAsUser: 999
-              runAsGroup: 999
-              runAsNonRoot: true
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
@@ -158,13 +152,6 @@ spec:
         ports:
           http:
             port: &port 6379
-
-      redis-data:
-        type: emptyDir
-        advancedMounts:
-          redis:
-            redis:
-              - path: /data
 
     persistence:
       database:
@@ -187,6 +174,13 @@ spec:
             main:
               - path: /data/libraries
                 subPath: libraries
+
+      redis-data:
+        type: emptyDir
+        advancedMounts:
+          redis:
+            redis:
+              - path: /data
 
       tmpfs:
         type: emptyDir
