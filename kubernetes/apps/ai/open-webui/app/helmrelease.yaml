@@ -79,7 +79,7 @@ spec:
               IMAGE_GENERATION_MODEL: "dreamshaper_8"
               IMAGE_SIZE: "512x512"
               IMAGE_STEPS: "30"
-              AUTOMATIC1111_BASE_URL: "http://sdnext.ai.svc.cluster.local:7860/"
+              # AUTOMATIC1111_BASE_URL: "http://sdnext.ai.svc.cluster.local:7860/"
               AUTOMATIC1111_CFG_SCALE: "7"
               AUTOMATIC1111_SAMPLER: "DPM++ SDE"
               AUTOMATIC1111_SCHEDULER: "Karras"
@@ -89,7 +89,7 @@ spec:
                 cpu: 500m
                 memory: 2Gi
               limits:
-                memory: 2Gi
+                memory: 3Gi
 
     service:
       app:
