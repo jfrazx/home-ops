@@ -21,3 +21,4 @@ talosconfig
 Thumbs.db
 logs/
 *.zip
+.envrc

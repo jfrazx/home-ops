@@ -10,5 +10,6 @@ configMapGenerator:
     files:
       - ./resources/limiter.toml
       - ./resources/settings.yml
+      - ./resources/uwsgi.ini
 generatorOptions:
   disableNameSuffixHash: true
