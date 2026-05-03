@@ -39,7 +39,6 @@ spec:
               APPRISE_DEFAULT_THEME: dark
               APPRISE_STATEFUL_MODE: simple
               APPRISE_WORKER_COUNT: 4
-              APPRISE_BASE_URL: "{{ .Release.Name }}.${SECRET_DOMAIN}"
               IPV4_ONLY: true
             probes:
               liveness:
