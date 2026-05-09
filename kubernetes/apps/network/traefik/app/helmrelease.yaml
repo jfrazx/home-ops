@@ -15,14 +15,19 @@ spec:
         kind: HelmRepository
         name: traefik-charts
         namespace: flux-system
+
   install:
+    crds: CreateReplace
     remediation:
       retries: 3
+
   upgrade:
+    crds: CreateReplace
     cleanupOnFail: true
     remediation:
       strategy: rollback
       retries: 3
+
   values:
     deployment:
       kind: DaemonSet
@@ -48,6 +53,7 @@ spec:
       kubernetesGateway:
         enabled: true
         experimentalChannel: true
+
     ports:
       traefik:
         port: 8080
@@ -81,14 +87,8 @@ spec:
           default: true
         exposedPort: 8443
         protocol: TCP
-        tls:
-          enabled: true
-          options: default
         http3:
           enabled: true
-        middlewares:
-          - network-errors@kubernetescrd
-          - network-blockuseragent@kubernetescrd
         forwardedHeaders:
           trustedIPs:
             - 10.42.0.0/16  # Pod CIDR - trust Cilium Gateway pods
