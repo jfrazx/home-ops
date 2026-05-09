@@ -24,3 +24,8 @@ TALOSCONFIG = "{{config_root}}/talos/clusterconfig/talosconfig"
 "aqua:mikefarah/yq" = "4.53.2"
 "aqua:siderolabs/talos" = "1.13.0"
 "aqua:yannh/kubeconform" = "0.7.0"
+"pipx:flux-local" = "latest"
+
+[tasks.test-cluster]
+description = "Validate Kubernetes flux manifests"
+run = "flux-local test --enable-helm --all-namespaces --path ./kubernetes/flux/cluster --kube-version 1.34.1"
