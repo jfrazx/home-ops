@@ -16,9 +16,11 @@ spec:
         name: traefik-charts
         namespace: flux-system
   install:
+    crds: CreateReplace
     remediation:
       retries: 3
   upgrade:
+    crds: CreateReplace
     cleanupOnFail: true
     remediation:
       strategy: rollback
@@ -81,14 +83,11 @@ spec:
           default: true
         exposedPort: 8443
         protocol: TCP
-        tls:
-          enabled: true
-          options: default
+        http:
+          tls:
+            enabled: true
         http3:
           enabled: true
-        middlewares:
-          - network-errors@kubernetescrd
-          - network-blockuseragent@kubernetescrd
         forwardedHeaders:
           trustedIPs:
             - 10.42.0.0/16  # Pod CIDR - trust Cilium Gateway pods
