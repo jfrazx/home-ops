@@ -33,11 +33,12 @@ spec:
       kind: DaemonSet
     service:
       enabled: true
-      type: ClusterIP
       annotations:
-        external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
-      ipFamilies:
-        - "IPv4"
+          external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
+      spec:
+        type: ClusterIP
+        ipFamilies:
+          - "IPv4"
 
     additionalArguments:
       - "--api.dashboard=true"
