@@ -32,6 +32,7 @@ spec:
       POSTGRES_VERSION: "18.1"
       POSTGRES_STORAGE_CLASS: truenas-iscsi
       POSTGRES_BACKUP_SCHEDULE: "30 3 * * *"
+      POSTGRES_STORAGE_SIZE: "20Gi"
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -65,4 +66,4 @@ spec:
     name: flux-system
     namespace: flux-system
   timeout: 5m
-  wait: false
+  wait: true
