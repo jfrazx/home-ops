@@ -24,3 +24,4 @@ spec:
   sourceRef:
     kind: GitRepository
     name: gateway-api-source
+    path: ./config/crd/experimental
