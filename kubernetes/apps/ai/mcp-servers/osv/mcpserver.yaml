@@ -7,7 +7,6 @@ spec:
   image: ghcr.io/stackloklabs/osv-mcp/server
   transport: streamable-http
   targetPort: &port 8080
-  port: *port
 
   resources:
     limits:
