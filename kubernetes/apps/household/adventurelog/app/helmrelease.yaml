@@ -48,7 +48,7 @@ spec:
           frontend:
             image:
               repository: ghcr.io/seanmorley15/adventurelog-frontend
-              tag: latest@sha256:6db530248f958ceacdee4e42f9f3f816bc9bbd3710336cde8f1e5859d5cf7aee
+              tag: latest@sha256:edd79220f0def1dbea5b5d56636621f6cfdb454db9c00a8ce436a8ab489c5e99
 
             env:
               PUBLIC_SERVER_URL: "https://{{ .Release.Name }}-backend.${SECRET_DOMAIN}"
