@@ -26,7 +26,7 @@ spec:
   values:
     image:
       repository: influxdb
-      tag: "2.8.0-alpine"
+      tag: "2.9.1-alpine"
 
     persistence:
       enabled: true
