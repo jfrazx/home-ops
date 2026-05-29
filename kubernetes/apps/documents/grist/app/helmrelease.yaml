@@ -21,7 +21,7 @@ spec:
           app:
             image:
               repository: docker.io/gristlabs/grist
-              tag: 1.7.13@sha256:006104fac45b6c59a05315f66dc37635ed11641b56519528ddf586bf0ed65e52
+              tag: 1.7.14@sha256:b8a48b6ace784fadb4a3981ad74024b218c1c02ba0c200c49b2fe425be465e15
 
             envFrom:
               - secretRef:
