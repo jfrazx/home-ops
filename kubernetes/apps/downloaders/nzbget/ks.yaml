@@ -17,6 +17,9 @@ spec:
       namespace: rook-ceph
     - name: volsync
       namespace: system
+    - name: democratic-csi
+      namespace: storage
+
   interval: 1h
   path: ./kubernetes/apps/downloaders/nzbget/app
   postBuild:
