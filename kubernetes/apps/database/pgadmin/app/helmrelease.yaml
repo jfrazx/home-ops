@@ -68,6 +68,18 @@ spec:
                 memory: 1024M
 
         pod:
+          annotations:
+            k8s.ksgate.org/iscsi-node-ready: |
+              {
+                "apiVersion": "apps/v1",
+                "kind": "DaemonSet",
+                "name": "democratic-csi-iscsi-node",
+                "namespace": "storage",
+                "expression": "resource.status.numberReady >= resource.status.desiredNumberScheduled"
+              }
+          schedulingGates:
+            - name: k8s.ksgate.org/iscsi-node-ready
+
           securityContext:
             runAsUser: 5050
             runAsGroup: 5050

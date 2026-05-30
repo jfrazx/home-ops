@@ -12,6 +12,9 @@ spec:
   commonMetadata:
     labels:
       name.kubernetes.io/name: *app
+  dependsOn:
+    - name: democratic-csi
+      namespace: storage
   decryption:
     provider: sops
     secretRef:

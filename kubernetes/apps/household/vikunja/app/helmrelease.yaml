@@ -109,6 +109,27 @@ spec:
                 memory: 512Mi
 
         pod:
+          annotations:
+            k8s.ksgate.org/iscsi-node-ready: |
+              {
+                "apiVersion": "apps/v1",
+                "kind": "DaemonSet",
+                "name": "democratic-csi-iscsi-node",
+                "namespace": "storage",
+                "expression": "resource.status.numberReady >= resource.status.desiredNumberScheduled"
+              }
+            k8s.ksgate.org/household-postgres-ready: |
+              {
+                "apiVersion": "postgresql.cnpg.io/v1",
+                "kind": "Cluster",
+                "name": "household-postgres",
+                "namespace": "household",
+                "expression": "resource.status.readyInstances >= 1"
+              }
+          schedulingGates:
+            - name: k8s.ksgate.org/iscsi-node-ready
+            - name: k8s.ksgate.org/household-postgres-ready
+
           securityContext:
             runAsNonRoot: true
             runAsUser: 1001

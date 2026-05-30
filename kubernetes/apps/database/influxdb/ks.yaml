@@ -23,6 +23,8 @@ spec:
       namespace: external-secrets
     - name: volsync
       namespace: system
+    - name: democratic-csi
+      namespace: storage
   interval: 1h
   path: ./kubernetes/apps/database/influxdb/app
   prune: true

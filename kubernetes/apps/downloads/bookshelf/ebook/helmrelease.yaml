@@ -26,6 +26,28 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
 
+        pod:
+          annotations:
+            k8s.ksgate.org/iscsi-node-ready: |
+              {
+                "apiVersion": "apps/v1",
+                "kind": "DaemonSet",
+                "name": "democratic-csi-iscsi-node",
+                "namespace": "storage",
+                "expression": "resource.status.numberReady >= resource.status.desiredNumberScheduled"
+              }
+            k8s.ksgate.org/downloads-postgres-ready: |
+              {
+                "apiVersion": "postgresql.cnpg.io/v1",
+                "kind": "Cluster",
+                "name": "downloads-postgres",
+                "namespace": "downloads",
+                "expression": "resource.status.readyInstances >= 1"
+              }
+          schedulingGates:
+            - name: k8s.ksgate.org/iscsi-node-ready
+            - name: k8s.ksgate.org/downloads-postgres-ready
+
         initContainers:
           init-db:
             image:
