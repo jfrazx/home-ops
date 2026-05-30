@@ -3,6 +3,8 @@ machine:
   kubelet:
     extraConfig:
       serializeImagePulls: false
+      imageGCHighThresholdPercent: 70
+      imageGCLowThresholdPercent: 50
     extraMounts:
       - destination: /var/mnt/extra
         type: bind

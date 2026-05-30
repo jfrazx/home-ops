@@ -25,7 +25,7 @@ nodes:
       serial: "S77NNG0WC90249"
     machineSpec:
       secureboot: false
-    talosImageURL: factory.talos.dev/installer/f4b1bb3c5c7b50639b99046fe6681275ebd18a0bc45a91430c26bb81fcf8023e
+    talosImageURL: factory.talos.dev/installer/be1c6cb3cff7811a8bcc49855be71042d67889154b5a83fddf024ec55316c46e
     controlPlane: true
     networkInterfaces:
       - deviceSelector:
@@ -45,7 +45,7 @@ nodes:
       serial: "S77NNG0WC30967"
     machineSpec:
       secureboot: false
-    talosImageURL: factory.talos.dev/installer/f4b1bb3c5c7b50639b99046fe6681275ebd18a0bc45a91430c26bb81fcf8023e
+    talosImageURL: factory.talos.dev/installer/be1c6cb3cff7811a8bcc49855be71042d67889154b5a83fddf024ec55316c46e
     controlPlane: true
     networkInterfaces:
       - deviceSelector:
@@ -64,7 +64,7 @@ nodes:
     installDisk: "/dev/sda"
     machineSpec:
       secureboot: false
-    talosImageURL: factory.talos.dev/installer/f4b1bb3c5c7b50639b99046fe6681275ebd18a0bc45a91430c26bb81fcf8023e
+    talosImageURL: factory.talos.dev/installer/be1c6cb3cff7811a8bcc49855be71042d67889154b5a83fddf024ec55316c46e
     controlPlane: true
     networkInterfaces:
       - deviceSelector:
