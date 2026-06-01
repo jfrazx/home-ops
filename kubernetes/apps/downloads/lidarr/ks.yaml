@@ -52,6 +52,7 @@ spec:
     - name: rook-ceph-cluster
       namespace: rook-ceph
     - name: lidarr-postgres
+
   interval: 1h
   path: ./kubernetes/apps/downloads/lidarr/app
   postBuild:
