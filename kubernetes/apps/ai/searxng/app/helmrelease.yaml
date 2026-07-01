@@ -49,10 +49,10 @@ spec:
                   httpGet:
                     path: /stats
                     port: 8080
-                  initialDelaySeconds: 0
+                  initialDelaySeconds: 10
                   periodSeconds: 10
                   timeoutSeconds: 1
-                  failureThreshold: 3
+                  failureThreshold: 9
               readiness: *probes
 
             resources:
