@@ -22,8 +22,7 @@ spec:
   # ingress on the client port (6379), which blocks every app outside the
   # `database` namespace (vikunja, paperless, linkwarden, etc). Disable it
   # since we don't have a supplemental policy allowing those namespaces.
-  networkPolicy:
-    enabled: false
+  networkPolicyEnabled: false
 
   topologySpreadConstraints:
     - maxSkew: 1
