@@ -93,6 +93,16 @@ spec:
     persistence:
       config:
         existingClaim: radarr-config
+      cache:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteMany
+        size: 10Gi
+        storageClass: truenas-nfs
+        advancedMounts:
+          radarr:
+            app:
+              - path: /config/MediaCover
       media:
         type: nfs
         path: "/mnt/${SECRET_NFS_SHARE}/media"
