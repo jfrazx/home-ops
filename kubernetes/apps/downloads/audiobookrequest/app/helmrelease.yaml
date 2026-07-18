@@ -28,14 +28,16 @@ spec:
 
         pod:
           annotations:
-            k8s.ksgate.org/qbittorrent-deployment: |-
+            k8s.ksgate.org/downloads-postgres-ready: |
               {
-                "apiVersion": "apps/v1",
-                "kind": "Service",
+                "apiVersion": "postgresql.cnpg.io/v1",
+                "kind": "Cluster",
                 "name": "downloads-postgres",
                 "namespace": "downloads",
-                "expression": "resource.status.readyReplicas >= 1"
+                "expression": "resource.status.readyInstances >= 1"
               }
+          schedulingGates:
+            - name: k8s.ksgate.org/downloads-postgres-ready
 
         initContainers:
           init-db:

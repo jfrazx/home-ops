@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: &namespace observability
 components:
   - ../../components/common
+  - ../../components/pod-security/privileged
 resources:
   - ./alloy/ks.yaml
   - ./blackbox-exporter/ks.yaml
@@ -13,14 +14,3 @@ resources:
   - ./kube-prometheus-stack/ks.yaml
   - ./smartctl-exporter/ks.yaml
   - ./victoria-logs/ks.yaml
-patches:
-  - target:
-      kind: Namespace
-      name: *namespace
-    patch: |-
-      - op: add
-        path: /metadata/labels
-        value:
-          pod-security.kubernetes.io/enforce: privileged
-          pod-security.kubernetes.io/audit: privileged
-          pod-security.kubernetes.io/warn: privileged

@@ -31,3 +31,17 @@ spec:
       static:
         - ${SECRET_NFS_SERVER}:2049
         # - rapacity.${SECRET_DOMAIN}:2049
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/probe_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: iscsi
+spec:
+  module: tcp_connect
+  prober:
+    url: blackbox-exporter.observability.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - ${SECRET_NFS_SERVER}:3260

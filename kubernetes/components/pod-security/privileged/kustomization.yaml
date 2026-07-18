@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# Sets Pod Security Admission to "privileged" on the namespace created by
+# components/common (which defaults it to "baseline"). Must be listed AFTER
+# ../common in a kustomization's `components:`.
+#
+# The target is intentionally unnamed: components/common ships a Namespace named
+# "not-used" that the parent kustomization renames via its `namespace:` field.
+# A name-based patch target is matched before that rename and silently no-ops,
+# which is why the previous per-app inline patches never took effect. Patching
+# individual label paths (rather than replacing /metadata/labels wholesale) also
+# preserves any other labels already on the namespace (e.g. k8tz).
+patches:
+  - target:
+      kind: Namespace
+    patch: |-
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce
+        value: privileged
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1audit
+        value: privileged
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1warn
+        value: privileged
