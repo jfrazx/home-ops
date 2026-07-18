@@ -8,3 +8,4 @@ components:
   - ../../components/pod-security/privileged
 resources:
   - ./rook-ceph/ks.yaml
+  - ./rook-ceph/namespace.yaml
