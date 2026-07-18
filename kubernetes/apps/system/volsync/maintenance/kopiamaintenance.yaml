@@ -11,6 +11,14 @@ spec:
   trigger:
     schedule: "30 3 * * *"
   enabled: true
+  # Repo blobs on the NFS backend are owned by uid/gid 1001 (matching the
+  # ReplicationSource movers). Without this the maintenance job runs as the
+  # image-default uid and gets "permission denied" reading /repository/.shards.
+  podSecurityContext:
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    supplementalGroups: [100]
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/v1.34.1/mutatingadmissionpolicybinding-admissionregistration-v1beta1.json
 apiVersion: admissionregistration.k8s.io/v1beta1

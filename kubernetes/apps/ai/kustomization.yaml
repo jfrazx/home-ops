@@ -6,20 +6,10 @@ namespace: &namespace ai
 components:
   - ../../components/flux/alerts
   - ../../components/common
+  - ../../components/pod-security/privileged
 resources:
   - ./kokoro/ks.yaml
   - ./ollama/ks.yaml
   - ./open-webui/ks.yaml
   - ./mcp-servers/ks.yaml
   - ./searxng/ks.yaml
-patches:
-  - target:
-      kind: Namespace
-      name: *namespace
-    patch: |-
-      - op: add
-        path: /metadata/labels
-        value:
-          pod-security.kubernetes.io/enforce: privileged
-          pod-security.kubernetes.io/audit: privileged
-          pod-security.kubernetes.io/warn: privileged
