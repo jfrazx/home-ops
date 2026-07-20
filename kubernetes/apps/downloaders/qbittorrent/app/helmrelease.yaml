@@ -95,7 +95,7 @@ spec:
           mousehole:
             image:
               repository: tmmrtn/mousehole
-              tag: 0.3@sha256:903eaac224b02327b6d4ef6238c0b78950ae62037f6863a3cc01118cb305f747
+              tag: 0.5@sha256:2fc02b12362581e60bfd6adba788bda9eda93f8f31ed089581eeabcee4518b0d
 
             dependsOn:
               - gluetun
