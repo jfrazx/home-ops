@@ -1,0 +1,199 @@
+---
+trashGuideUrl: https://github.com/TRaSH-Guides/Guides
+recyclarrConfigUrl: https://github.com/recyclarr/config-templates
+
+sonarrEnabled: true
+radarrEnabled: true
+readarrEnabled: true
+whisparrEnabled: false
+lidarrEnabled: false
+
+# Readarr has no TRaSH-Guides or recyclarr data, so its custom formats must be
+# defined here by hand. These are conservative starting points -- tune the
+# regexes against real release names before leaning on them.
+customFormatDefinitions:
+  - trash_id: ebook-retail
+    name: Retail
+    includeCustomFormatWhenRenaming: false
+    trash_scores:
+      default: 100
+    specifications:
+      - name: Retail
+        implementation: ReleaseTitleSpecification
+        negate: false
+        required: false
+        fields:
+          value: "\\bretail\\b"
+
+  - trash_id: ebook-advance-copy
+    name: Advance Copy
+    includeCustomFormatWhenRenaming: false
+    trash_scores:
+      default: -1000
+    specifications:
+      # Deliberately does NOT match a bare "ARC" -- far too many book titles
+      # contain that word (Arc of a Scythe, Noah's Arc, ...).
+      - name: Advance Copy
+        implementation: ReleaseTitleSpecification
+        negate: false
+        required: false
+        fields:
+          value: "\\b(advance[ ._-]?(reader|reading|review)[ ._-]?copy|uncorrected[ ._-]?proof|galley[ ._-]?proof)\\b"
+
+  - trash_id: ebook-scanned
+    name: Scanned
+    includeCustomFormatWhenRenaming: false
+    trash_scores:
+      default: -1000
+    specifications:
+      - name: Scanned
+        implementation: ReleaseTitleSpecification
+        negate: false
+        required: false
+        fields:
+          value: "\\b(scanned|djvu)\\b"
+
+  - trash_id: ebook-converted
+    name: Converted
+    includeCustomFormatWhenRenaming: false
+    trash_scores:
+      default: -500
+    specifications:
+      # Converted-from-PDF EPUBs are usually badly reflowed.
+      - name: Converted
+        implementation: ReleaseTitleSpecification
+        negate: false
+        required: false
+        fields:
+          value: "\\bconverted\\b"
+
+# NOTE: media_naming is deliberately not managed here. Sonarr/Radarr already have
+# renaming enabled with custom format strings; adopting the TRaSH naming scheme
+# would trigger a full rename of the existing library over NFS.
+#
+# NOTE: download_clients is deliberately not managed here. It is an experimental
+# configarr feature, and `delete_unmanaged` would remove the NZBGet and SABnzbd
+# clients that configarr does not know about.
+
+sonarr:
+  sonarr:
+    base_url: http://sonarr.downloads.svc.cluster.local:8989
+    api_key: !env SONARR_API_KEY
+
+    root_folders:
+      - /data/media/shows
+      - /data/media/shows-4k
+      - /data/media/anime
+      - /data/media/anime-4k
+
+    include:
+      # Quality definition is instance-wide; `series` covers the mixed
+      # shows + anime library. Swap to sonarr-quality-definition-anime only if
+      # the library becomes primarily anime.
+      - template: sonarr-quality-definition-series
+
+      # WEB-1080p
+      - template: sonarr-v4-quality-profile-web-1080p
+      - template: sonarr-v4-custom-formats-web-1080p
+
+      # WEB-2160p
+      - template: sonarr-v4-quality-profile-web-2160p
+      - template: sonarr-v4-custom-formats-web-2160p
+
+      # Remux-1080p - Anime
+      - template: sonarr-v4-quality-profile-anime
+      - template: sonarr-v4-custom-formats-anime
+
+    custom_formats:
+      # Prefer x265/HEVC at 1080p to cut storage use.
+      #
+      # TRaSH scores "x265 (HD)" at -10000 because sub-2160p HEVC is usually a
+      # re-encode of an x264 source (generational quality loss) and transcodes
+      # poorly on some clients. Overriding to a positive score makes x265 win
+      # only as a tiebreaker between releases of the same tier -- release-group
+      # tiers score 1650-1800, so 150 does not let a bad x265 rip beat a good
+      # x264 one. Raise it toward ~1000 to prefer x265 more aggressively.
+      - trash_ids:
+          - 47435ece6b99a0b477caf360e79ba0bb # x265 (HD)
+        assign_scores_to:
+          - name: WEB-1080p
+            score: 150
+
+      # Left at the TRaSH default (-10000) in WEB-2160p: there, an "x265 (HD)"
+      # match means a sub-2160p release, which does not belong in a 4K profile.
+      # 2160p releases are already HEVC by default, so no override is needed.
+
+radarr:
+  radarr:
+    base_url: http://radarr.downloads.svc.cluster.local:7878
+    api_key: !env RADARR_API_KEY
+
+    root_folders:
+      - /data/media/movies
+      - /data/media/movies-4k
+
+    include:
+      - template: radarr-quality-definition-movie
+
+      # HD Bluray + WEB
+      - template: radarr-quality-profile-hd-bluray-web
+      - template: radarr-custom-formats-hd-bluray-web
+
+      # UHD Bluray + WEB
+      - template: radarr-quality-profile-uhd-bluray-web
+      - template: radarr-custom-formats-uhd-bluray-web
+
+      # Remux-1080p - Anime
+      - template: radarr-quality-profile-anime
+      - template: radarr-custom-formats-anime
+
+    custom_formats:
+      # See the Sonarr note above for the rationale and scale.
+      - trash_ids:
+          - dc98083864ea246d05a42df0d05f81cc # x265 (HD)
+        assign_scores_to:
+          - name: HD Bluray + WEB
+            score: 150
+
+# Readarr support in configarr is experimental. Only the ebook instance is
+# managed here; see the note at the bottom for the audiobook instance.
+readarr:
+  ebookshelf:
+    base_url: http://ebookshelf.downloads.svc.cluster.local:8787
+    api_key: !env EBOOKSHELF_API_KEY
+
+    # Not supported for Readarr:
+    #   quality_definition, min_format_score
+
+    custom_formats:
+      - trash_ids:
+          - ebook-retail
+          - ebook-advance-copy
+          - ebook-scanned
+          - ebook-converted
+        assign_scores_to:
+          - name: eBook
+
+    quality_profiles:
+      # Managed by name so it stays profile id 1, which /data/media/ebook
+      # already uses as its default. Ordering is most-preferred first:
+      # EPUB and AZW3 reflow properly and are a fraction of the size of a PDF.
+      - name: eBook
+        reset_unmatched_scores:
+          enabled: true
+        upgrade:
+          allowed: true
+          until_quality: EPUB
+          until_score: 1000
+        quality_sort: top
+        qualities:
+          - name: EPUB
+          - name: AZW3
+          - name: MOBI
+          - name: PDF
+
+# NOTE: the audiobook instance (`bookshelf`, the "Spoken" profile) is not
+# managed here. Its ExternalSecret publishes the OpenBao key as READARR_API_KEY,
+# which the app does not read -- the running instance still uses its own
+# self-generated key and returns 401 for the OpenBao value. Fix that wiring
+# first, then add a second readarr instance block here.
