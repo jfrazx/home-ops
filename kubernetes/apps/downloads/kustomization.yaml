@@ -11,6 +11,7 @@ resources:
   - ./audiobookrequest/ks.yaml
   - ./bazarr/ks.yaml
   - ./bookshelf/ks.yaml
+  - ./configarr/ks.yaml
   - ./cross-seed/ks.yaml
   - ./database/ks.yaml
   - ./flaresolverr/ks.yaml
