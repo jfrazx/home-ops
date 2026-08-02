@@ -23,12 +23,20 @@ HTTPS for all normal internal HTTPRoutes. Unifi TLS passthrough is currently
 
 Even before this, the passthrough listener never actually worked:
 `unifi-tls` listener hostname was `unifi-dashboard.${SECRET_DOMAIN}`, but the
-`TLSRoute` (`kubernetes/apps/network/unifi-controller/app/tlsroute.yaml`) uses
-hostname `unifi.${SECRET_DOMAIN}`, matching the actual cert
-(`app/certificate.yaml` only covers `unifi.${SECRET_DOMAIN}` /
+old `TLSRoute` used hostname `unifi.${SECRET_DOMAIN}`, matching the actual
+cert (`app/certificate.yaml` only covers `unifi.${SECRET_DOMAIN}` /
 `unifi-controller.${SECRET_DOMAIN}`). Gateway status confirmed
 `attachedRoutes: 0` on `unifi-tls` — the hostnames never matched, so the
-route never attached to the listener in the first place.
+route never attached to the listener in the first place. On top of that, the
+`TLSRoute` file was never even listed in
+`app/kustomization.yaml`'s `resources`, so it wasn't applied to the cluster
+at all (`kubectl get tlsroute -A` returns nothing) — it was dead source, not
+a live broken route.
+
+Since the `unifi-tls` listener it targeted no longer exists, the old
+`app/tlsroute.yaml` has been deleted rather than left pointing at a
+nonexistent `sectionName` (it needs to be recreated from scratch anyway,
+against a new Gateway — see below).
 
 ## Proper fix
 
@@ -47,8 +55,9 @@ conflict is to split them across separate Gateways
    - `infrastructure.annotations["external-dns.alpha.kubernetes.io/hostname"]`
      set to the new Gateway's own hostname so external-dns can point
      `unifi.${SECRET_DOMAIN}` at the new IP.
-2. Update `tlsroute.yaml`'s `parentRefs` to point at the new Gateway instead
-   of `internal`/`unifi-tls`.
+2. Recreate `app/tlsroute.yaml` with `parentRefs` pointing at the new Gateway,
+   and add it to `app/kustomization.yaml`'s `resources` (it was missing
+   before, which is why the old route was never actually live).
 3. Verify: `kubectl get gateway internal-passthrough -n kube-system -o yaml`
    shows the listener `Programmed`, `attachedRoutes: 1`, and
    `https://unifi.${SECRET_DOMAIN}` reaches the controller with its own cert
