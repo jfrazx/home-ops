@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: ghcr.io/arabcoders/ytptube
-              tag: "v2.5.11@sha256:c102c7177a05deb8d6e028900a9b950d1f582d4265dda1728a9736d0656d0000"
+              tag: "v2.6.4@sha256:7d9bd397d4206c852dabdb2dcef14de34e20a19f4d781a1812c18fd71d9a1353"
             env:
               TZ: ${TIMEZONE}
               YTP_INSTANCE_TITLE: "YouTube Downloader"
