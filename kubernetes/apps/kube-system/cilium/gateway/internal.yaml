@@ -15,15 +15,12 @@ spec:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
   listeners:
-    - name: unifi-tls
-      protocol: TLS
-      port: 443
-      hostname: "unifi-dashboard.${SECRET_DOMAIN}"
-      tls:
-        mode: Passthrough
-      allowedRoutes:
-        namespaces:
-          from: All
+    # unifi-tls (TLS passthrough) listener removed 2026-08-02: it conflicted with
+    # the wildcard `https` listener below on port 443 after the Cilium v1.20.0
+    # upgrade started enforcing Gateway API hostname-overlap validation, which
+    # broke every HTTPRoute on this Gateway. See
+    # kubernetes/apps/network/unifi-controller/TLS-PASSTHROUGH-TODO.md for the
+    # proper fix (separate Gateway/IP for passthrough).
     - name: http
       protocol: HTTP
       port: 80
