@@ -93,7 +93,7 @@ spec:
       config:
         existingClaim: *app
         globalMounts:
-        - path: /app/config
+          - path: /app/config
 
       media:
         type: nfs
