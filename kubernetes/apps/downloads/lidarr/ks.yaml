@@ -3,43 +3,6 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app lidarr-postgres
-  namespace: flux-system
-spec:
-  targetNamespace: &namespace downloads
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
-  dependsOn:
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
-    - name: cnpg-operator
-      namespace: flux-system
-    - name: democratic-csi
-      namespace: storage
-  path: ./kubernetes/apps/downloads/lidarr/database
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  wait: true
-  interval: 30m
-  retryInterval: 1m
-  timeout: 5m
-  postBuild:
-    substitute:
-      APP: lidarr
-      NAMESPACE: *namespace
-      POSTGRES_VERSION: "18.1"
-      POSTGRES_STORAGE_CLASS: truenas-iscsi
-      POSTGRES_BACKUP_SCHEDULE: "30 3 * * *"
-      POSTGRES_STORAGE_SIZE: "20Gi"
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
   name: &app lidarr
 spec:
   targetNamespace: &namespace downloads
@@ -51,7 +14,7 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
-    - name: lidarr-postgres
+    - name: downloads-postgres
 
   interval: 1h
   path: ./kubernetes/apps/downloads/lidarr/app

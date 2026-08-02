@@ -29,6 +29,36 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
 
+        pod:
+          annotations:
+            k8s.ksgate.org/downloads-postgres-ready: |
+              {
+                "apiVersion": "postgresql.cnpg.io/v1",
+                "kind": "Cluster",
+                "name": "downloads-postgres",
+                "namespace": "downloads",
+                "expression": "resource.status.readyInstances >= 1"
+              }
+          schedulingGates:
+            - name: k8s.ksgate.org/downloads-postgres-ready
+
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.4.0@sha256:5086f94abc783f1147d7c2a32c01db00ab594820026e4f6a82ac2af3dbde7fc7
+
+            env:
+              INIT_POSTGRES_SUPER_PASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: downloads-postgres-superuser
+                    key: password
+
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+
         containers:
           app:
             image:
@@ -44,28 +74,6 @@ spec:
               LIDARR__SERVER__PORT: &port 8686
               LIDARR__LOG_LEVEL: info
               LIDARR__APP__THEME: dark
-
-              LIDARR__POSTGRES__HOST: lidarr-postgres-rw.downloads.svc.cluster.local
-              LIDARR__POSTGRES__PORT:
-                valueFrom:
-                  secretKeyRef:
-                    name: lidarr-postgres-app
-                    key: port
-              LIDARR__POSTGRES__MAINDB:
-                valueFrom:
-                  secretKeyRef:
-                    name: lidarr-postgres-app
-                    key: dbname
-              LIDARR__POSTGRES__USER:
-                valueFrom:
-                  secretKeyRef:
-                    name: lidarr-postgres-app
-                    key: username
-              LIDARR__POSTGRES__PASSWORD:
-                valueFrom:
-                  secretKeyRef:
-                    name: lidarr-postgres-app
-                    key: password
 
             envFrom:
               - secretRef:
