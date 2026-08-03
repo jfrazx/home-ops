@@ -35,7 +35,7 @@ spec:
           app:
             image:
               repository: ghcr.io/jfrazx/ollama-sycl
-              tag: 0.31.1
+              tag: 0.32.5@d6f23cbc4fa2ea7ccad10f1d54e7266129662fcf12512efd2251ff2cf722dc4d
 
             env:
               OLLAMA_MODELS: &modelPath /models
