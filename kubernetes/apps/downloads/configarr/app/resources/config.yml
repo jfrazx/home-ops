@@ -6,7 +6,7 @@ sonarrEnabled: true
 radarrEnabled: true
 readarrEnabled: true
 whisparrEnabled: false
-lidarrEnabled: false
+lidarrEnabled: true
 
 # Readarr has no TRaSH-Guides or recyclarr data, so its custom formats must be
 # defined here by hand. These are conservative starting points -- tune the
@@ -197,3 +197,16 @@ readarr:
 # which the app does not read -- the running instance still uses its own
 # self-generated key and returns 401 for the OpenBao value. Fix that wiring
 # first, then add a second readarr instance block here.
+
+# Lidarr has no TRaSH-Guides or recyclarr data (music isn't covered), so this
+# only wires up the connection. Quality profiles (Any/Lossless/Standard) and
+# root folders (MP3/FLAC) are already set up in the app itself and stay
+# managed by hand there -- not redefined here.
+lidarr:
+  lidarr:
+    base_url: http://lidarr.downloads.svc.cluster.local:8686
+    api_key: !env LIDARR_API_KEY
+
+    root_folders:
+      - /data/media/mp3
+      - /data/media/flac

@@ -15,6 +15,7 @@ spec:
     - name: sonarr
     - name: radarr
     - name: ebookshelf
+    - name: lidarr
   interval: 1h
   path: ./kubernetes/apps/downloads/configarr/app
   postBuild:
