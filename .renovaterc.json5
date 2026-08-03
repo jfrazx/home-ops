@@ -181,5 +181,16 @@
       ],
       datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
     },
+    {
+      description: "Process annotated Dockerfile ARG versions",
+      customType: "regex",
+      managerFilePatterns: ["/(^|/)docker/.+/Dockerfile$/"],
+      matchStrings: [
+        // # renovate: datasource=github-releases depName=intel/compute-runtime versioning=loose
+        // ARG COMPUTE_RUNTIME_VERSION=26.22.38646.4
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( versioning=(?<versioning>\\S+))?( extractVersion=(?<extractVersion>\\S+))?\\n(#.*\\n)*ARG\\s+\\w+=(?<currentValue>\\S+)",
+      ],
+      datasourceTemplate: "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
+    },
   ],
 }
