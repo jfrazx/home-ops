@@ -40,7 +40,6 @@ spec:
             env:
               OLLAMA_MODELS: &modelPath /models
               OLLAMA_HOST: "0.0.0.0"
-              no_proxy: "localhost,127.0.0.1"
               NO_PROXY: "localhost,127.0.0.1"
               ONEAPI_DEVICE_SELECTOR: "level_zero:0"
               ZES_ENABLE_SYSMAN: "1"
@@ -64,6 +63,14 @@ spec:
                 cpu: "8"
                 memory: "16Gi"
                 gpu.intel.com/i915: 1
+
+            # readOnlyRootFilesystem intentionally omitted - SYCL_CACHE_PERSISTENT
+            # writes a kernel cache under $HOME, which isn't backed by a volume here.
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
 
             probes:
               readiness:
