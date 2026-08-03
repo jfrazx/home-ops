@@ -44,6 +44,7 @@ spec:
               ONEAPI_DEVICE_SELECTOR: "level_zero:0"
               ZES_ENABLE_SYSMAN: "1"
               SYCL_CACHE_PERSISTENT: "1"
+              SYCL_CACHE_DIR: /root/.ollama/sycl_cache
               SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS: "1"
               UR_L0_USE_IMMEDIATE_COMMANDLISTS: "1"
               GGML_SYCL_F16: "1"
@@ -57,11 +58,11 @@ spec:
             resources:
               requests:
                 cpu: "2"
-                memory: "8Gi"
+                memory: "12Gi"
                 gpu.intel.com/i915: 1
               limits:
                 cpu: "8"
-                memory: "16Gi"
+                memory: "24Gi"
                 gpu.intel.com/i915: 1
 
             # readOnlyRootFilesystem intentionally omitted - SYCL_CACHE_PERSISTENT
