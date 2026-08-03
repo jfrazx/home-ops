@@ -34,11 +34,17 @@ jobs:
 
       - name: Determine Ollama Version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -n "${{ inputs.ollama_version }}" ]; then
             echo "version=${{ inputs.ollama_version }}" >> "$GITHUB_OUTPUT"
           else
-            latest="$(curl -sL https://api.github.com/repos/ollama/ollama/releases/latest | jq -r '.tag_name' | sed 's/^v//')"
+            latest="$(curl -fsSL \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/ollama/ollama/releases/latest \
+              | jq -er '.tag_name' | sed 's/^v//')"
             echo "version=${latest}" >> "$GITHUB_OUTPUT"
           fi
 
