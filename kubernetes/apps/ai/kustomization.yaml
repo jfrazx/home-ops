@@ -8,6 +8,7 @@ components:
   - ../../components/common
   - ../../components/pod-security/privileged
 resources:
+  - ./hermes-agent/ks.yaml
   - ./kokoro/ks.yaml
   - ./ollama/ks.yaml
   - ./open-webui/ks.yaml
