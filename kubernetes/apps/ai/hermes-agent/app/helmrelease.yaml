@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: nousresearch/hermes-agent
-              tag: v2026.7.30
+              tag: v2026.8.3@sha256:16788311e2fa3035456bdc1bafb8ec2b1777db64ebf020af9bb7eb73c3712c9e
 
             args: ["gateway", "run"]
 
@@ -40,6 +40,21 @@ spec:
               OPENAI_API_KEY: "ollama" # dummy value, Ollama does not validate it
               HERMES_MODEL: "qwen3:8b"
 
+              # Defaults to 127.0.0.1 - required for the Service/HTTPRoute to reach it.
+              # The app logs its own warning about this: with terminal.backend=local
+              # (default, unsandboxed), a network-accessible bind means anything that
+              # reaches this endpoint with the API key can run terminal/file tools as
+              # the container user. Bearer-key auth is enforced (verified live) and
+              # this only reaches the internal gateway, not the public internet - but
+              # worth revisiting terminal.backend: docker if that changes.
+              API_SERVER_HOST: "0.0.0.0"
+
+              # Dashboard already defaults to a 0.0.0.0 bind, which means its auth
+              # gate is mandatory (fails closed without a provider - hardened after
+              # a real incident with unauthenticated public dashboards). Basic-auth
+              # creds come from hermes-agent-secret via envFrom below.
+              HERMES_DASHBOARD: "1"
+
               # --- Home Assistant (disabled until ready) ---
               # HASS_TOKEN comes from hermes-agent-secret (see externalsecret.yaml) once uncommented there
               # HASS_URL: "http://homeassistant.local:8123"
@@ -48,11 +63,26 @@ spec:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
 
+            # The image's s6-overlay entrypoint starts as root and drops privileges
+            # twice: once for its own cont-init setup (needs SETUID/SETGID/CHOWN),
+            # then again per-service when launching dashboard/main-hermes, which
+            # touch root-owned supervision dirs under /run (needs DAC_OVERRIDE/FOWNER
+            # to bypass that ownership check as the now-unprivileged "hermes" user).
+            # Verified live: SETUID/SETGID/CHOWN alone is NOT sufficient - services
+            # fail to start with "Permission denied" without the latter two as well.
+            # Running fully non-root (runAsUser) was also tried and fails earlier -
+            # s6-overlay's own preinit hard-requires /run to already match its uid.
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop:
                   - ALL
+                add:
+                  - SETUID
+                  - SETGID
+                  - CHOWN
+                  - DAC_OVERRIDE
+                  - FOWNER
 
             resources:
               requests:
@@ -66,7 +96,9 @@ spec:
         controller: *app
         ports:
           http:
-            port: 8642
+            port: &apiPort 8642
+          dashboard:
+            port: &dashboardPort 9119
 
     persistence:
       data:
@@ -80,14 +112,28 @@ spec:
 
     route:
       app:
+        hostnames: ["hermes.${SECRET_DOMAIN}"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *apiPort
+      dashboard:
         annotations:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Self-improving AI agent with persistent memory
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/name: Hermes Agent
           gethomepage.dev/app: *app
-        hostnames: ["hermes.${SECRET_DOMAIN}"]
+        hostnames: ["hermes-dashboard.${SECRET_DOMAIN}"]
         parentRefs:
           - name: internal
             namespace: kube-system
             sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *dashboardPort
