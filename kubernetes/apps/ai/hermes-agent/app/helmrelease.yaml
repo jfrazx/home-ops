@@ -38,7 +38,7 @@ spec:
               # Model provider - routed at the in-cluster Ollama instance
               OPENAI_BASE_URL: http://ollama.ai.svc.cluster.local:11434/v1
               OPENAI_API_KEY: "ollama" # dummy value, Ollama does not validate it
-              HERMES_MODEL: "qwen3:8b"
+              # HERMES_MODEL: "qwen3:8b"
 
               # Defaults to 127.0.0.1 - required for the Service/HTTPRoute to reach it.
               # The app logs its own warning about this: with terminal.backend=local
