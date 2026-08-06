@@ -48,6 +48,18 @@ spec:
               SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS: "1"
               UR_L0_USE_IMMEDIATE_COMMANDLISTS: "1"
               GGML_SYCL_F16: "1"
+              # Integrated Arc GPU shares system RAM; the driver only exposes a
+              # small dedicated VRAM window (~2.2GiB) by default, which isn't
+              # enough to offload most models (verified: 0/34 layers offloaded,
+              # ~4.6 tok/s, effectively CPU-only). This env var is read at
+              # runtime by ggml-sycl (confirmed in ggml/src/ggml-sycl.cpp) and
+              # widens Ollama's reported free device memory, letting it offload
+              # fully. Verified live: 34-37/34-37 layers offloaded, ~7.6 tok/s.
+              # Note: this hardware doesn't actually support the zero-copy USM
+              # allocation path (logs: "Device does not support USM system
+              # allocations") - the gain comes from the memory availability
+              # check alone, not the intended fast path.
+              GGML_SYCL_USM_SYSTEM: "1"
               OLLAMA_FLASH_ATTENTION: "true"
               OLLAMA_KV_CACHE_TYPE: "q4_0"
               OLLAMA_NUM_GPU: "999"
