@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./externalsecret.yaml
+  - ./helmrelease.yaml
+  - ./mcpserver.yaml
+configMapGenerator:
+  - name: docs-mcp-configmap
+    files:
+      - ./resources/repos.txt
+      - ./resources/sync.sh
+      # Parked with the webhook controller; restore both together.
+      # - ./resources/webhook.js
+generatorOptions:
+  disableNameSuffixHash: true

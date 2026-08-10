@@ -8,6 +8,7 @@ components:
   - ../../components/common
   - ../../components/pod-security/privileged
 resources:
+  - ./docs-mcp/ks.yaml
   - ./hermes-agent/ks.yaml
   - ./kokoro/ks.yaml
   - ./ollama/ks.yaml
