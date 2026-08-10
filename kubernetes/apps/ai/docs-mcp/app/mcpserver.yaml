@@ -1,0 +1,43 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: docs-mcp
+  namespace: ai
+spec:
+  image: ghcr.io/arabold/docs-mcp-server:2.5.0
+  transport: streamable-http
+  proxyPort: 8080
+  mcpPort: 6280
+
+  # ToolHive runs the image directly, so the CLI subcommand goes here. Search
+  # is served over the worker's RPC rather than by opening the store locally,
+  # which keeps the SQLite file single-writer.
+  args:
+    - mcp
+    - --protocol
+    - http
+    - --host
+    - 0.0.0.0
+    - --port
+    - "6280"
+    - --server-url
+    - http://docs-mcp-worker.ai.svc.cluster.local:8080/api
+    - --no-logo
+
+  env:
+    - name: DOCS_MCP_TELEMETRY
+      value: "false"
+    # This endpoint answers questions; indexing is the worker's job. Read-only
+    # keeps an agent from mutating the index through the MCP tools.
+    - name: DOCS_MCP_READ_ONLY
+      value: "true"
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+    requests:
+      cpu: 100m
+      memory: 256Mi

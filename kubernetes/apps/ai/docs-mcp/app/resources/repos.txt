@@ -1,0 +1,25 @@
+# Repositories indexed by docs-mcp-server.
+#
+# One "owner/repo" per line. Blank lines and '#' comments are ignored.
+#
+# Each entry becomes:
+#   library name = the repo name (the part after the slash)
+#   source URL   = https://github.com/<owner>/<repo>
+#
+# This file drives the nightly sync CronJob. It also doubles as the allowlist
+# for the GitHub webhook receiver if that ever gets enabled (see webhook.js),
+# which refuses any delivery for a repo not listed here.
+#
+# Private repos work, but only if the GITHUB_TOKEN in the docs-mcp secret has
+# access to them.
+
+jfrazx/home-ops
+jfrazx/abstract
+jfrazx/path-finder
+jfrazx/surrogate
+jfrazx/envirator
+jfrazx/defaults
+
+# BoardGamesEmpire
+BoardGamesEmpire/board-games-empire-client
+BoardGamesEmpire/board-games-empire-backend
