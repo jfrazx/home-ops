@@ -54,7 +54,13 @@ function allowedRepos() {
 }
 
 function signatureIsValid(signature, body) {
-  if (!signature) return false;
+  // Node joins duplicate request headers into a single string and only ever
+  // hands back an array for set-cookie, so in practice this is always a string.
+  // Guard on the type anyway: a delivery carrying anything other than exactly
+  // one signature is anomalous and should be rejected rather than reconciled,
+  // and it keeps Buffer.from() from throwing inside the request handler, which
+  // has no try/catch and would take the process down rather than return 401.
+  if (typeof signature !== "string" || signature.length === 0) return false;
   const expected =
     "sha256=" + crypto.createHmac("sha256", SECRET).update(body).digest("hex");
   const a = Buffer.from(expected, "utf8");

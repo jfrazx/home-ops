@@ -48,12 +48,26 @@ if [ "$#" -gt 0 ]; then
 fi
 
 rc=0
-# Strip comments and blank lines, then sync each entry. One bad repo must not
-# abort the rest of the run, so failures are accumulated into the exit code.
-sed -e 's/#.*$//' -e 's/[[:space:]]//g' "${REPOS_FILE}" \
-  | grep -v '^$' \
-  | while IFS= read -r repo; do
-      sync_one "${repo}" || echo "[sync] continuing after failure on ${repo}" >&2
-    done || rc=1
+failed=""
+
+# Read the file directly instead of piping into the loop: a `while` on the right
+# of a pipe runs in a subshell, so anything tracked inside it is discarded when
+# the loop ends. One bad repo must not abort the run, but it must still fail the
+# job -- a silent exit 0 would report a healthy index while it went stale.
+# The `|| [ -n "$line" ]` keeps a final line with no trailing newline.
+while IFS= read -r line || [ -n "${line}" ]; do
+  repo=$(printf '%s' "${line}" | sed -e 's/#.*$//' -e 's/[[:space:]]//g')
+  [ -n "${repo}" ] || continue
+
+  if ! sync_one "${repo}"; then
+    rc=1
+    failed="${failed} ${repo}"
+    echo "[sync] continuing after failure on ${repo}" >&2
+  fi
+done <"${REPOS_FILE}"
+
+if [ "${rc}" -ne 0 ]; then
+  echo "[sync] completed with failures:${failed}" >&2
+fi
 
 exit "${rc}"
