@@ -23,6 +23,7 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CLAIM: lidarr-config
+      VOLSYNC_CAPACITY: 20Gi
       VOLSYNC_REPOSITORY_NAMESPACE: *namespace
     substituteFrom:
       - kind: Secret

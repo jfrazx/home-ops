@@ -64,7 +64,13 @@ spec:
               OLLAMA_KV_CACHE_TYPE: "q4_0"
               OLLAMA_NUM_GPU: "999"
               OLLAMA_NUM_PARALLEL: "1"
-              OLLAMA_MAX_LOADED_MODELS: "1"
+              # 2, not 1, so docs-mcp's embedding model can stay resident
+              # alongside whatever chat model is in use. At 1 any chat request
+              # evicted embeddinggemma:300m (681Mi), and the ~150s reload
+              # exceeded docs-mcp's non-configurable embedding timeout -- its
+              # nightly sync then indexed pages with zero content and still
+              # reported success.
+              OLLAMA_MAX_LOADED_MODELS: "2"
               OLLAMA_KEEP_ALIVE: "2h"
 
             resources:

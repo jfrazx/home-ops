@@ -33,7 +33,7 @@ spec:
           app: &container
             image:
               repository: ghcr.io/arabold/docs-mcp-server
-              tag: 2.5.0
+              tag: 3.0.0
 
             command:
               - node
@@ -127,12 +127,14 @@ spec:
                 memory: 512Mi
 
       # NOTE: a GitHub webhook receiver (resources/webhook.js) is written and
-      # tested but intentionally not deployed. Indexing is cron-driven for now.
+      # tested but intentionally not deployed. Refreshing is cron-driven for now.
       # To enable it, restore the `webhook` controller/service/route here, add
       # webhook.js back to the configMapGenerator, and restore the
       # GITHUB_WEBHOOK_SECRET entry in externalsecret.yaml.
 
-      # Sole trigger for indexing while the webhook is parked. Cheap to run
+      # Keeps the index fresh; it does not decide what is in it. Libraries are
+      # added and removed through the web UI, and this refreshes whatever the
+      # store reports -- upstream has no scheduler of its own. Cheap to run
       # often: unchanged pages return 304 and skip the pipeline entirely.
       sync:
         type: cronjob
@@ -161,7 +163,6 @@ spec:
             env:
               <<: *env
               DOCS_MCP_SERVER_URL: *serverUrl
-              DOCS_MCP_REPOS_FILE: /etc/docs-mcp/repos.txt
 
             probes:
               liveness:

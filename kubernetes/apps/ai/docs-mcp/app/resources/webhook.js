@@ -8,22 +8,27 @@
  * It deliberately does very little:
  *   - verifies X-Hub-Signature-256 against GITHUB_WEBHOOK_SECRET
  *   - accepts only `push` events on the repo's own default branch
- *   - accepts only repos listed in repos.txt
  *   - shells out to sync.sh, which refreshes (or scrapes) that one library
  *
  * This endpoint is reachable from the public internet, so every request is
- * rejected unless it clears all four checks above.
+ * rejected unless it clears all three checks above.
+ *
+ * There is no allowlist here any more. The set of indexed libraries lives only
+ * in the store now (it used to be repos.txt, which this read on every request),
+ * so sync.sh is the gate: it looks the library up and exits non-zero for
+ * anything not already indexed. That is a stricter check than the old file --
+ * it cannot drift from what is actually in the index -- at the cost of spawning
+ * a short-lived process to reject an unknown repo. Reaching that point already
+ * requires a valid signature.
  */
 "use strict";
 
 const http = require("node:http");
 const crypto = require("node:crypto");
-const fs = require("node:fs");
 const { spawn } = require("node:child_process");
 
 const PORT = Number(process.env.WEBHOOK_PORT || 8080);
 const SECRET = process.env.GITHUB_WEBHOOK_SECRET || "";
-const REPOS_FILE = process.env.DOCS_MCP_REPOS_FILE || "/etc/docs-mcp/repos.txt";
 const SYNC_SCRIPT = process.env.DOCS_MCP_SYNC_SCRIPT || "/etc/docs-mcp/sync.sh";
 const MAX_BODY = 5 * 1024 * 1024; // GitHub caps payloads at 25MB; we need far less.
 
@@ -33,25 +38,6 @@ if (!SECRET) {
 }
 
 const log = (...args) => console.log("[webhook]", ...args);
-
-/**
- * Read the allowlist on every request so edits to the ConfigMap take effect
- * without a pod restart (kubelet refreshes the mounted file in place).
- */
-function allowedRepos() {
-  try {
-    return new Set(
-      fs
-        .readFileSync(REPOS_FILE, "utf8")
-        .split("\n")
-        .map((line) => line.replace(/#.*$/, "").trim())
-        .filter(Boolean),
-    );
-  } catch (err) {
-    log("could not read", REPOS_FILE, err.message);
-    return new Set();
-  }
-}
 
 function signatureIsValid(signature, body) {
   // Node joins duplicate request headers into a single string and only ever
@@ -85,8 +71,9 @@ function triggerSync(repo) {
   inFlight.add(repo);
   log("starting sync for", repo);
 
-  // `repo` is already known-good (it matched the allowlist) and is passed as a
-  // discrete argv entry, never interpolated into a shell string.
+  // `repo` comes straight from the payload, so it is untrusted: it is passed as
+  // a discrete argv entry, never interpolated into a shell string, and sync.sh
+  // only acts on it if it matches a library already in the store.
   const child = spawn("/bin/sh", [SYNC_SCRIPT, repo], { stdio: "inherit" });
 
   const finish = (detail) => {
@@ -161,13 +148,9 @@ const server = http.createServer((req, res) => {
     }
     if (payload.deleted) return reply(202, "ignoring branch deletion");
 
-    if (!allowedRepos().has(repo)) {
-      log("ignoring push for unlisted repo", repo);
-      return reply(202, "repo not indexed");
-    }
-
     // Respond before the sync finishes; GitHub times deliveries out at 10s and
-    // a full scrape can take minutes.
+    // a full scrape can take minutes. That also means an unindexed repo still
+    // gets a 202 here -- sync.sh does the rejecting, and logs it.
     reply(202, "sync queued");
     triggerSync(repo);
   });

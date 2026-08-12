@@ -9,9 +9,15 @@ resources:
 configMapGenerator:
   - name: docs-mcp-configmap
     files:
-      - ./resources/repos.txt
       - ./resources/sync.sh
+      - ./resources/list-libraries.mjs
+      - ./resources/warm-embeddings.mjs
       # Parked with the webhook controller; restore both together.
       # - ./resources/webhook.js
 generatorOptions:
   disableNameSuffixHash: true
+  annotations:
+    # sync.sh (and webhook.js) are full of ${...} shell/JS expansions; Flux
+    # postBuild substitution would replace every one of them with an empty
+    # string and leave a script that runs but does nothing.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
