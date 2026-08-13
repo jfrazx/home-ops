@@ -9,7 +9,8 @@ metadata:
 spec:
   parentRefs:
     - name: internal
-      namespace: networking
+      namespace: kube-system
+      sectionName: https
   hostnames:
     - "influxdb.${SECRET_DOMAIN}"
   rules:
