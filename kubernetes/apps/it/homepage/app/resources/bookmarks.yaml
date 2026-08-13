@@ -1,0 +1,8 @@
+---
+- Cluster:
+    - Authentik:
+        - abbr: AK
+          href: https://auth.${SECRET_DOMAIN}/
+    - Flux:
+        - abbr: FL
+          href: https://fluxcd.io/

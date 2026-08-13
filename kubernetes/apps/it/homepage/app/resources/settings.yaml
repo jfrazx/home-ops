@@ -1,0 +1,31 @@
+---
+title: Home
+headerStyle: clean
+statusStyle: dot
+hideVersion: true
+
+# Group keys must match `gethomepage.dev/group` annotation values exactly.
+# LLM/Ai, Home and Services are in use today; the rest are seeded for
+# future annotation work and stay empty until routes claim them.
+layout:
+  LLM/Ai:
+    style: row
+    columns: 4
+  Media:
+    style: row
+    columns: 4
+  Downloads:
+    style: row
+    columns: 4
+  Home:
+    style: row
+    columns: 4
+  Services:
+    style: row
+    columns: 4
+  Observability:
+    style: row
+    columns: 4
+  Network:
+    style: row
+    columns: 4

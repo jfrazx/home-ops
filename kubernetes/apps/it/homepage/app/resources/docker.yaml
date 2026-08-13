@@ -1,0 +1,2 @@
+---
+# Intentionally empty. Discovery is via the Kubernetes API, not Docker labels.

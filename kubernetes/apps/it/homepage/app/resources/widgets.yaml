@@ -1,0 +1,16 @@
+---
+# The kubernetes widget reads metrics.k8s.io, so it doubles as a live check
+# that the ClusterRole in rbac.yaml applied correctly.
+- kubernetes:
+    cluster:
+      show: true
+      cpu: true
+      memory: true
+      showLabel: true
+      label: cluster
+    nodes:
+      show: false
+
+- search:
+    provider: duckduckgo
+    target: _blank

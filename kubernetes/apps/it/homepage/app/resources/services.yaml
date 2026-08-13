@@ -1,0 +1,5 @@
+---
+# Intentionally empty.
+#
+# Services are discovered from `gethomepage.dev/*` annotations on HTTPRoutes.
+# To add an app to this dashboard, annotate that app's route -- do not add it here.
