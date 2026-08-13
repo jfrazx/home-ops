@@ -39,6 +39,12 @@ spec:
               repository: ghcr.io/gethomepage/homepage
               tag: v1.13.2@sha256:a0b71c8e757298d02560186bab9fbe3fc2d375c523a62cc1019177b37e48aa28
 
+            # Supplies HOMEPAGE_VAR_* widget keys referenced by discovered
+            # route annotations. Add new widget keys to the ExternalSecret.
+            envFrom:
+              - secretRef:
+                  name: homepage-secret
+
             env:
               TZ: "${TIMEZONE}"
               # Required. Without it Homepage serves a blank page.

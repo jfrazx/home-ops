@@ -22,4 +22,4 @@ Thumbs.db
 logs/
 *.zip
 .envrc
-docs/superpowers/*
+docs/*
