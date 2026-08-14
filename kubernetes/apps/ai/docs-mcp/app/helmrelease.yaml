@@ -237,7 +237,9 @@ spec:
       web:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Local documentation index for AI assistants
+          gethomepage.dev/description: >-
+            Local documentation index for AI assistants ·
+            {{ if eq (index .Values.route.web.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/icon: mdi-book-search
           gethomepage.dev/name: Docs MCP

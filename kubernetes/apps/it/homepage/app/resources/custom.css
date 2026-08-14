@@ -1,0 +1,10 @@
+/*
+ * Intentionally empty.
+ *
+ * Homepage treats this as a required config file and copies its skeleton into
+ * /app/config on first request. That directory sits on the read-only root
+ * filesystem, so the copy fails with EROFS and the process exits. Shipping the
+ * file here means Homepage never has to create it.
+ *
+ * Do not delete. See also custom.js and proxmox.yaml.
+ */

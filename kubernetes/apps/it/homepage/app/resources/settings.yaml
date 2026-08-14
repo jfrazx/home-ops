@@ -4,9 +4,12 @@ headerStyle: clean
 statusStyle: dot
 hideVersion: true
 
-# Group keys must match `gethomepage.dev/group` annotation values exactly.
-# LLM/Ai, Home and Services are in use today; the rest are seeded for
-# future annotation work and stay empty until routes claim them.
+# Group keys must match `gethomepage.dev/group` annotation values exactly, and
+# the order here is the order they render in. Every group below is populated.
+#
+# A route joins a group via `gethomepage.dev/group` on its HTTPRoute. Adding a
+# group name that no route claims renders an empty heading, so add here and
+# annotate in the same change.
 layout:
   LLM/Ai:
     style: row
@@ -20,12 +23,21 @@ layout:
   Home:
     style: row
     columns: 4
-  Services:
+  Documents:
+    style: row
+    columns: 4
+  Automation:
+    style: row
+    columns: 4
+  Maker:
     style: row
     columns: 4
   Observability:
     style: row
     columns: 4
   Network:
+    style: row
+    columns: 4
+  Services:
     style: row
     columns: 4

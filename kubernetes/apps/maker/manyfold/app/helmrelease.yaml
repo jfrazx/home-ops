@@ -197,6 +197,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Manyfold
+          gethomepage.dev/group: Maker
+          gethomepage.dev/icon: manyfold.svg
+          gethomepage.dev/description: >-
+            3D model library ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

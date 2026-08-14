@@ -139,6 +139,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Paperless
+          gethomepage.dev/group: Documents
+          gethomepage.dev/icon: paperless.svg
+          gethomepage.dev/description: >-
+            Document archive ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

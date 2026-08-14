@@ -6,6 +6,11 @@ metadata:
   name: &app prometheus
   namespace: &namespace observability
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Prometheus
+    gethomepage.dev/group: Observability
+    gethomepage.dev/icon: prometheus.svg
+    gethomepage.dev/description: Metrics · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames: ["prometheus.${SECRET_DOMAIN}"]
@@ -30,6 +35,11 @@ metadata:
   name: &app alertmanager
   namespace: &namespace observability
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Alertmanager
+    gethomepage.dev/group: Observability
+    gethomepage.dev/icon: alertmanager.svg
+    gethomepage.dev/description: Alert routing · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames: ["alertmanager.${SECRET_DOMAIN}"]

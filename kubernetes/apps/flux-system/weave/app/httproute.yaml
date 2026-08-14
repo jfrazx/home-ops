@@ -5,6 +5,11 @@ metadata:
   name: weave-gitops
   namespace: flux-system
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Weave GitOps
+    gethomepage.dev/group: Services
+    gethomepage.dev/icon: weave-gitops.svg
+    gethomepage.dev/description: Flux dashboard · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames: ["gitops.${SECRET_DOMAIN}"]

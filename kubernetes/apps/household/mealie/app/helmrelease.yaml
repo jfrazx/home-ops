@@ -72,6 +72,9 @@ spec:
           gethomepage.dev/name: Mealie
           gethomepage.dev/icon: mealie.svg
           gethomepage.dev/group: Home
+          gethomepage.dev/description: >-
+            Recipes and meal planning ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/href: *baseUrl
           gethomepage.dev/widget.type: mealie
           gethomepage.dev/widget.url: http://mealie.household:9000

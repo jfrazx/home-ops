@@ -134,7 +134,9 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Stable Diffusion image generation
+          gethomepage.dev/description: >-
+            Stable Diffusion image generation ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/icon: mdi-image-auto-adjust
           gethomepage.dev/name: SD.Next

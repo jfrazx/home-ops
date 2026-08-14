@@ -112,7 +112,9 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Interact with your AI models
+          gethomepage.dev/description: >-
+            Interact with your AI models ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/icon: sh-open-webui.svg
           gethomepage.dev/name: Open WebUI

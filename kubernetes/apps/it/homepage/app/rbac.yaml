@@ -11,6 +11,12 @@ rules:
   - apiGroups: ["gateway.networking.k8s.io"]
     resources: ["httproutes", "gateways"]
     verbs: ["get", "list"]
+  # Homepage lists Ingresses on every discovery pass even with `gateway: true`,
+  # logging a 403 each time without it. This cluster has zero Ingress objects,
+  # so this grants nothing today -- it just keeps the logs clean.
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list"]
   - apiGroups: ["metrics.k8s.io"]
     resources: ["nodes", "pods"]
     verbs: ["get", "list"]

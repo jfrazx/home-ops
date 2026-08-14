@@ -156,6 +156,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: qBittorrent
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/icon: qbittorrent.svg
+          gethomepage.dev/description: >-
+            Torrent client ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "qbit.${SECRET_DOMAIN}"
         parentRefs:

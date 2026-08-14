@@ -93,22 +93,9 @@ spec:
           http:
             port: *port
 
-    # ingress:
-    #   app:
-    #     enabled: true
-    #     className: internal
-    #     annotations:
-    #       gethomepage.dev/enabled: "true"
-    #       gethomepage.dev/group: Services
-    #       gethomepage.dev/name: *app
-    #       gethomepage.dev/icon: si-postgresql
-    #     hosts:
-    #       - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-    #         paths:
-    #           - path: /
-    #             service:
-    #               identifier: app
-    #               port: http
+    # Routing lives in ./httproute.yaml, which also carries the
+    # gethomepage.dev/* annotations. A commented-out Ingress block used to sit
+    # here; it predated the Gateway API migration and is gone.
 
     persistence:
       config:

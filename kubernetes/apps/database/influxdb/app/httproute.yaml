@@ -5,6 +5,11 @@ metadata:
   name: influxdb
   namespace: database
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: InfluxDB
+    gethomepage.dev/group: Services
+    gethomepage.dev/icon: influxdb.svg
+    gethomepage.dev/description: Time series database · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   parentRefs:

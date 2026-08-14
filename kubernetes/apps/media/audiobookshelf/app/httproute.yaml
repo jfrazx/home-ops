@@ -5,6 +5,11 @@ metadata:
   name: &app audiobookshelf
   namespace: &namespace media
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Audiobookshelf
+    gethomepage.dev/group: Media
+    gethomepage.dev/icon: audiobookshelf.svg
+    gethomepage.dev/description: Audiobooks and podcasts · External
     kustomize.toolkit.fluxcd.io/substitute: "true"
     external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
 spec:

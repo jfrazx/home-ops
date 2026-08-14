@@ -84,6 +84,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Stirling PDF
+          gethomepage.dev/group: Documents
+          gethomepage.dev/icon: stirling-pdf.svg
+          gethomepage.dev/description: >-
+            PDF toolkit ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "pdf.${SECRET_DOMAIN}"
         parentRefs:

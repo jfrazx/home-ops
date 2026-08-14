@@ -120,6 +120,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Jellyfin
+          gethomepage.dev/group: Media
+          gethomepage.dev/icon: jellyfin.svg
+          gethomepage.dev/description: >-
+            Movies and TV ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

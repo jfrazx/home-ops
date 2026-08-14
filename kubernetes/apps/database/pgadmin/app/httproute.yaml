@@ -6,6 +6,11 @@ metadata:
   name: &app pgadmin
   namespace: &namespace database
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: pgAdmin
+    gethomepage.dev/group: Services
+    gethomepage.dev/icon: pgadmin.svg
+    gethomepage.dev/description: Postgres admin · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames: ["pgadmin.${SECRET_DOMAIN}"]

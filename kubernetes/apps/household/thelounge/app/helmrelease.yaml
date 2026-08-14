@@ -68,6 +68,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: The Lounge
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: thelounge.svg
+          gethomepage.dev/description: >-
+            IRC client ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

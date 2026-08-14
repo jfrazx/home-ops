@@ -114,6 +114,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: SABnzbd
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/icon: sabnzbd.svg
+          gethomepage.dev/description: >-
+            Usenet downloader ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

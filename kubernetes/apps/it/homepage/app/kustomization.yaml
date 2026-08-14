@@ -7,6 +7,9 @@ resources:
   - ./helmrelease.yaml
   - ./rbac.yaml
 configMapGenerator:
+  # All nine files Homepage considers "required" must be here. It copies any
+  # missing one from its skeleton into /app/config at request time, which fails
+  # on the read-only root filesystem and exits the process.
   - name: homepage-configmap
     files:
       - ./resources/settings.yaml
@@ -15,5 +18,8 @@ configMapGenerator:
       - ./resources/widgets.yaml
       - ./resources/bookmarks.yaml
       - ./resources/docker.yaml
+      - ./resources/proxmox.yaml
+      - ./resources/custom.css
+      - ./resources/custom.js
 generatorOptions:
   disableNameSuffixHash: true

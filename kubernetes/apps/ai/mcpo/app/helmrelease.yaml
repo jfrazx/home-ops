@@ -96,7 +96,9 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: MCP to OpenAPI Proxy
+          gethomepage.dev/description: >-
+            MCP to OpenAPI Proxy ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/icon: mdi-transit-connection-variant
           gethomepage.dev/name: MCPO

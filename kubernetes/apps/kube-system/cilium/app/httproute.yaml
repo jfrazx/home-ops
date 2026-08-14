@@ -5,6 +5,11 @@ metadata:
   name: &app hubble-ui
   namespace: &namespace kube-system
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Hubble
+    gethomepage.dev/group: Network
+    gethomepage.dev/icon: cilium.svg
+    gethomepage.dev/description: Network observability · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames: ["hubble.${SECRET_DOMAIN}"]

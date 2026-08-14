@@ -113,6 +113,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: n8n
+          gethomepage.dev/group: Automation
+          gethomepage.dev/icon: n8n.svg
+          gethomepage.dev/description: >-
+            Workflow automation ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - *host
         parentRefs:

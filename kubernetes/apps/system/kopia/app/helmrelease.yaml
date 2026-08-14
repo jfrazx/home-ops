@@ -125,6 +125,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Kopia
+          gethomepage.dev/group: Services
+          gethomepage.dev/icon: kopia.svg
+          gethomepage.dev/description: >-
+            Backups ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

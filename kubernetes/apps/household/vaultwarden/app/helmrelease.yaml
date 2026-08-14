@@ -175,6 +175,14 @@ spec:
 
     route:
       vaultwarden:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Vaultwarden
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: vaultwarden.svg
+          gethomepage.dev/description: >-
+            Password manager ·
+            {{ if eq (index .Values.route.vaultwarden.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
         parentRefs:
           - name: internal

@@ -109,6 +109,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Listenarr
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/icon: mdi-headphones
+          gethomepage.dev/description: >-
+            Audiobook automation ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

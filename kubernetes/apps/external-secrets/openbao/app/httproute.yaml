@@ -5,6 +5,11 @@ metadata:
   name: openbao
   namespace: external-secrets
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: OpenBao
+    gethomepage.dev/group: Services
+    gethomepage.dev/icon: mdi-safe
+    gethomepage.dev/description: Secrets management · LAN only
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames: ["openbao.${SECRET_DOMAIN}"]

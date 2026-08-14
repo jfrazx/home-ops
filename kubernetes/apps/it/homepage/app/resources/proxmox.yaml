@@ -1,0 +1,5 @@
+---
+# Intentionally empty. There is no Proxmox in this cluster.
+#
+# Present only because Homepage treats it as a required config file and will
+# exit trying to create it in the read-only /app/config. See custom.css.

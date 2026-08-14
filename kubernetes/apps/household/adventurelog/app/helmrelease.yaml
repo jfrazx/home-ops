@@ -106,6 +106,14 @@ spec:
 
     route:
       frontend:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: AdventureLog
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: adventurelog.svg
+          gethomepage.dev/description: >-
+            Travel journal ·
+            {{ if eq (index .Values.route.frontend.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         enabled: true
         kind: HTTPRoute
         parentRefs:

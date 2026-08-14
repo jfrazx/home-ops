@@ -72,6 +72,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Node-RED
+          gethomepage.dev/group: Automation
+          gethomepage.dev/icon: node-red.svg
+          gethomepage.dev/description: >-
+            Flow-based automation ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
         parentRefs:
           - name: internal

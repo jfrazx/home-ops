@@ -81,6 +81,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Actual Budget
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: actual-budget.svg
+          gethomepage.dev/description: >-
+            Budgeting ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames: ["budget.${SECRET_DOMAIN}"]
         parentRefs:
           - name: external

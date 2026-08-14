@@ -69,6 +69,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Networking Toolbox
+          gethomepage.dev/group: Network
+          gethomepage.dev/icon: mdi-lan
+          gethomepage.dev/description: >-
+            Network calculators ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

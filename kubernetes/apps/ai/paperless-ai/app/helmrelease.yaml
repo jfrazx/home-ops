@@ -121,7 +121,9 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Document management with AI features
+          gethomepage.dev/description: >-
+            Document management with AI features ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/icon: sh-paperless-ai.svg
           gethomepage.dev/name: Paperless AI

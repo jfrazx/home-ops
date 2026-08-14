@@ -63,6 +63,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: IT Tools
+          gethomepage.dev/group: Services
+          gethomepage.dev/icon: it-tools.svg
+          gethomepage.dev/description: >-
+            Developer utilities ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

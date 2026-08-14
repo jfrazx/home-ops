@@ -118,6 +118,14 @@ spec:
 
     route:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Audiobook Request
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/icon: mdi-book-plus
+          gethomepage.dev/description: >-
+            Audiobook requests ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
