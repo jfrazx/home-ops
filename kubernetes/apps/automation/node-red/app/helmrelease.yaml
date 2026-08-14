@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: docker.io/nodered/node-red
-              tag: 4.1.12
+              tag: 5.0.4
             envFrom:
               - secretRef:
                   name: node-red-secret
