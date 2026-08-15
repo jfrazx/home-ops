@@ -7,7 +7,7 @@ metadata:
 spec:
   # Keep in lockstep with the worker's tag in helmrelease.yaml: this talks to
   # the worker over tRPC, and v3 added methods to that interface.
-  image: ghcr.io/arabold/docs-mcp-server:3.0.0
+  image: ghcr.io/arabold/docs-mcp-server:3.0.1
   transport: streamable-http
   proxyPort: 8080
   mcpPort: 6280
