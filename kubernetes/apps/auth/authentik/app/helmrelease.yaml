@@ -85,6 +85,27 @@ spec:
         enabled: true
         maxUnavailable: 1
 
+      # gunicorn recycles workers periodically and a fresh worker takes ~1-2s to
+      # boot; the chart default of timeoutSeconds 3 trips during that window.
+      readinessProbe:
+        httpGet:
+          path: '{{ .Values.authentik.web.path }}-/health/ready/'
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 10
+        failureThreshold: 5
+        successThreshold: 1
+      livenessProbe:
+        httpGet:
+          path: '{{ .Values.authentik.web.path }}-/health/live/'
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 10
+        failureThreshold: 5
+        successThreshold: 1
+
       containerSecurityContext:
         runAsNonRoot: true
         readOnlyRootFilesystem: true

@@ -27,4 +27,9 @@ spec:
     - "error.*lookup raw\\.githubusercontent\\.com"
     - "dial.*tcp.*timeout"
     - "waiting.*socket"
+    # IPv4-only cluster (Cilium enable-ipv6=false) fetching from upstreams that
+    # publish AAAA records: Go dials the v6 address, fails instantly, and the
+    # retry succeeds. Roughly 70/day of pure noise. Scoped to bracketed IPv6
+    # literals so a genuine IPv4 routing failure still alerts.
+    - "dial tcp \\[[0-9a-fA-F:]+\\]:[0-9]+: connect: network is unreachable"
   suspend: false
