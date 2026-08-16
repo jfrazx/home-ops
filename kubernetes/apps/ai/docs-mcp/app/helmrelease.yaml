@@ -33,7 +33,7 @@ spec:
           app: &container
             image:
               repository: ghcr.io/arabold/docs-mcp-server
-              tag: 3.0.0
+              tag: 3.0.1
 
             command:
               - node
