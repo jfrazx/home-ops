@@ -37,7 +37,7 @@ spec:
           app:
             image:
               repository: ghcr.io/gethomepage/homepage
-              tag: v1.13.2@sha256:a0b71c8e757298d02560186bab9fbe3fc2d375c523a62cc1019177b37e48aa28
+              tag: v2.0.0@sha256:638dacf5c844e908dc06c1fd57a2b5694f8efd91f91f152829ea0c2f547458f2
 
             # Supplies HOMEPAGE_VAR_* widget keys referenced by discovered
             # route annotations. Add new widget keys to the ExternalSecret.
@@ -50,6 +50,11 @@ spec:
               # Required. Without it Homepage serves a blank page.
               # Must match the route hostname below.
               HOMEPAGE_ALLOWED_HOSTS: "homepage.${SECRET_DOMAIN}"
+
+              HOMEPAGE_AUTH_ENABLED: "true"
+              HOMEPAGE_EXTERNAL_URL: "https://homepage.${SECRET_DOMAIN}"
+              HOMEPAGE_OIDC_ISSUER: "https://auth.${SECRET_DOMAIN}/application/o/homepage/"
+              HOMEPAGE_OIDC_NAME: "Authentik"
 
             resources:
               requests:
