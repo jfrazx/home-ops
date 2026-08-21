@@ -125,7 +125,7 @@ spec:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: >-
             Self-improving AI agent with persistent memory ·
-            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
+            {{ if eq (index .Values.route.dashboard.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
           gethomepage.dev/group: LLM/Ai
           gethomepage.dev/name: Hermes Agent
           gethomepage.dev/app: *app

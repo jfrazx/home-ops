@@ -34,12 +34,19 @@ spec:
             can take longer than Alertmanager's notification timeout, and a timed-out
             webhook is retried, which would deliver duplicates. Acknowledging the POST
             immediately and retrying internally avoids that.
+
+            The queue is in memory, so a pod restart loses whatever is in flight. That is
+            deliberate: Alertmanager re-notifies firing groups on repeat_interval, so it
+            remains the durable source of truth, and the retry horizon below is sized to
+            outlast a signal-cli-rest-api restart. Only "resolved" notices are sent once
+            and can genuinely be lost.
             """
 
             import json
             import logging
             import os
             import queue
+            import re
             import sys
             import threading
             import time
@@ -67,11 +74,17 @@ spec:
             SIGNAL_NUMBER = _required("SIGNAL_NUMBER")
             RECIPIENTS = [r.strip() for r in _required("SIGNAL_RECIPIENTS").split(",") if r.strip()]
             SEND_TIMEOUT = float(os.environ.get("SEND_TIMEOUT", "60"))
-            MAX_ATTEMPTS = int(os.environ.get("MAX_ATTEMPTS", "4"))
+            # 10 attempts with the backoff below spans roughly five minutes, enough to
+            # ride out a signal-cli-rest-api rollout rather than dropping the alert.
+            MAX_ATTEMPTS = int(os.environ.get("MAX_ATTEMPTS", "10"))
+            BACKOFF_CAP = float(os.environ.get("BACKOFF_CAP", "60"))
             MAX_ALERTS = int(os.environ.get("MAX_ALERTS_PER_MESSAGE", "10"))
             LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "8080"))
 
             STATUS_PREFIX = {"firing": "[FIRING]", "resolved": "[RESOLVED]"}
+            # The 429 rate-limit body echoes back the sender account, and signal-cli
+            # errors can quote recipient numbers, so scrub E.164 before logging.
+            PHONE_RE = re.compile(r"\+\d{6,15}")
             outbox = queue.Queue(maxsize=1000)
 
 
@@ -118,6 +131,35 @@ spec:
                 return "\n".join(lines)
 
 
+            def redact(text):
+                return PHONE_RE.sub("+<redacted>", text or "")
+
+
+            def recipient_errors(body):
+                """Per-recipient failures reported inside a 2xx response.
+
+                /v2/send answers 201 with [{"timestamp": ..., "errors": {"recipients":
+                [...]}}], so a 2xx status on its own does not mean every recipient was
+                actually reached.
+                """
+                try:
+                    parsed = json.loads(body or "null")
+                except ValueError:
+                    return []
+                if isinstance(parsed, dict):
+                    parsed = [parsed]
+                if not isinstance(parsed, list):
+                    return []
+                failures = []
+                for entry in parsed:
+                    if not isinstance(entry, dict):
+                        continue
+                    errors = entry.get("errors") or {}
+                    for item in errors.get("recipients") or []:
+                        failures.append(item if isinstance(item, str) else json.dumps(item))
+                return failures
+
+
             def deliver(message):
                 body = json.dumps(
                     {"message": message, "number": SIGNAL_NUMBER, "recipients": RECIPIENTS}
@@ -129,7 +171,7 @@ spec:
                     method="POST",
                 )
                 with urllib.request.urlopen(request, timeout=SEND_TIMEOUT) as response:
-                    return response.status
+                    return response.status, response.read().decode("utf-8", "replace")
 
 
             def worker():
@@ -137,20 +179,31 @@ spec:
                     message = outbox.get()
                     for attempt in range(1, MAX_ATTEMPTS + 1):
                         try:
-                            status = deliver(message)
-                            log.info("sent to %d recipient(s) (HTTP %s)", len(RECIPIENTS), status)
+                            status, body = deliver(message)
+                            failures = recipient_errors(body)
+                            if failures:
+                                # Re-sending the batch would duplicate to recipients that
+                                # did receive it, so report the partial failure instead.
+                                log.error(
+                                    "HTTP %s but %d recipient(s) failed: %s",
+                                    status,
+                                    len(failures),
+                                    redact("; ".join(failures))[:300],
+                                )
+                            else:
+                                log.info("sent to %d recipient(s) (HTTP %s)", len(RECIPIENTS), status)
                             break
                         except urllib.error.HTTPError as exc:
-                            detail = exc.read().decode("utf-8", "replace")[:300]
+                            detail = redact(exc.read().decode("utf-8", "replace"))[:300]
                             log.warning("attempt %d/%d failed: HTTP %s %s", attempt, MAX_ATTEMPTS, exc.code, detail)
                             # 4xx other than 429 will not succeed on retry.
                             if 400 <= exc.code < 500 and exc.code != 429:
                                 log.error("giving up, request rejected by signal-cli-rest-api")
                                 break
                         except Exception as exc:  # noqa: BLE001 - never let the worker die
-                            log.warning("attempt %d/%d failed: %s", attempt, MAX_ATTEMPTS, exc)
+                            log.warning("attempt %d/%d failed: %s", attempt, MAX_ATTEMPTS, redact(str(exc)))
                         if attempt < MAX_ATTEMPTS:
-                            time.sleep(min(2 ** attempt, 30))
+                            time.sleep(min(2 ** attempt, BACKOFF_CAP))
                     else:
                         log.error("dropped message after %d attempts", MAX_ATTEMPTS)
                     outbox.task_done()
