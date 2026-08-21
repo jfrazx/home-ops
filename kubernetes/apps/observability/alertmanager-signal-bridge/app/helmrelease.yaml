@@ -40,6 +40,12 @@ spec:
             remains the durable source of truth, and the retry horizon below is sized to
             outlast a signal-cli-rest-api restart. Only "resolved" notices are sent once
             and can genuinely be lost.
+
+            Written against the pinned signal-cli-rest-api 0.100 contract: /v2/send answers
+            201 with {"timestamp": "..."} and nothing else, and maps every failure except
+            rate limiting to 400. A 400 therefore does not mean the request was bad, so it
+            must stay retryable -- see permanent_failure below. Newer upstream builds add a
+            per-recipient errors array; this code does not read it, so revisit on a bump.
             """
 
             import json
@@ -85,6 +91,12 @@ spec:
             # The 429 rate-limit body echoes back the sender account, and signal-cli
             # errors can quote recipient numbers, so scrub E.164 before logging.
             PHONE_RE = re.compile(r"\+\d{6,15}")
+            # Substrings of the 400 replies /v2/send emits before running signal-cli.
+            # Anything else at 400 came from signal-cli and may be transient.
+            VALIDATION_MARKERS = (
+                "couldn't process request",
+                "view_once' can only be set",
+            )
             outbox = queue.Queue(maxsize=1000)
 
 
@@ -135,29 +147,21 @@ spec:
                 return PHONE_RE.sub("+<redacted>", text or "")
 
 
-            def recipient_errors(body):
-                """Per-recipient failures reported inside a 2xx response.
+            def permanent_failure(code, detail):
+                """Whether an HTTP error is worth giving up on rather than retrying.
 
-                /v2/send answers 201 with [{"timestamp": ..., "errors": {"recipients":
-                [...]}}], so a 2xx status on its own does not mean every recipient was
-                actually reached.
+                0.100 returns 400 for everything from a malformed body to a transient
+                signal-cli hiccup, so the status alone cannot tell them apart. Only the
+                validation replies, which the API emits before invoking signal-cli, are
+                genuinely permanent. A wrong path means the URL is misconfigured. When in
+                doubt the answer is "retry", since the horizon is bounded anyway.
                 """
-                try:
-                    parsed = json.loads(body or "null")
-                except ValueError:
-                    return []
-                if isinstance(parsed, dict):
-                    parsed = [parsed]
-                if not isinstance(parsed, list):
-                    return []
-                failures = []
-                for entry in parsed:
-                    if not isinstance(entry, dict):
-                        continue
-                    errors = entry.get("errors") or {}
-                    for item in errors.get("recipients") or []:
-                        failures.append(item if isinstance(item, str) else json.dumps(item))
-                return failures
+                if code in (404, 405):
+                    return True
+                if code != 400:
+                    return False
+                lowered = detail.lower()
+                return any(marker in lowered for marker in VALIDATION_MARKERS)
 
 
             def deliver(message):
@@ -171,7 +175,8 @@ spec:
                     method="POST",
                 )
                 with urllib.request.urlopen(request, timeout=SEND_TIMEOUT) as response:
-                    return response.status, response.read().decode("utf-8", "replace")
+                    response.read()
+                    return response.status
 
 
             def worker():
@@ -179,32 +184,14 @@ spec:
                     message = outbox.get()
                     for attempt in range(1, MAX_ATTEMPTS + 1):
                         try:
-                            status, body = deliver(message)
-                            failures = recipient_errors(body)
-                            if not failures:
-                                log.info("sent to %d recipient(s) (HTTP %s)", len(RECIPIENTS), status)
-                                break
-                            detail = redact("; ".join(failures))[:300]
-                            if len(failures) < len(RECIPIENTS):
-                                # Some recipients did get it, so re-sending the batch
-                                # would duplicate for them. Report and leave the gap to
-                                # Alertmanager's next repeat_interval.
-                                log.error(
-                                    "HTTP %s, partial delivery, %d/%d recipient(s) failed: %s",
-                                    status, len(failures), len(RECIPIENTS), detail,
-                                )
-                                break
-                            # Nobody received it, so a retry cannot duplicate anything.
-                            log.warning(
-                                "attempt %d/%d: HTTP %s but all %d recipient(s) failed: %s",
-                                attempt, MAX_ATTEMPTS, status, len(RECIPIENTS), detail,
-                            )
+                            status = deliver(message)
+                            log.info("sent to %d recipient(s) (HTTP %s)", len(RECIPIENTS), status)
+                            break
                         except urllib.error.HTTPError as exc:
                             detail = redact(exc.read().decode("utf-8", "replace"))[:300]
                             log.warning("attempt %d/%d failed: HTTP %s %s", attempt, MAX_ATTEMPTS, exc.code, detail)
-                            # 4xx other than 429 will not succeed on retry.
-                            if 400 <= exc.code < 500 and exc.code != 429:
-                                log.error("giving up, request rejected by signal-cli-rest-api")
+                            if permanent_failure(exc.code, detail):
+                                log.error("giving up, signal-cli-rest-api rejected the request itself")
                                 break
                         except Exception as exc:  # noqa: BLE001 - never let the worker die
                             log.warning("attempt %d/%d failed: %s", attempt, MAX_ATTEMPTS, redact(str(exc)))

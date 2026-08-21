@@ -55,6 +55,19 @@ spec:
               # is faster but expects an account to already exist at startup,
               # which is false until the device-link QR has been scanned.
               MODE: native
+              # A linked secondary device still has to drain its envelope queue:
+              # otherwise Signal keeps queueing server-side and sync traffic
+              # (group/contact updates, key rotations) is never processed. native
+              # mode never receives on its own and this deployment only sends, so
+              # the receive has to be scheduled. Rejected by MODE: json-rpc, which
+              # already receives continuously.
+              AUTO_RECEIVE_SCHEDULE: "*/15 * * * *"
+              # Send-only, so discard what a receive would otherwise download into
+              # the 1Gi config volume.
+              AUTO_RECEIVE_SCHEDULE_IGNORE_ATTACHMENTS: "true"
+              AUTO_RECEIVE_SCHEDULE_IGNORE_STORIES: "true"
+              AUTO_RECEIVE_SCHEDULE_IGNORE_AVATARS: "true"
+              AUTO_RECEIVE_SCHEDULE_IGNORE_STICKERS: "true"
 
             probes:
               # TCP rather than HTTP: the service is unregistered until someone
