@@ -181,18 +181,24 @@ spec:
                         try:
                             status, body = deliver(message)
                             failures = recipient_errors(body)
-                            if failures:
-                                # Re-sending the batch would duplicate to recipients that
-                                # did receive it, so report the partial failure instead.
-                                log.error(
-                                    "HTTP %s but %d recipient(s) failed: %s",
-                                    status,
-                                    len(failures),
-                                    redact("; ".join(failures))[:300],
-                                )
-                            else:
+                            if not failures:
                                 log.info("sent to %d recipient(s) (HTTP %s)", len(RECIPIENTS), status)
-                            break
+                                break
+                            detail = redact("; ".join(failures))[:300]
+                            if len(failures) < len(RECIPIENTS):
+                                # Some recipients did get it, so re-sending the batch
+                                # would duplicate for them. Report and leave the gap to
+                                # Alertmanager's next repeat_interval.
+                                log.error(
+                                    "HTTP %s, partial delivery, %d/%d recipient(s) failed: %s",
+                                    status, len(failures), len(RECIPIENTS), detail,
+                                )
+                                break
+                            # Nobody received it, so a retry cannot duplicate anything.
+                            log.warning(
+                                "attempt %d/%d: HTTP %s but all %d recipient(s) failed: %s",
+                                attempt, MAX_ATTEMPTS, status, len(RECIPIENTS), detail,
+                            )
                         except urllib.error.HTTPError as exc:
                             detail = redact(exc.read().decode("utf-8", "replace"))[:300]
                             log.warning("attempt %d/%d failed: HTTP %s %s", attempt, MAX_ATTEMPTS, exc.code, detail)
