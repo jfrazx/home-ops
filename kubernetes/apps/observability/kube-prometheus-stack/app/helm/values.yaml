@@ -8,15 +8,18 @@ alertmanager:
   enabled: true
   config:
     global:
+      # Do not add http_config.timeout here. Alertmanager's global http_config is
+      # a common HTTPClientConfig, which has no timeout field; the operator fails
+      # to unmarshal the whole secret and silently substitutes its default
+      # config, in which every route points at the "null" receiver. That is what
+      # PrometheusOperatorSyncFailed was reporting, and why nothing ever fired.
       resolve_timeout: 5m
-      http_config:
-        timeout: 10s
     route:
       group_by: ["alertname", "cluster", "service"]
       group_wait: 10s
       group_interval: 5m
       repeat_interval: 6h
-      receiver: "discord"
+      receiver: "notify"
       routes:
         - receiver: "null"
           matchers:
@@ -24,12 +27,21 @@ alertmanager:
         - receiver: "null"
           matchers:
             - severity = "none"
-        - receiver: "discord"
+        - receiver: "notify"
           matchers:
             - severity =~ "warning|critical"
     receivers:
       - name: "null"
-      - name: "discord"
+      # A receiver may hold several transports; Discord stays on as a fallback
+      # until Signal has been confirmed working end to end, then it can go.
+      - name: "notify"
+        webhook_configs:
+          # Alertmanager cannot template a webhook body, so the bridge renders
+          # the Signal message. It acks immediately and retries out of band, so
+          # a slow signal-cli send cannot time out the notify path and get
+          # retried into duplicate messages.
+          - url: http://alertmanager-signal-bridge.observability.svc.cluster.local:8080/alert
+            send_resolved: true
         discord_configs:
           - webhook_url_file: /etc/alertmanager/secrets/alertmanager-webhook-secret/webhook-url
             title: "🚨 {{ .GroupLabels.alertname }}"

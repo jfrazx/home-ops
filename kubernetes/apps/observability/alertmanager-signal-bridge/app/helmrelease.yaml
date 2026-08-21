@@ -1,0 +1,345 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app alertmanager-signal-bridge
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+
+  values:
+    configMaps:
+      bridge:
+        data:
+          bridge.py: |-
+            """Translate Prometheus Alertmanager webhook payloads into Signal messages.
+
+            Alertmanager cannot template a webhook body, and signal-cli-rest-api expects
+            {message, number, recipients}, so something has to sit in between.
+
+            Sends are queued and performed by a worker thread: signal-cli in native mode
+            can take longer than Alertmanager's notification timeout, and a timed-out
+            webhook is retried, which would deliver duplicates. Acknowledging the POST
+            immediately and retrying internally avoids that.
+
+            The queue is in memory, so a pod restart loses whatever is in flight. That is
+            deliberate: Alertmanager re-notifies firing groups on repeat_interval, so it
+            remains the durable source of truth, and the retry horizon below is sized to
+            outlast a signal-cli-rest-api restart. Only "resolved" notices are sent once
+            and can genuinely be lost.
+
+            Written against the pinned signal-cli-rest-api 0.100 contract: /v2/send answers
+            201 with {"timestamp": "..."} and nothing else, and maps every failure except
+            rate limiting to 400. A 400 therefore does not mean the request was bad, so it
+            must stay retryable -- see permanent_failure below. Newer upstream builds add a
+            per-recipient errors array; this code does not read it, so revisit on a bump.
+            """
+
+            import json
+            import logging
+            import os
+            import queue
+            import re
+            import sys
+            import threading
+            import time
+            import urllib.error
+            import urllib.request
+            from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+            logging.basicConfig(
+                stream=sys.stdout,
+                level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+                format="%(asctime)s %(levelname)s %(message)s",
+            )
+            log = logging.getLogger("signal-bridge")
+
+
+            def _required(name):
+                value = os.environ.get(name, "").strip()
+                if not value:
+                    log.error("%s is not set", name)
+                    sys.exit(1)
+                return value
+
+
+            SIGNAL_API_URL = _required("SIGNAL_API_URL").rstrip("/")
+            SIGNAL_NUMBER = _required("SIGNAL_NUMBER")
+            RECIPIENTS = [r.strip() for r in _required("SIGNAL_RECIPIENTS").split(",") if r.strip()]
+            SEND_TIMEOUT = float(os.environ.get("SEND_TIMEOUT", "60"))
+            # 10 attempts with the backoff below spans roughly five minutes, enough to
+            # ride out a signal-cli-rest-api rollout rather than dropping the alert.
+            MAX_ATTEMPTS = int(os.environ.get("MAX_ATTEMPTS", "10"))
+            BACKOFF_CAP = float(os.environ.get("BACKOFF_CAP", "60"))
+            MAX_ALERTS = int(os.environ.get("MAX_ALERTS_PER_MESSAGE", "10"))
+            LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "8080"))
+
+            STATUS_PREFIX = {"firing": "[FIRING]", "resolved": "[RESOLVED]"}
+            # The 429 rate-limit body echoes back the sender account, and signal-cli
+            # errors can quote recipient numbers, so scrub E.164 before logging.
+            PHONE_RE = re.compile(r"\+\d{6,15}")
+            # Substrings of the 400 replies /v2/send emits before running signal-cli.
+            # Anything else at 400 came from signal-cli and may be transient.
+            VALIDATION_MARKERS = (
+                "couldn't process request",
+                "view_once' can only be set",
+            )
+            outbox = queue.Queue(maxsize=1000)
+
+
+            def render(payload):
+                """Build a plain-text Signal message from an Alertmanager webhook payload."""
+                status = str(payload.get("status") or "unknown").lower()
+                alerts = payload.get("alerts") or []
+                group = payload.get("groupLabels") or {}
+                first_labels = (alerts[0].get("labels") or {}) if alerts else {}
+
+                name = group.get("alertname") or first_labels.get("alertname") or "alert"
+                severity = group.get("severity") or first_labels.get("severity") or ""
+
+                header = "%s %s" % (STATUS_PREFIX.get(status, "[" + status.upper() + "]"), name)
+                if severity:
+                    header += " (%s)" % severity
+                if len(alerts) > 1:
+                    header += " x%d" % len(alerts)
+                lines = [header]
+
+                for alert in alerts[:MAX_ALERTS]:
+                    annotations = alert.get("annotations") or {}
+                    labels = alert.get("labels") or {}
+                    text = (
+                        annotations.get("summary")
+                        or annotations.get("description")
+                        or labels.get("alertname")
+                        or "(no summary)"
+                    )
+                    where = "/".join(
+                        part
+                        for part in (labels.get("namespace"), labels.get("pod") or labels.get("instance"))
+                        if part
+                    )
+                    lines.append("- %s%s" % (text, " [" + where + "]" if where else ""))
+
+                if len(alerts) > MAX_ALERTS:
+                    lines.append("...and %d more" % (len(alerts) - MAX_ALERTS))
+
+                external_url = payload.get("externalURL")
+                if external_url:
+                    lines.append(external_url)
+
+                return "\n".join(lines)
+
+
+            def redact(text):
+                return PHONE_RE.sub("+<redacted>", text or "")
+
+
+            def permanent_failure(code, detail):
+                """Whether an HTTP error is worth giving up on rather than retrying.
+
+                0.100 returns 400 for everything from a malformed body to a transient
+                signal-cli hiccup, so the status alone cannot tell them apart. Only the
+                validation replies, which the API emits before invoking signal-cli, are
+                genuinely permanent. A wrong path means the URL is misconfigured. When in
+                doubt the answer is "retry", since the horizon is bounded anyway.
+                """
+                if code in (404, 405):
+                    return True
+                if code != 400:
+                    return False
+                lowered = detail.lower()
+                return any(marker in lowered for marker in VALIDATION_MARKERS)
+
+
+            def deliver(message):
+                body = json.dumps(
+                    {"message": message, "number": SIGNAL_NUMBER, "recipients": RECIPIENTS}
+                ).encode("utf-8")
+                request = urllib.request.Request(
+                    SIGNAL_API_URL + "/v2/send",
+                    data=body,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(request, timeout=SEND_TIMEOUT) as response:
+                    response.read()
+                    return response.status
+
+
+            def worker():
+                while True:
+                    message = outbox.get()
+                    for attempt in range(1, MAX_ATTEMPTS + 1):
+                        try:
+                            status = deliver(message)
+                            log.info("sent to %d recipient(s) (HTTP %s)", len(RECIPIENTS), status)
+                            break
+                        except urllib.error.HTTPError as exc:
+                            detail = redact(exc.read().decode("utf-8", "replace"))[:300]
+                            log.warning("attempt %d/%d failed: HTTP %s %s", attempt, MAX_ATTEMPTS, exc.code, detail)
+                            if permanent_failure(exc.code, detail):
+                                log.error("giving up, signal-cli-rest-api rejected the request itself")
+                                break
+                        except Exception as exc:  # noqa: BLE001 - never let the worker die
+                            log.warning("attempt %d/%d failed: %s", attempt, MAX_ATTEMPTS, redact(str(exc)))
+                        if attempt < MAX_ATTEMPTS:
+                            time.sleep(min(2 ** attempt, BACKOFF_CAP))
+                    else:
+                        log.error("dropped message after %d attempts", MAX_ATTEMPTS)
+                    outbox.task_done()
+
+
+            class Handler(BaseHTTPRequestHandler):
+                protocol_version = "HTTP/1.1"
+
+                def _reply(self, code, text="ok"):
+                    payload = text.encode("utf-8")
+                    self.send_response(code)
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
+                    self.send_header("Content-Length", str(len(payload)))
+                    self.end_headers()
+                    self.wfile.write(payload)
+
+                def do_GET(self):  # noqa: N802 - BaseHTTPRequestHandler API
+                    if self.path.split("?")[0] in ("/healthz", "/"):
+                        self._reply(200)
+                    else:
+                        self._reply(404, "not found")
+
+                def do_POST(self):  # noqa: N802 - BaseHTTPRequestHandler API
+                    if self.path.split("?")[0] != "/alert":
+                        self._reply(404, "not found")
+                        return
+                    try:
+                        length = int(self.headers.get("Content-Length") or 0)
+                        payload = json.loads(self.rfile.read(length) or b"{}")
+                    except (ValueError, TypeError) as exc:
+                        log.warning("rejected malformed payload: %s", exc)
+                        self._reply(400, "bad request")
+                        return
+
+                    try:
+                        message = render(payload)
+                    except Exception as exc:  # noqa: BLE001 - a bad payload must not 500 the pipe
+                        log.exception("could not render payload: %s", exc)
+                        self._reply(400, "bad request")
+                        return
+
+                    try:
+                        outbox.put_nowait(message)
+                    except queue.Full:
+                        log.error("outbox full, dropping notification")
+                        self._reply(503, "queue full")
+                        return
+
+                    # Acknowledge before delivery so Alertmanager does not time out.
+                    self._reply(202, "queued")
+
+                def log_message(self, fmt, *fmt_args):
+                    log.debug("%s - %s", self.address_string(), fmt % fmt_args)
+
+
+            def main():
+                threading.Thread(target=worker, name="signal-sender", daemon=True).start()
+                log.info(
+                    "listening on :%d, relaying to %s for %d recipient(s)",
+                    LISTEN_PORT,
+                    SIGNAL_API_URL,
+                    len(RECIPIENTS),
+                )
+                ThreadingHTTPServer(("0.0.0.0", LISTEN_PORT), Handler).serve_forever()
+
+
+            if __name__ == "__main__":
+                main()
+
+    controllers:
+      alertmanager-signal-bridge:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            runAsNonRoot: true
+
+        containers:
+          app:
+            # Stock upstream Python; the bridge is stdlib-only so there is
+            # nothing to install and no image to build and keep patched.
+            image:
+              repository: docker.io/library/python
+              tag: 3.13-alpine@sha256:540c7d91f98ff6880174c40e99067bf5941eb54d818a7a5e094d188b196a934d
+
+            command: ["python3", "-u", "/app/bridge.py"]
+
+            env:
+              TZ: "${TIMEZONE}"
+              LISTEN_PORT: &port 8080
+              SIGNAL_API_URL: http://signal-cli-rest-api.messaging.svc.cluster.local:8080
+              # The script lives on a read-only configMap mount.
+              PYTHONDONTWRITEBYTECODE: "1"
+            envFrom:
+              - secretRef:
+                  name: alertmanager-signal-bridge-secret
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: *port
+                  initialDelaySeconds: 5
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+    persistence:
+      bridge:
+        type: configMap
+        identifier: bridge
+        globalMounts:
+          - path: /app/bridge.py
+            subPath: bridge.py
+
+      tmpfs:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

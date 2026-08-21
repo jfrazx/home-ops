@@ -1,0 +1,123 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app signal-cli-rest-api
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+
+  values:
+    controllers:
+      signal-cli-rest-api:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        # The PVC holds a single Signal device registration; a second replica
+        # sharing it would corrupt the signal-cli store, so never run two.
+        strategy: Recreate
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsNonRoot: true
+
+        containers:
+          app:
+            image:
+              # -rootless variant runs as uid 1000 (signal-api). The default
+              # image starts as root, which this namespace's baseline PSA
+              # allows but the repo's securityContext conventions do not.
+              repository: docker.io/bbernhard/signal-cli-rest-api
+              tag: 0.100-rootless@sha256:7f80cec95fc36408fae6bdc6b4534764d825d5bd02c5772db8740842bdd257f0
+
+            env:
+              TZ: "${TIMEZONE}"
+              PORT: &port 8080
+              # native runs signal-cli as a compiled binary per request. json-rpc
+              # is faster but expects an account to already exist at startup,
+              # which is false until the device-link QR has been scanned.
+              MODE: native
+              # A linked secondary device still has to drain its envelope queue:
+              # otherwise Signal keeps queueing server-side and sync traffic
+              # (group/contact updates, key rotations) is never processed. native
+              # mode never receives on its own and this deployment only sends, so
+              # the receive has to be scheduled. Rejected by MODE: json-rpc, which
+              # already receives continuously.
+              AUTO_RECEIVE_SCHEDULE: "*/15 * * * *"
+              # Send-only, so discard what a receive would otherwise download into
+              # the 1Gi config volume.
+              AUTO_RECEIVE_SCHEDULE_IGNORE_ATTACHMENTS: "true"
+              AUTO_RECEIVE_SCHEDULE_IGNORE_STORIES: "true"
+              AUTO_RECEIVE_SCHEDULE_IGNORE_AVATARS: "true"
+              AUTO_RECEIVE_SCHEDULE_IGNORE_STICKERS: "true"
+
+            probes:
+              # TCP rather than HTTP: the service is unregistered until someone
+              # scans the link QR, and its HTTP routes should not gate rollout.
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: *port
+                  initialDelaySeconds: 15
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probes
+
+            resources:
+              requests:
+                cpu: 20m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+    persistence:
+      # SIGNAL_CLI_CONFIG_DIR. Losing this means re-linking the device.
+      config:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: ceph-block
+        globalMounts:
+          - path: /home/.local/share/signal-cli
+
+      # The image sets S6_READ_ONLY_ROOT=1 and S6_RUNTIME_PATH=/tmp/s6-runtime,
+      # so s6 and the JVM need /tmp writable under a read-only root filesystem.
+      tmpfs:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

@@ -1,0 +1,28 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/networking.k8s.io/networkpolicy_v1.json
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: alertmanager-signal-bridge
+spec:
+  # /alert takes caller-supplied text and relays it through the linked Signal
+  # account, so leaving it open makes the bridge an unauthenticated way to send
+  # arbitrary Signal messages, bypassing the policy on signal-cli-rest-api.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager-signal-bridge
+  policyTypes: ["Ingress"]
+  ingress:
+    # Alertmanager runs in this namespace, so an unqualified podSelector (same
+    # namespace only) is the tightest correct match.
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alertmanager
+      ports:
+        - protocol: TCP
+          port: 8080
+  # Egress unrestricted: the bridge must reach signal-cli-rest-api in messaging.
+  #
+  # Kubelet probes come from the host, which Cilium exempts from NetworkPolicy
+  # while enable-host-firewall is false, as it is here.

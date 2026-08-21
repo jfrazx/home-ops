@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/networking.k8s.io/networkpolicy_v1.json
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: signal-cli-rest-api
+spec:
+  # This API is unauthenticated and fronts a linked Signal account: anything that
+  # can reach it can send and read messages as that account and manage the
+  # account itself. Upstream offers no auth of its own, so restrict it at the
+  # network instead of leaving it open to every workload in the cluster.
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: signal-cli-rest-api
+  policyTypes: ["Ingress"]
+  ingress:
+    # namespaceSelector and podSelector in one element are ANDed, so this admits
+    # only the bridge pod in observability.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alertmanager-signal-bridge
+      ports:
+        - protocol: TCP
+          port: 8080
+  # Egress is intentionally unrestricted; signal-cli must reach Signal's servers.
+  #
+  # Kubelet probes and `kubectl port-forward` (needed for the device-link QR) are
+  # sourced from the host, which Cilium exempts from NetworkPolicy while
+  # enable-host-firewall is false, as it is here.
