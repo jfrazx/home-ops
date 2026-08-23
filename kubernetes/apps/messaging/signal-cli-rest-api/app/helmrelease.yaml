@@ -121,3 +121,16 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /tmp
+
+      # S6_READ_ONLY_ROOT also makes s6-overlay's preinit demand a writable
+      # /run, before S6_RUNTIME_PATH is consulted. If /run is not writable it
+      # tries to mount its own tmpfs there, which needs CAP_SYS_ADMIN that this
+      # container drops, so it aborted on "cannot create /run/test of
+      # writability". Memory-backed so it is a real tmpfs mounted exec: preinit
+      # warns and s6 later crashes if /run turns up noexec.
+      run:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 16Mi
+        globalMounts:
+          - path: /run

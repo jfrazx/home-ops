@@ -92,6 +92,28 @@ spec:
       config:
         existingClaim: *app
 
+      # cross-seed writes verbose.<date>.log unconditionally at level "silly"
+      # (dist/logger.js builds that transport whether or not -v is passed; the
+      # flag only raises the console level), which at this library size is
+      # ~1GB a day, and it prunes purely by age -- maxFiles: "14d", no size cap.
+      # A fortnight of that does not fit the 5Gi config claim: it filled on
+      # 2026-08-14 and every start since died on ENOSPC in the first log write,
+      # before a single torrent was read. Off ceph because this is throwaway
+      # data and ceph is the scarcer pool, and off the config claim so volsync
+      # keeps snapshotting the 12MB database instead of two weeks of logs.
+      logs:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 30Gi
+        storageClass: truenas-iscsi
+        # config uses existingClaim, so this is the only claim the chart
+        # generates, and app-template appends the identifier only when it
+        # generates more than one. Without the suffix it renders as plain
+        # "cross-seed" and Helm tries to overwrite the volsync-managed claim.
+        suffix: logs
+        globalMounts:
+          - path: /config/logs
+
       config-file:
         type: secret
         name: cross-seed-secret
