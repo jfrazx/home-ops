@@ -4,14 +4,26 @@
     "config:recommended",
     "docker:enableMajor",
     "helpers:pinGitHubActionDigests",
-    ":automergeBranch",
     ":dependencyDashboard",
     ":disableRateLimiting",
     ":semanticCommits",
   ],
   dependencyDashboard: true,
   dependencyDashboardTitle: "Renovate Dashboard 🤖",
-  schedule: ["every weekend"],
+
+  // Age gate instead of a weekend window: a release must sit untouched for three
+  // days before Renovate will branch on it, which leaves room for a hijacked or
+  // poisoned release to be spotted and yanked upstream before it reaches here.
+  // "strict" keeps pending releases out of PRs entirely rather than flapping
+  // between the pending and last-good version.
+  minimumReleaseAge: "3 days",
+  internalChecksFilter: "strict",
+
+  // main has no required status checks and the repo has auto-merge disabled, so
+  // GitHub cannot hold a PR open until CI is green. Renovate has to watch the
+  // branch status and merge it itself.
+  platformAutomerge: false,
+
   ignorePaths: ["**/*.sops.*"],
   flux: {
     managerFilePatterns: ["/(^|/)kubernetes/.+\\.ya?ml(?:\\.j2)?$/"],
@@ -29,6 +41,46 @@
     managerFilePatterns: ["/^kustomization\\.ya?ml(?:\\.j2)?$/"],
   },
   packageRules: [
+    //
+    // Automerge policy. Later rules win, so the order here matters:
+    // baseline automerge first, then the carve-outs that switch it back off.
+    //
+    {
+      description: "Auto-merge patch and minor updates for semver deps at 1.0.0 or above",
+      matchUpdateTypes: ["minor", "patch"],
+      // Deliberately a positive match rather than an exclusion. The value has to be
+      // dotted-numeric with a major of at least 1, plus an optional letter-led
+      // compatibility suffix. That covers plain semver, the *arr four-segment
+      // scheme (6.4.2.10590), MAJOR.MINOR images like pgadmin, and -alpine/-full
+      // variants. Anything still on 0.x, un-versioned (latest, develop), or carrying
+      // a rolling/date suffix (2025.5.17-86373e7, RELEASE.2025-04-22T...) never
+      // matches and keeps needing a human.
+      matchCurrentValue: "/^v?[1-9]\\d*(\\.\\d+)+(-[a-zA-Z][a-zA-Z0-9._-]*)?$/",
+      automerge: true,
+      automergeType: "pr",
+    },
+    {
+      description: "Major updates always require review",
+      matchUpdateTypes: ["major"],
+      automerge: false,
+    },
+
+    //
+    // Grouping. The broad container rule comes first so the per-app groups below
+    // can pull their own packages back out of it.
+    //
+    {
+      description: "Container Images Group - all automergeable image patch bumps in one PR",
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["patch"],
+      // Same shape test as the automerge rule. Keeping the un-automergeable images
+      // out means one of them can never block the whole batch.
+      matchCurrentValue: "/^v?[1-9]\\d*(\\.\\d+)+(-[a-zA-Z][a-zA-Z0-9._-]*)?$/",
+      groupName: "Container Images",
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
     {
       description: "Cert-Manager Group",
       groupName: "Cert-Manager",
@@ -75,22 +127,58 @@
       },
     },
     {
-      description: "Auto-merge GitHub Actions",
-      matchManagers: ["github-actions"],
-      automerge: true,
-      automergeType: "branch",
-      matchUpdateTypes: ["minor", "patch", "digest"],
-      minimumReleaseAge: "3 days",
-      ignoreTests: true,
+      description: "Rook-Ceph Group - operator chart, cluster chart and ceph images move together",
+      groupName: "Rook-Ceph",
+      matchPackageNames: ["/rook/", "/ceph/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
     },
     {
-      description: "Auto-merge Mise Tools",
-      matchManagers: ["mise"],
-      automerge: true,
-      automergeType: "branch",
-      matchUpdateTypes: ["minor", "patch"],
-      ignoreTests: true,
+      description: "AdventureLog Group - frontend and backend move together",
+      groupName: "AdventureLog",
+      matchPackageNames: ["/adventurelog/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
     },
+    {
+      description: "OpenBao Group - chart and image move together",
+      groupName: "OpenBao",
+      matchPackageNames: ["/openbao/"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+
+    //
+    // Talos and Kubernetes are never automerged at any update type. These come
+    // last so they also win the groupName fight against the container rule above.
+    //
+    {
+      description: "Talos - never auto-merge, always review",
+      groupName: "Talos",
+      matchPackageNames: ["/siderolabs/", "/talhelper/"],
+      automerge: false,
+      addLabels: ["renovate/manual"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+    {
+      description: "Kubernetes - never auto-merge, always review",
+      groupName: "Kubernetes",
+      matchPackageNames: ["/kubelet/", "/kubectl/"],
+      automerge: false,
+      addLabels: ["renovate/manual"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
+
+    //
+    // Commit message and label conventions.
+    //
     {
       matchUpdateTypes: ["major"],
       semanticCommitType: "feat",

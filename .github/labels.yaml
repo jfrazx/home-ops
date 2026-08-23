@@ -31,6 +31,8 @@
   color: "027fa0"
 - name: renovate/helm
   color: "027fa0"
+- name: renovate/manual
+  color: "b60205"
 # Semantic Types
 - name: type/digest
   color: "ffeC19"
