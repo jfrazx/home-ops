@@ -7,4 +7,6 @@ metadata:
   namespace: flux-system
 spec:
   type: alertmanager
-  address: http://alertmanager.observability.svc.cluster.local:9093/api/v2/alerts/
+  # Service is named after the kube-prometheus-stack release, not "alertmanager";
+  # the bare name does not resolve and every notification failed to dispatch.
+  address: http://kube-prometheus-stack-alertmanager.observability.svc.cluster.local:9093/api/v2/alerts/

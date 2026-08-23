@@ -7,6 +7,7 @@ components:
   - ../../components/common
   - ../../components/pod-security/privileged
 resources:
+  - ./alertmanager-signal-bridge/ks.yaml
   - ./alloy/ks.yaml
   - ./blackbox-exporter/ks.yaml
   - ./grafana/ks.yaml
