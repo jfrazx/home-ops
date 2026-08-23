@@ -26,6 +26,14 @@ gatewayAPI:
   enabled: true
 hubble:
   enabled: true
+  tls:
+    auto:
+      # The default "helm" method generates the leaf certs once and then pins
+      # them forever (the templates reuse any existing secret via `lookup`, with
+      # no expiry check), so they silently expire after certValidityDuration and
+      # break hubble-relay. "cronJob" reuses the existing cilium-ca and rotates
+      # the leaves on a schedule instead.
+      method: cronJob
   relay:
     enabled: true
     rollOutPods: true
