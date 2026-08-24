@@ -26,8 +26,37 @@ spec:
     remediation:
       retries: 3
 
+  # The chart hardcodes ReadWriteOnce in templates/pvc.yaml with no value to
+  # override it. NFS is multi-attach anyway, every other truenas-nfs claim in
+  # this repo is RWX, and accessModes are immutable once the PVC is bound.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: PersistentVolumeClaim
+              name: trivy-operator-pvc
+            patch: |-
+              - op: replace
+                path: /spec/accessModes
+                value:
+                  - ReadWriteMany
+
   values:
     excludeNamespaces: "kube-system"
+
+    # Reports live as JSON files on NFS instead of CRDs in etcd.
+    # 1384 SBOMReports (~200Mi, up to 1.4Mi each) rewritten every
+    # scannerReportTTL were fragmenting etcd down to a ~42% in-use ratio.
+    # runAsUser/fsGroup match the truenas-nfs dataset (0770 1001:1001).
+    alternateReportStorage:
+      enabled: true
+      storageClassName: truenas-nfs
+      storage: 10Gi
+      mountPath: /mnt/data/trivy-operator
+      volumeName: trivy-operator-pvc
+      podSecurityContext:
+        runAsUser: 1001
+        fsGroup: 1001
     podAnnotations:
       k8tz.io/inject: "false"
 
