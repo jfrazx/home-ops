@@ -1,0 +1,37 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authentik-database-minio
+  namespace: auth
+spec:
+  secretStoreRef:
+    name: openbao-cluster-secretstore
+    kind: ClusterSecretStore
+  target:
+    name: authentik-database-minio
+    creationPolicy: Owner
+  data:
+    - secretKey: MINIO_ACCESS_KEY
+      remoteRef:
+        key: database/postgres/minio
+        property: access_key
+    - secretKey: MINIO_SECRET_KEY
+      remoteRef:
+        key: database/postgres/minio
+        property: secret_key
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: authentik-database-backup
+  namespace: auth
+spec:
+  # Six-field cron (seconds first) - CNPG is not Kubernetes CronJob format.
+  # A five-field expression parses as "every hour" and silently over-backs-up.
+  schedule: "0 0 4 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: authentik-database
+  method: barmanObjectStore
+  immediate: true

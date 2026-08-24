@@ -27,6 +27,26 @@ spec:
       localeCType: "en_US.UTF-8"
       localeCollate: "en_US.UTF-8"
 
+  backup:
+    target: prefer-standby
+    retentionPolicy: "30d"
+    barmanObjectStore:
+      destinationPath: s3://postgresql-backups/authentik
+      endpointURL: http://minio.storage.svc.cluster.local:9000
+      s3Credentials:
+        accessKeyId:
+          name: authentik-database-minio
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: authentik-database-minio
+          key: MINIO_SECRET_KEY
+      wal:
+        compression: gzip
+        maxParallel: 2
+      data:
+        compression: gzip
+        jobs: 2
+
   postgresql:
     parameters:
       max_connections: "200"
