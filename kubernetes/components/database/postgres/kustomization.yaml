@@ -49,6 +49,6 @@ configMapGenerator:
       - POSTGRES_MEMORY_LIMIT="2Gi"
 
       # Backup
-      - POSTGRES_BACKUP_SCHEDULE="0 2 * * *"
+      - POSTGRES_BACKUP_SCHEDULE="0 0 2 * * *"
       - POSTGRES_BACKUP_RETENTION="20d"
       - POSTGRES_BACKUP_ENDPOINT="http://minio.storage.svc.cluster.local:9000"
