@@ -1,0 +1,37 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: linkwarden-postgres-minio
+  namespace: documents
+spec:
+  secretStoreRef:
+    name: openbao-cluster-secretstore
+    kind: ClusterSecretStore
+  target:
+    name: linkwarden-postgres-minio
+    creationPolicy: Owner
+  data:
+    - secretKey: MINIO_ACCESS_KEY
+      remoteRef:
+        key: database/postgres/minio
+        property: access_key
+    - secretKey: MINIO_SECRET_KEY
+      remoteRef:
+        key: database/postgres/minio
+        property: secret_key
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: linkwarden-postgres-backup
+  namespace: documents
+spec:
+  # Six-field cron (seconds first) - CNPG is not Kubernetes CronJob format.
+  # A five-field expression parses as "every hour" and silently over-backs-up.
+  schedule: "0 15 1 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: linkwarden-postgres
+  method: barmanObjectStore
+  immediate: true

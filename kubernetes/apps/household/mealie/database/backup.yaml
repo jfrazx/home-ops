@@ -1,0 +1,37 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mealie-postgres-minio
+  namespace: household
+spec:
+  secretStoreRef:
+    name: openbao-cluster-secretstore
+    kind: ClusterSecretStore
+  target:
+    name: mealie-postgres-minio
+    creationPolicy: Owner
+  data:
+    - secretKey: MINIO_ACCESS_KEY
+      remoteRef:
+        key: database/postgres/minio
+        property: access_key
+    - secretKey: MINIO_SECRET_KEY
+      remoteRef:
+        key: database/postgres/minio
+        property: secret_key
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: mealie-postgres-backup
+  namespace: household
+spec:
+  # Six-field cron (seconds first) - CNPG is not Kubernetes CronJob format.
+  # A five-field expression parses as "every hour" and silently over-backs-up.
+  schedule: "0 45 4 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: mealie-postgres
+  method: barmanObjectStore
+  immediate: true

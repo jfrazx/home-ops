@@ -73,36 +73,63 @@ spec:
           labels:
             severity: warning
 
+        # failed_count is a lifetime counter that is never reset, so comparing
+        # it against zero pins this alert on forever after a single historical
+        # failure (typically a .history file at a failover). Compare the
+        # timestamps instead: this fires only while archiving is *currently*
+        # stuck, and clears as soon as any WAL archives successfully.
         - alert: CNPGWALArchiveFailing
           expr: |
-            cnpg_pg_stat_archiver_failed_count > 0
+            cnpg_pg_stat_archiver_last_failed_time
+              > cnpg_pg_stat_archiver_last_archived_time
           for: 15m
           annotations:
-            summary: "WAL archive failing on {{ $labels.namespace }}/{{ $labels.cluster }}"
-            description: "{{ $value }} WAL segments failed to archive"
+            summary: "WAL archiving is stuck on {{ $labels.job }}"
+            description: "The most recent archive attempt on {{ $labels.pod }} failed and no WAL has archived since."
           labels:
             severity: warning
 
         # Backup Status
+        #
+        # These read cnpg_collector_* metrics. Replicas report 0 for the backup
+        # timestamps, so every expression aggregates with max by (namespace, job)
+        # to pick up the primary's real value.
         - alert: CNPGBackupFailed
           expr: |
-            cnpg_backup_status{status!="success"} == 1
+            max by (namespace, job) (cnpg_collector_last_failed_backup_timestamp)
+              > max by (namespace, job) (cnpg_collector_last_available_backup_timestamp)
           for: 5m
           annotations:
-            summary: "CNPG backup failed on {{ $labels.namespace }}/{{ $labels.cluster }}"
-            description: "Last backup status: {{ $labels.status }}"
+            summary: "CNPG backup failed on {{ $labels.job }}"
+            description: "The last backup attempt failed and is newer than the last successful backup."
           labels:
             severity: critical
 
         - alert: CNPGBackupStale
           expr: |
-            time() - cnpg_backup_last_completed_timestamp > 86400
+            (time() - max by (namespace, job) (cnpg_collector_last_available_backup_timestamp > 0)) > 86400
           for: 1h
           annotations:
-            summary: "CNPG backup is stale on {{ $labels.namespace }}/{{ $labels.cluster }}"
+            summary: "CNPG backup is stale on {{ $labels.job }}"
             description: "Last successful backup was {{ $value | humanizeDuration }} ago"
           labels:
             severity: warning
+
+        # Catches a cluster that has never produced a backup at all. CNPG sets
+        # archive_mode=on with its own archive_command regardless of whether an
+        # object store is configured, and that command succeeds as a no-op when
+        # there is none - so an unconfigured cluster looks healthy and reports
+        # ContinuousArchiving=True while storing nothing. CNPGBackupStale cannot
+        # catch this because the timestamp is 0 rather than merely old.
+        - alert: CNPGBackupNotConfigured
+          expr: |
+            max by (namespace, job) (cnpg_collector_last_available_backup_timestamp) == 0
+          for: 1h
+          annotations:
+            summary: "CNPG cluster {{ $labels.job }} has never been backed up"
+            description: "No successful backup has ever been recorded. Check that spec.backup.barmanObjectStore and a ScheduledBackup exist."
+          labels:
+            severity: critical
 
         # Performance
         - alert: CNPGSlowQueries
