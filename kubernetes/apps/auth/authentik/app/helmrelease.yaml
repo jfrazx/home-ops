@@ -126,6 +126,48 @@ spec:
 
     worker:
       replicas: 3
+
+      # The chart defaults all three worker probes to `exec: ak healthcheck`, and
+      # /lifecycle/ak runs `python -m authentik.lib.config debugger` on every
+      # invocation before it dispatches -- ~160ms of CPU to boot an interpreter and
+      # read a debug flag that is always False here. The healthcheck it then execs
+      # is a 16ms Rust binary that only GETs /-/health/live/ on 9000, so ~90% of
+      # each probe was interpreter startup. Liveness and readiness both fire every
+      # 10s, which made probes essentially this container's entire CPU usage.
+      # Worse, ~250ms does not fit the 50ms of CFS quota a 500m limit allows per
+      # 100ms period, so every probe was throttled across 4+ periods and
+      # CPUThrottlingHigh sat at a flat 26% independent of load. The chart already
+      # defaults the server's probes to httpGet and only the worker's to exec,
+      # which is why server pods throttle at under 2% on an identical image and
+      # limit. This just gives the worker the same treatment: same endpoint the
+      # Rust healthcheck was calling anyway, without the interpreter in front.
+      livenessProbe: &workerProbe
+        # Helm deep-merges values, so the chart's default `exec` survives unless it
+        # is explicitly nulled -- and a probe carrying both handlers is rejected.
+        exec: null
+        httpGet:
+          path: /-/health/live/
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+        successThreshold: 1
+      # Kept on /-/health/live/ rather than /-/health/ready/ to preserve exactly
+      # what `ak healthcheck` probed; this change is about the cost of the probe,
+      # not its meaning.
+      readinessProbe: *workerProbe
+      startupProbe:
+        exec: null
+        httpGet:
+          path: /-/health/live/
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 60
+        successThreshold: 1
+
       containerSecurityContext:
         runAsNonRoot: true
         readOnlyRootFilesystem: true

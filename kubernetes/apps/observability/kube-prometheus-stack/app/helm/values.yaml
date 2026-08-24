@@ -32,8 +32,13 @@ alertmanager:
             - severity =~ "warning|critical"
     receivers:
       - name: "null"
-      # A receiver may hold several transports; Discord stays on as a fallback
-      # until Signal has been confirmed working end to end, then it can go.
+      # Discord was removed on 2026-08-23 once Signal was confirmed end to end.
+      # It had been dead the whole time regardless: its webhook_url_file is
+      # valid upstream Alertmanager config but is not in prometheus-operator's
+      # own discordConfig struct, so the operator rejected the secret and
+      # substituted its null-receiver default, exactly as global.http_config
+      # .timeout did before it. amtool accepts both, so it cannot be relied on
+      # here -- check the operator log and the -generated secret instead.
       - name: "notify"
         webhook_configs:
           # Alertmanager cannot template a webhook body, so the bridge renders
@@ -41,19 +46,6 @@ alertmanager:
           # a slow signal-cli send cannot time out the notify path and get
           # retried into duplicate messages.
           - url: http://alertmanager-signal-bridge.observability.svc.cluster.local:8080/alert
-            send_resolved: true
-        discord_configs:
-          - webhook_url_file: /etc/alertmanager/secrets/alertmanager-webhook-secret/webhook-url
-            title: "🚨 {{ .GroupLabels.alertname }}"
-            message: |
-              **Status:** {{ .Status | title }}
-              **Severity:** {{ .GroupLabels.severity }}
-
-              {{ range .Alerts }}
-              **Alert:** {{ .Annotations.summary }}
-              {{ if .Annotations.description }}**Description:** {{ .Annotations.description }}{{ end }}
-              **Source:** {{ .Labels.namespace }}/{{ .Labels.pod }}
-              {{ end }}
             send_resolved: true
     inhibit_rules:
       - source_matchers:
@@ -65,8 +57,6 @@ alertmanager:
   alertmanagerSpec:
     replicas: 1
     podAntiAffinity: hard
-    secrets:
-      - alertmanager-webhook-secret
     storage:
       volumeClaimTemplate:
         spec:
