@@ -21,6 +21,29 @@ spec:
       name: kube-dns
       clusterIP: 10.43.0.10
     servers:
+      # Split-horizon zone: ${SECRET_DOMAIN} exists publicly on Cloudflare, but the
+      # internal view lives only on the LAN resolver. Forwarding the zone explicitly
+      # keeps the public resolvers in machine.network.nameservers from ever answering
+      # for it, and bypasses the Talos hostDNS cache shared via forwardKubeDNSToHost.
+      # The LAN resolver already delegates cluster names on to k8s-gateway.
+      # NOTE: do not add `fallthrough` to k8s-gateway's k8s_gateway block -- it would
+      # close the CoreDNS -> LAN resolver -> k8s-gateway -> CoreDNS cycle.
+      - zones:
+          - zone: ${SECRET_DOMAIN}
+            scheme: dns://
+            use_tcp: true
+        port: 53
+        plugins:
+          - name: errors
+          - name: forward
+            parameters: . 10.168.2.1
+          # Upstream serves these records with TTL 1, so without a floor every lookup
+          # re-walks CoreDNS -> LAN resolver -> k8s-gateway. MINTTL caps that at 30s.
+          - name: cache
+            configBlock: |-
+              success 9984 3600 30
+              denial 1024 300 15
+              serve_stale 5m verify
       - zones:
           - zone: .
             scheme: dns://
@@ -44,7 +67,7 @@ spec:
           - name: cache
             configBlock: |-
               prefetch 20
-              serve_stale
+              serve_stale 5m verify
           - name: loop
           - name: reload
           - name: loadbalance
