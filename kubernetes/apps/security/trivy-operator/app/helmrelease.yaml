@@ -26,6 +26,21 @@ spec:
     remediation:
       retries: 3
 
+  # The chart hardcodes ReadWriteOnce in templates/pvc.yaml with no value to
+  # override it. NFS is multi-attach anyway, every other truenas-nfs claim in
+  # this repo is RWX, and accessModes are immutable once the PVC is bound.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: PersistentVolumeClaim
+              name: trivy-operator-pvc
+            patch: |-
+              - op: replace
+                path: /spec/accessModes
+                value:
+                  - ReadWriteMany
+
   values:
     excludeNamespaces: "kube-system"
 
