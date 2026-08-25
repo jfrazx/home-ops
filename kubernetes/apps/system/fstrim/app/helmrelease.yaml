@@ -1,0 +1,137 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app fstrim
+spec:
+  interval: 1h
+  maxHistory: 2
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+
+  values:
+    controllers:
+      fstrim:
+        # A DaemonSet rather than a CronJob on purpose. A CronJob schedules one
+        # Pod per firing, so it can only ever trim whichever node that Pod lands
+        # on. Getting per-node coverage out of a CronJob means either pinning a
+        # CronJob per node by name (which would write node hostnames into this
+        # repo) or leaning on completions + parallelism + hostname anti-affinity
+        # (which hangs whenever a node is unreachable, and needs the count
+        # updated by hand whenever the cluster grows). The schedule for a
+        # maintenance task is arbitrary, so coverage wins; resources/fstrim.sh
+        # does its own interval timing.
+        type: daemonset
+
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        pod:
+          # Every node needs this, control-plane included -- Talos leaves
+          # EPHEMERAL untrimmed everywhere. The nodes carry no taints today;
+          # these are here so the DaemonSet does not silently stop covering the
+          # control plane if that ever changes.
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+            - key: node-role.kubernetes.io/master
+              operator: Exists
+              effect: NoSchedule
+
+          securityContext:
+            # FITRIM requires CAP_SYS_ADMIN. A non-root user cannot hold it
+            # without ambient capabilities, so this runs as uid 0 with every
+            # other capability dropped rather than as a fully privileged pod.
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            seccompProfile:
+              type: RuntimeDefault
+
+        containers:
+          app:
+            image:
+              repository: docker.io/library/alpine
+              tag: "3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b"
+
+            # busybox provides /sbin/fstrim, including -v. Invoked via `sh` so
+            # the ConfigMap does not need an exec bit.
+            command:
+              - /bin/sh
+              - /etc/fstrim/fstrim.sh
+
+            # No TZ here on purpose. This Kustomization declares no postBuild, so
+            # "${TIMEZONE}" would reach the container unsubstituted -- and adding
+            # postBuild would mean escaping every $labels and $1 in
+            # prometheusRule.yaml. The script logs with `date -u` and schedules
+            # by duration, so it has no use for a local timezone.
+            env:
+              MOUNTPOINT: /host/var
+              # Every 6h, well short of the distro-conventional weekly. Two
+              # reasons. EPHEMERAL on a control-plane node takes ~120 GiB/day, so
+              # a long gap lets the controller's free-block view drift far from
+              # what the filesystem actually holds. And Prometheus retention is
+              # deliberately 24h here (raising it reintroduces the page-cache
+              # thrashing that saturated a control-plane disk), so the companion
+              # alert in prometheusRule.yaml has to detect a stall inside that
+              # window -- it looks back 18h, which is three cycles of margin at
+              # this interval. Lengthening this means lengthening that too.
+              INTERVAL_SECONDS: "21600"
+              JITTER_MAX_SECONDS: "900"
+              NODE_NAME:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                memory: 64Mi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+                add:
+                  - SYS_ADMIN
+
+    defaultPodOptions:
+      automountServiceAccountToken: false
+
+    persistence:
+      script:
+        type: configMap
+        name: fstrim-configmap
+        globalMounts:
+          - path: /etc/fstrim
+            readOnly: true
+
+      # The Talos EPHEMERAL filesystem. Mounted read-only: FITRIM checks that
+      # the superblock is writable, not the bind mount's MNT_READONLY flag, so a
+      # read-only mount is enough to trim while keeping etcd and the containerd
+      # state under /var out of this container's reach. If the first run logs
+      # EROFS, drop the `readOnly: true` below.
+      hostvar:
+        type: hostPath
+        hostPath: /var
+        hostPathType: Directory
+        globalMounts:
+          - path: /host/var
+            readOnly: true

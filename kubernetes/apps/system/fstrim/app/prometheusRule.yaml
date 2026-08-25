@@ -1,0 +1,62 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: fstrim-rules
+  annotations:
+    # Defensive. This app's Kustomization declares no postBuild today, so no
+    # variable substitution runs over it. If one is ever added, envsubst would
+    # read the `$labels` in the annotations and the `$1` in label_replace as
+    # variables and blank them out, leaving a rule that still loads but can
+    # never match. This keeps that from happening silently.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
+spec:
+  groups:
+    - name: fstrim.rules
+      rules:
+        # Catches the failure mode the DaemonSet's own health cannot: fstrim
+        # running on schedule but discarding nothing, because the FITRIM ioctl is
+        # rejected (EROFS from a read-only mount, EPERM from a missing
+        # CAP_SYS_ADMIN) or because it is pointed at the wrong path. In all of
+        # those cases the pod stays Running and logs quietly once a cycle, so
+        # KubeDaemonSetNotScheduled and KubeDaemonSetRolloutStuck -- which
+        # kube-prometheus-stack already ships -- stay silent.
+        #
+        # The right-hand side of the join is the system-disk selector. It reads
+        # the device backing /var out of node_filesystem_size_bytes
+        # (/dev/nvme0n1p4, /dev/sda4, ...) and rewrites it to the parent disk
+        # (nvme0n1, sda) that node_disk_* reports against, which is why no node
+        # hostname or device name is hardcoded here: each node's system disk is
+        # whichever one holds EPHEMERAL. Ceph OSD devices are excluded for free,
+        # since they carry no /var filesystem.
+        #
+        # endpoint="http-metrics" pins this to the ServiceMonitor-scraped
+        # node-exporter series. A second scrape source produces the same metrics
+        # labelled instance="<ip>:9100" and covers only part of the cluster;
+        # without this matcher every node alerts twice.
+        - alert: FstrimSystemDiskNotTrimmed
+          annotations:
+            summary: |
+              System disk {{ $labels.device }} on {{ $labels.instance }} has not
+              been trimmed in 18h. The drive controller is not being told which
+              blocks are free, so it loses its spare area and write
+              amplification climbs.
+            description: |
+              Check the fstrim DaemonSet on this node:
+                kubectl -n system logs -l app.kubernetes.io/name=fstrim --tail=20
+              A "trim FAILED" line reporting EROFS means the hostvar mount needs
+              `readOnly: true` removed in the fstrim HelmRelease.
+          expr: |
+            (
+              increase(node_disk_discarded_sectors_total{endpoint="http-metrics"}[18h]) == 0
+            )
+            and on (instance, device) (
+              label_replace(
+                node_filesystem_size_bytes{mountpoint="/var", fstype="xfs", endpoint="http-metrics"},
+                "device", "$1", "device", "/dev/(.*?)p?[0-9]+"
+              )
+            )
+          for: 30m
+          labels:
+            severity: warning
