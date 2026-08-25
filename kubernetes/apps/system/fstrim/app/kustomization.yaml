@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./helmrelease.yaml
+  - ./prometheusRule.yaml
+configMapGenerator:
+  - name: fstrim-configmap
+    files:
+      - ./resources/fstrim.sh
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    # Defensive, same as prometheusRule.yaml: this app's Kustomization declares
+    # no postBuild today. fstrim.sh is full of ${...} shell expansions, so if one
+    # is ever added, substitution would blank every one of them and leave a
+    # script that starts, trims nothing, and sleeps forever.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
