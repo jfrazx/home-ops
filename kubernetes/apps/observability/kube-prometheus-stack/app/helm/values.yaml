@@ -135,7 +135,7 @@ prometheus:
     enableAdminAPI: true
     walCompression: true
 
-    retention: 30d
+    retention: 24h
     retentionSize: 90GB
 
     storageSpec:
@@ -150,9 +150,9 @@ prometheus:
     resources:
       requests:
         cpu: 100m
-        memory: 1Gi
+        memory: 6Gi
       limits:
-        memory: 4Gi
+        memory: 12Gi
 
     # Additional scrape configs for services that don't have ServiceMonitors
     additionalScrapeConfigs:
@@ -162,7 +162,7 @@ prometheus:
           username_file: /etc/prometheus/secrets/minio-metrics-auth/username
           password_file: /etc/prometheus/secrets/minio-metrics-auth/password
         static_configs:
-          - targets: ["primary-hl.storage.svc.cluster.local:9000"]
+          - targets: ["minio.storage.svc.cluster.local:9000"]
 
       - job_name: node-exporter
         static_configs:
@@ -170,21 +170,6 @@ prometheus:
               - 10.168.2.91:9100
               - 10.168.2.92:9100
               - 10.168.2.93:9100
-
-    remoteWrite:
-      - url: http://mimir-gateway.observability.svc.cluster.local/api/v1/push
-        writeRelabelConfigs:
-          - sourceLabels: [__name__]
-            regex: 'prometheus_.*|go_.*'
-            action: drop
-        queueConfig:
-          capacity: 10000
-          maxSamplesPerSend: 2000
-          batchSendDeadline: 5s
-          minShards: 1
-          maxShards: 10
-
-    retention: 24h
 
 kubeApiServer:
   enabled: true
