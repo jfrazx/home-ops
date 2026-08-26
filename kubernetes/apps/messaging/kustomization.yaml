@@ -8,5 +8,4 @@ components:
   - ../../components/flux/alerts
 resources:
   - ./apprise/ks.yaml
-  - ./emqx-operator/ks.yaml
   - ./signal-cli-rest-api/ks.yaml
