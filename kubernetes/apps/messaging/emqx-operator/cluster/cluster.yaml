@@ -32,14 +32,17 @@ spec:
       annotations:
         reloader.stakater.com/auto: "true"
     spec:
-      replicas: 3
+      # EMQX >= 5.9 is BSL-licensed: the built-in community license
+      # permits single-node only. Clustering needs a commercial key,
+      # so extra core nodes crash-loop on SINGLE_NODE_LICENSE.
+      replicas: 1
       envFrom:
         - secretRef:
             name: emqx-secret
       extraVolumeMounts:
         - name: init-user
           mountPath: /opt/init-user.json
-          subPath: init-user.json
+          subPath: init_users.json
           readOnly: true
       extraVolumes:
         - name: init-user
