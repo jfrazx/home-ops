@@ -83,9 +83,6 @@ kube-state-metrics:
     - deployments=[*]
     - persistentvolumeclaims=[*]
   prometheus:
-    prometheusSpec:
-      secrets:
-        - minio-metrics-auth
     monitor:
       enabled: true
       relabelings:
@@ -153,6 +150,10 @@ prometheus:
         memory: 6Gi
       limits:
         memory: 12Gi
+
+    # Mounted at /etc/prometheus/secrets/<name>/ for the minio scrape config below.
+    secrets:
+      - minio-metrics-auth
 
     # Additional scrape configs for services that don't have ServiceMonitors
     additionalScrapeConfigs:
