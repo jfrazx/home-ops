@@ -34,6 +34,11 @@ spec:
             env:
               MINIO_API_CORS_ALLOW_ORIGIN: https://s3.${SECRET_DOMAIN},https://minio.${SECRET_DOMAIN}
               MINIO_BROWSER_REDIRECT_URL: https://minio.${SECRET_DOMAIN}
+              # Metrics endpoints are only reachable in-cluster and via the internal
+              # gateway, so scrape them unauthenticated. MinIO only supports `jwt`
+              # (a bearer token from `mc admin prometheus generate`) or `public` --
+              # it rejects HTTP basic auth outright.
+              MINIO_PROMETHEUS_AUTH_TYPE: public
               MINIO_PROMETHEUS_JOB_ID: minio
               MINIO_PROMETHEUS_URL: https://prometheus.${SECRET_DOMAIN}
               MINIO_SERVER_URL: https://s3.${SECRET_DOMAIN}
