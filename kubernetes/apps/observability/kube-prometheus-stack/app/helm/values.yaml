@@ -151,17 +151,26 @@ prometheus:
       limits:
         memory: 12Gi
 
-    # Mounted at /etc/prometheus/secrets/<name>/ for the minio scrape config below.
-    secrets:
-      - minio-metrics-auth
-
     # Additional scrape configs for services that don't have ServiceMonitors
     additionalScrapeConfigs:
+      # MinIO v2 metrics are split across three endpoints, each needing its own
+      # job. MINIO_PROMETHEUS_AUTH_TYPE=public means no credentials are required;
+      # MinIO does not support basic auth, only a `jwt` bearer token or `public`.
+      # `minio` keeps its name to match MINIO_PROMETHEUS_JOB_ID on the server.
       - job_name: minio
         metrics_path: /minio/v2/metrics/cluster
-        basic_auth:
-          username_file: /etc/prometheus/secrets/minio-metrics-auth/username
-          password_file: /etc/prometheus/secrets/minio-metrics-auth/password
+        static_configs:
+          - targets: ["minio.storage.svc.cluster.local:9000"]
+
+      - job_name: minio-node
+        metrics_path: /minio/v2/metrics/node
+        static_configs:
+          - targets: ["minio.storage.svc.cluster.local:9000"]
+
+      # v2 bucket metrics are capped at 100 buckets upstream; move to v3 if we
+      # ever exceed that.
+      - job_name: minio-bucket
+        metrics_path: /minio/v2/metrics/bucket
         static_configs:
           - targets: ["minio.storage.svc.cluster.local:9000"]
 

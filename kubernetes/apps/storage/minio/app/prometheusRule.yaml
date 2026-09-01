@@ -1,0 +1,70 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: minio-rules
+spec:
+  groups:
+    - name: minio.rules
+      rules:
+        - alert: MinioClusterUnhealthy
+          annotations:
+            summary: |
+              MinIO on {{ $labels.instance }} reports its cluster health as
+              unhealthy.
+          expr: minio_cluster_health_status != 1
+          for: 10m
+          labels:
+            severity: critical
+
+        - alert: MinioDriveOffline
+          annotations:
+            summary: |
+              MinIO on {{ $labels.instance }} has {{ $value }} drive(s) offline.
+          expr: minio_cluster_drive_offline_total > 0
+          for: 10m
+          labels:
+            severity: critical
+
+        - alert: MinioCapacityLow
+          annotations:
+            summary: |
+              MinIO on {{ $labels.instance }} has less than 10% usable capacity
+              free ({{ $value | humanizePercentage }} remaining).
+          expr: |
+            (
+              minio_cluster_capacity_usable_free_bytes
+              /
+              minio_cluster_capacity_usable_total_bytes
+            ) < 0.10
+            and minio_cluster_capacity_usable_total_bytes > 0
+          for: 30m
+          labels:
+            severity: warning
+
+        - alert: MinioCapacityCritical
+          annotations:
+            summary: |
+              MinIO on {{ $labels.instance }} has less than 5% usable capacity
+              free ({{ $value | humanizePercentage }} remaining).
+          expr: |
+            (
+              minio_cluster_capacity_usable_free_bytes
+              /
+              minio_cluster_capacity_usable_total_bytes
+            ) < 0.05
+            and minio_cluster_capacity_usable_total_bytes > 0
+          for: 15m
+          labels:
+            severity: critical
+
+        - alert: MinioServerErrors
+          annotations:
+            summary: |
+              MinIO on {{ $labels.instance }} is returning S3 5xx errors at
+              {{ $value | printf "%.2f" }} per second.
+          expr: sum by (instance) (rate(minio_s3_requests_5xx_errors_total[5m])) > 0.5
+          for: 15m
+          labels:
+            severity: warning
