@@ -4,7 +4,7 @@ ARG OLLAMA_VERSION=0.32.9
 # renovate: datasource=github-releases depName=intel/compute-runtime versioning=loose
 ARG COMPUTE_RUNTIME_VERSION=26.31.39395.13
 # renovate: datasource=github-releases depName=oneapi-src/level-zero versioning=loose extractVersion=^v(?<version>.+)$
-ARG LEVEL_ZERO_VERSION=1.32.0
+ARG LEVEL_ZERO_VERSION=1.33.1
 # renovate: datasource=github-releases depName=intel/intel-graphics-compiler versioning=loose extractVersion=^v(?<version>.+)$
 ARG IGC_VERSION=2.40.13
 # NOTE: IGC_BUILD is the package build suffix, not part of the git tag - it does not
