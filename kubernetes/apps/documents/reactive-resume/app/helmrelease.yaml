@@ -86,13 +86,22 @@ spec:
             envFrom: *secret
 
             probes:
-              # /api/health checks DB (SELECT 1) and S3 (PutObject+DeleteObject),
-              # returning 503 if either is unreachable. On liveness that turns a
-              # transient Postgres/MinIO blip into a killed container, which then
-              # re-runs Drizzle migrations on restart and crash-loops with kubelet
-              # backoff (up to 5m) if the dependency is still down -- a 2m blip
-              # becomes 5-10m of downtime. So liveness only checks that the
-              # process is listening; readiness and startup keep the real check.
+              # No probe uses /api/health. That route checks Postgres (SELECT 1)
+              # and S3 (PutObject + DeleteObject of key `healthcheck`) under a
+              # hardcoded 1500ms budget -- HEALTHCHECK_TIMEOUT_MS in
+              # apps/server/src/http/health.ts, not configurable by env -- and
+              # returns 503 if either check exceeds it. MinIO here is a single
+              # node on an NFS PVC (truenas-nfs-minio), where a 2-byte PutObject
+              # measures 1.5-2.2s, so the storage check times out on every poll
+              # and the route is a permanent 503. Gating readiness on it kept the
+              # pod NotReady forever even though the app served / in 7ms.
+              #
+              # Probing / instead is safe: the server runs Drizzle migrations to
+              # completion before it opens the listener, so an answered request
+              # means migrations finished and the DB was reachable. Dependency
+              # health belongs in alerting, not in a probe that can hard-down the
+              # app -- a killed container re-runs migrations and crash-loops with
+              # kubelet backoff up to 5m, turning a 2m blip into 10m of downtime.
               liveness:
                 enabled: true
                 custom: true
@@ -108,7 +117,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /api/health
+                    path: /
                     port: *port
                   initialDelaySeconds: 0
                   periodSeconds: 30
@@ -119,7 +128,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /api/health
+                    path: /
                     port: *port
                   initialDelaySeconds: 10
                   periodSeconds: 10
