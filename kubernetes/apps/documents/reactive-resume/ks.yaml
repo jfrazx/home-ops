@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app reactive-resume
+  namespace: flux-system
+spec:
+  targetNamespace: &namespace documents
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: documents-postgres
+    - name: openbao
+      namespace: external-secrets
+  interval: 1h
+  path: ./kubernetes/apps/documents/reactive-resume/app
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  timeout: 5m
+  wait: true
+  healthChecks:
+    - apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: documents-postgres
+      namespace: *namespace
+    - apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: reactive-resume-secret
+      namespace: *namespace
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+    substitute:
+      APP: *app
