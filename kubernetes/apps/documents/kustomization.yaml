@@ -5,12 +5,15 @@ kind: Kustomization
 namespace: &namespace documents
 components:
   - ../../components/common
+  - ../../components/common/secrets
   - ../../components/flux/alerts
 resources:
+  - ./database/ks.yaml
   - ./excalidraw/ks.yaml
   - ./grist/ks.yaml
   - ./karakeep/ks.yaml
   - ./linkwarden/ks.yaml
   - ./pairdrop/ks.yaml
   - ./paperless/ks.yaml
+  - ./reactive-resume/ks.yaml
   - ./stirling-pdf/ks.yaml
