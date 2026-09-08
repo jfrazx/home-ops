@@ -86,8 +86,26 @@ datasources:
           httpMethod: POST
           timeInterval: 30s
 
+      # Added for the VictoriaMetrics migration. Not default during phase 1 --
+      # its purpose is to let the same dashboards be pointed at vmsingle and
+      # compared against Prometheus before kube-prometheus-stack is removed.
+      # Declared as `prometheus` because VictoriaMetrics serves the Prometheus
+      # query API; swap to the victoriametrics-metrics-datasource plugin at
+      # cutover if MetricsQL is wanted.
+      - name: VictoriaMetrics
+        type: prometheus
+        uid: victoriametrics
+        url: http://vmsingle-stack.observability.svc.cluster.local:8428
+        access: proxy
+        jsonData:
+          httpMethod: POST
+          timeInterval: 30s
+
       - name: VictoriaLogs
         type: victoriametrics-logs-datasource
+        # Pinned so dashboards and Explore links can reference this datasource by
+        # a stable id rather than a generated one.
+        uid: victorialogs
         access: proxy
         url: http://victoria-logs-server.observability.svc.cluster.local:9428
 

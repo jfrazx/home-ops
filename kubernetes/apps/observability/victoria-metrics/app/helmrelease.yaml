@@ -8,7 +8,12 @@ metadata:
 spec:
   chartRef:
     kind: OCIRepository
-    name: victoria-metrics-k8s-stack
+    # The OCIRepository is named `victoria-metrics` (it just happens to point at
+    # the victoria-metrics-k8s-stack chart), and it lives in flux-system while
+    # this release targets observability -- so the namespace is required. Both
+    # were wrong, which is one reason this app has never deployed.
+    name: victoria-metrics
+    namespace: flux-system
   interval: 1h
   # After 0.61.0, I've been getting new alerts firing so I'm patching for now
   postRenderers:
@@ -30,6 +35,26 @@ spec:
                 value: "count(up == 0) without(instance,pod,node) OR on() vector(0)"
 
   values:
+    # ------------------------------------------------------------------------
+    # PHASE 1 of 2 -- running alongside kube-prometheus-stack for parity checking.
+    #
+    # In this phase VictoriaMetrics only *collects*. It does not alert and it does
+    # not own any component that kube-prometheus-stack already runs. vmagent
+    # scrapes from the VMServiceScrape/VMRule objects the operator converts out of
+    # the existing 41 ServiceMonitors, 12 PodMonitors and 43 PrometheusRules, and
+    # writes to vmsingle. Grafana gets VictoriaMetrics as a second, non-default
+    # datasource so dashboards can be compared side by side.
+    #
+    # Expect ~2x scrape load while both stacks run. That is the cost of the
+    # phased cutover.
+    #
+    # AT CUTOVER (phase 2), flip every "phase 1" marker below and remove
+    # kube-prometheus-stack. Note that `enable_converter_ownership: true` makes
+    # converted objects garbage-collect with their source, so kube-prometheus-
+    # stack's own converted rules disappear when it does -- which is why
+    # defaultRules and the built-in scrape targets must be turned back ON in the
+    # same change.
+    # ------------------------------------------------------------------------
     fullnameOverride: stack
     victoria-metrics-operator:
       env:
@@ -47,7 +72,11 @@ spec:
       enabled: false
 
     defaultRules:
-      create: true
+      # phase 1: OFF. kube-prometheus-stack's 43 PrometheusRules are already
+      # converted to VMRules by the operator, so creating these too would define
+      # every alert twice. Turn back ON at cutover, when the converted copies
+      # disappear along with kube-prometheus-stack.
+      create: false
       # Added to not consider 304 redirects as errors/warnings
       groups:
         kubeApiserverSlos:
@@ -80,6 +109,16 @@ spec:
             namespace: kube-system
 
     alertmanager:
+      # phase 1: OFF. kube-prometheus-stack's Alertmanager keeps ownership of
+      # notifications throughout the migration, so alerting never moves and there
+      # is no window of duplicate or missing pages.
+      #
+      # The config below is ALSO STALE and must be reworked before it is enabled:
+      # it routes to Pushover, which predates this cluster's move to the Signal
+      # bridge (Discord was removed 2026-08-23 once Signal was confirmed end to
+      # end). At cutover, port the `notify` webhook receiver from
+      # kube-prometheus-stack's values rather than turning this on as written.
+      enabled: false
       useManagedConfig: true
       config:
         route:
@@ -153,6 +192,10 @@ spec:
                 url_title: View in Alertmanager
 
     vmalert:
+      # phase 1: OFF. With the converter running, vmalert would evaluate copies of
+      # the same rules Prometheus is already evaluating and fire a second set of
+      # notifications. Enable at cutover, together with defaultRules.
+      enabled: false
       spec:
         # Skip vmalerts for vmlog rules
         selectAllByDefault: false
@@ -184,6 +227,10 @@ spec:
       enabled: false
 
     kube-state-metrics:
+      # phase 1: OFF. kube-prometheus-stack already runs kube-state-metrics; a
+      # second copy would double every kube_* series. vmagent picks up the
+      # existing one through its converted ServiceMonitor. Enable at cutover.
+      enabled: false
       livenessProbe:
         httpGet:
           path: /healthz
@@ -200,6 +247,9 @@ spec:
         failureThreshold:    5
 
     prometheus-node-exporter:
+      # phase 1: OFF, same reasoning as kube-state-metrics -- a second DaemonSet
+      # on every node duplicating node_* series. Enable at cutover.
+      enabled: false
       vmScrape:
         spec:
           endpoints:
@@ -209,7 +259,13 @@ spec:
                     - __meta_kubernetes_endpoint_node_name
                   target_label: node
 
+    # The chart's own control-plane scrape targets. In phase 1 these are OFF
+    # because kube-prometheus-stack's equivalents are already being converted
+    # into VMServiceScrapes -- leaving both on would scrape kubelet, apiserver
+    # and CoreDNS twice into the same vmsingle. Turn all three back ON at
+    # cutover, when the converted copies are garbage-collected with their source.
     kubelet:
+      enabled: false
       vmScrape:
         spec:
           # drop high cardinality label and useless metrics for cadvisor and kubelet
@@ -253,6 +309,13 @@ spec:
               sourceLabels: [__name__]
               regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
 
+    kubeApiServer:
+      enabled: false # phase 1 (see kubelet above)
+
+    coreDns:
+      enabled: false # phase 1 (see kubelet above)
+
+    # These four were already off before the migration and stay off.
     kubeControllerManager:
       enabled: false
 
@@ -306,73 +369,87 @@ spec:
                   summary: Pod has been in Failed state for more than 15 minutes
                   description: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in Failed state for longer than 15 minutes on cluster {{ $labels.cluster }}.
 
-    extraObjects:
-      - apiVersion: monitoring.coreos.com/v1
-        kind: PrometheusRule
-        metadata:
-          name: custom-kube-apiserver-slos
-          namespace: observability
-        spec:
-          groups:
-            - name: kube-apiserver-slos
-              rules:
-              - alert: KubeAPIErrorBudgetBurn
-                annotations:
-                  description: 'The API server is burning too much error budget on cluster .'
-                  runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
-                  summary: 'The API server is burning too much error budget.'
-                condition: 'true'
-                expr: |-
-                  sum by (cluster) (apiserver_request:burnrate1h{code=~"4..|5.."}) > (14.40 * 0.01000)
-                  and on (cluster)
-                  sum by (cluster) (apiserver_request:burnrate5m{code=~"4..|5.."}) > (14.40 * 0.01000)
-                for: 2m
-                labels:
-                  long: 1h
-                  severity: critical
-                  short: 5m
-              - alert: KubeAPIErrorBudgetBurn
-                annotations:
-                  description: 'The API server is burning too much error budget on cluster .'
-                  runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
-                  summary: 'The API server is burning too much error budget.'
-                condition: 'true'
-                expr: |-
-                  sum by (cluster) (apiserver_request:burnrate6h{code=~"4..|5.."}) > (6.00 * 0.01000)
-                  and on (cluster)
-                  sum by (cluster) (apiserver_request:burnrate30m{code=~"4..|5.."}) > (6.00 * 0.01000)
-                for: 15m
-                labels:
-                  long: 6h
-                  severity: critical
-                  short: 30m
-              - alert: KubeAPIErrorBudgetBurn
-                annotations:
-                  description: 'The API server is burning too much error budget on cluster .'
-                  runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
-                  summary: 'The API server is burning too much error budget.'
-                condition: 'true'
-                expr: |-
-                  sum by (cluster) (apiserver_request:burnrate1d{code=~"4..|5.."}) > (3.00 * 0.01000)
-                  and on (cluster)
-                  sum by (cluster) (apiserver_request:burnrate2h{code=~"4..|5.."}) > (3.00 * 0.01000)
-                for: 1h
-                labels:
-                  long: 1d
-                  severity: warning
-                  short: 2h
-              - alert: KubeAPIErrorBudgetBurn
-                annotations:
-                  description: 'The API server is burning too much error budget on cluster .'
-                  runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
-                  summary: 'The API server is burning too much error budget.'
-                condition: 'true'
-                expr: |-
-                  sum by (cluster) (apiserver_request:burnrate3d{code=~"4..|5.."}) > (1.00 * 0.01000)
-                  and on (cluster)
-                  sum by (cluster) (apiserver_request:burnrate6h{code=~"4..|5.."}) > (1.00 * 0.01000)
-                for: 3h
-                labels:
-                  long: 3d
-                  severity: warning
-                  short: 6h
+    # phase 1: EMPTY, deliberately.
+    #
+    # The block below defines a PrometheusRule (`custom-kube-apiserver-slos`) --
+    # a *Prometheus* CR, not a VM one, so the kube-prometheus-stack Prometheus
+    # that is running right now would pick it up and evaluate it immediately.
+    # `KubeAPIErrorBudgetBurn` already exists today in
+    # `kube-prometheus-stack-kube-apiserver-slos` with all four burn-rate
+    # windows, so shipping this in phase 1 would define every one of those alerts
+    # twice and page twice through the Signal bridge.
+    #
+    # It is the intended REPLACEMENT for those rules after cutover, when
+    # kube-prometheus-stack (and its copy) is gone. Uncomment it in phase 2,
+    # together with defaultRules, vmalert and the built-in scrape targets.
+    extraObjects: []
+    # extraObjects:
+    #   - apiVersion: monitoring.coreos.com/v1
+    #     kind: PrometheusRule
+    #     metadata:
+    #       name: custom-kube-apiserver-slos
+    #       namespace: observability
+    #     spec:
+    #       groups:
+    #         - name: kube-apiserver-slos
+    #           rules:
+    #           - alert: KubeAPIErrorBudgetBurn
+    #             annotations:
+    #               description: 'The API server is burning too much error budget on cluster .'
+    #               runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
+    #               summary: 'The API server is burning too much error budget.'
+    #             condition: 'true'
+    #             expr: |-
+    #               sum by (cluster) (apiserver_request:burnrate1h{code=~"4..|5.."}) > (14.40 * 0.01000)
+    #               and on (cluster)
+    #               sum by (cluster) (apiserver_request:burnrate5m{code=~"4..|5.."}) > (14.40 * 0.01000)
+    #             for: 2m
+    #             labels:
+    #               long: 1h
+    #               severity: critical
+    #               short: 5m
+    #           - alert: KubeAPIErrorBudgetBurn
+    #             annotations:
+    #               description: 'The API server is burning too much error budget on cluster .'
+    #               runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
+    #               summary: 'The API server is burning too much error budget.'
+    #             condition: 'true'
+    #             expr: |-
+    #               sum by (cluster) (apiserver_request:burnrate6h{code=~"4..|5.."}) > (6.00 * 0.01000)
+    #               and on (cluster)
+    #               sum by (cluster) (apiserver_request:burnrate30m{code=~"4..|5.."}) > (6.00 * 0.01000)
+    #             for: 15m
+    #             labels:
+    #               long: 6h
+    #               severity: critical
+    #               short: 30m
+    #           - alert: KubeAPIErrorBudgetBurn
+    #             annotations:
+    #               description: 'The API server is burning too much error budget on cluster .'
+    #               runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
+    #               summary: 'The API server is burning too much error budget.'
+    #             condition: 'true'
+    #             expr: |-
+    #               sum by (cluster) (apiserver_request:burnrate1d{code=~"4..|5.."}) > (3.00 * 0.01000)
+    #               and on (cluster)
+    #               sum by (cluster) (apiserver_request:burnrate2h{code=~"4..|5.."}) > (3.00 * 0.01000)
+    #             for: 1h
+    #             labels:
+    #               long: 1d
+    #               severity: warning
+    #               short: 2h
+    #           - alert: KubeAPIErrorBudgetBurn
+    #             annotations:
+    #               description: 'The API server is burning too much error budget on cluster .'
+    #               runbook_url: 'https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapierrorbudgetburn'
+    #               summary: 'The API server is burning too much error budget.'
+    #             condition: 'true'
+    #             expr: |-
+    #               sum by (cluster) (apiserver_request:burnrate3d{code=~"4..|5.."}) > (1.00 * 0.01000)
+    #               and on (cluster)
+    #               sum by (cluster) (apiserver_request:burnrate6h{code=~"4..|5.."}) > (1.00 * 0.01000)
+    #             for: 3h
+    #             labels:
+    #               long: 3d
+    #               severity: warning
+    #               short: 6h

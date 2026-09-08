@@ -12,15 +12,167 @@ spec:
     namespace: flux-system
   interval: 30m
   values:
+    # NOTE: `fullnameOverride` is not a top-level key in this chart (the chart
+    # exposes `nameOverride` and `server.fullnameOverride`), so this value is
+    # ignored. It is kept because the name it *would* produce is not the name
+    # the release currently has -- moving it to `server.fullnameOverride` would
+    # rename the StatefulSet and orphan its PVC. Leave it alone.
     fullnameOverride: victoria-logs
-    retentionPeriod: 14d
+
     server:
+      # Retention lives under `server`, not at the top level. It was previously
+      # set as a top-level `retentionPeriod: 14d`, which the chart silently
+      # ignored -- the server was running the chart default of `1` (one month).
+      retentionPeriod: 30d
+      # Second, independent guard: trim oldest data once on-disk usage reaches
+      # this many GiB, so the volume can never fill. Sized below the 50Gi PVC to
+      # leave filesystem headroom.
+      retentionDiskSpaceUsage: 45
+
       persistentVolume:
         enabled: true
         storageClassName: truenas-iscsi
-        size: 20Gi
+        size: 50Gi
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 2Gi
+
       serviceMonitor:
         enabled: true
+
+    # Vector runs as a DaemonSet and is the only writer into VictoriaLogs. It
+    # carries two pipelines:
+    #   1. `k8s`   -- container logs from every node (chart default)
+    #   2. `talos` -- Talos kernel (KmsgLogConfig) and service log destinations,
+    #                 delivered as newline-separated JSON over raw TCP. Talos
+    #                 does not speak syslog, so VictoriaLogs' own syslog listener
+    #                 cannot take this feed directly.
+    vector:
+      enabled: true
+
+      containerPorts:
+        - name: prom-exporter
+          containerPort: 9090
+          protocol: TCP
+        # hostPort, deliberately, rather than a LoadBalancer. Talos speaks from
+        # the host network namespace, so every node reaches its own agent at
+        # 127.0.0.1:6514 -- one uniform machine-config patch for all nodes, no
+        # LB address to allocate.
+        #
+        # It also solves attribution. A LoadBalancer here would be
+        # externalTrafficPolicy: Cluster (what every other LB in this cluster
+        # uses), which SNATs and destroys the client address -- and KmsgLogConfig
+        # supports no extraTags, so kernel messages would arrive with no way to
+        # tell which node produced them. Going via localhost lets Vector stamp
+        # the node from its own downward-API env var instead.
+        - name: talos
+          containerPort: 6514
+          hostPort: 6514
+          protocol: TCP
+
+      customConfig:
+        data_dir: /vector-data-dir
+        api:
+          enabled: false
+          address: 0.0.0.0:8686
+
+        sources:
+          k8s:
+            type: kubernetes_logs
+          internal_metrics:
+            type: internal_metrics
+          talos:
+            type: socket
+            mode: tcp
+            address: 0.0.0.0:6514
+            host_key: node_ip
+            framing:
+              method: newline_delimited
+            decoding:
+              codec: json
+
+        transforms:
+          parser:
+            type: remap
+            inputs: [k8s]
+            source: |
+              .log = parse_json(.message) ?? .message
+              del(.message)
+
+          # Normalise Talos records onto the same field names the Kubernetes
+          # pipeline already uses, so both feed one sink with one set of headers.
+          talos_parser:
+            type: remap
+            inputs: [talos]
+            source: |
+              .message = to_string(.msg) ?? ""
+              del(.msg)
+
+              # Hyphenated keys use quoted-path syntax (`."talos-time"`).
+              # `.["talos-time"]` is NOT valid VRL -- brackets take integers only.
+              ts, err = parse_timestamp(."talos-time", "%+")
+              .timestamp = if err == null { ts } else { now() }
+              del(."talos-time")
+
+              if exists(."talos-level") {
+                .level = to_string(."talos-level") ?? "info"
+                del(."talos-level")
+              }
+
+              # Talos messages carry no hostname. Because delivery is over
+              # localhost, the agent receiving them is by definition running on
+              # the node that produced them -- so its own node name is the
+              # attribution, and it needs no lookup table to go stale.
+              .node = get_env_var("VECTOR_SELF_NODE_NAME") ?? "unknown"
+              del(.node_ip)
+
+              # Service logs carry `talos-service`; kernel logs carry `facility`.
+              # `exists` is required here -- to_string(null) returns "" rather
+              # than erroring, so a `??` chain would never reach its fallback.
+              # Written as statements, not an assigned if-expression: VRL rejects
+              # `else if` on the right-hand side of an assignment.
+              .talos_stream = "kernel"
+              if exists(."talos-service") {
+                .talos_stream = to_string(."talos-service") ?? "service"
+              } else if exists(.facility) {
+                .talos_stream = to_string(.facility) ?? "kernel"
+              }
+
+        sinks:
+          exporter:
+            type: prometheus_exporter
+            address: 0.0.0.0:9090
+            inputs: [internal_metrics]
+
+          # `endpoints` is deliberately unset -- the chart injects the in-cluster
+          # VictoriaLogs URL for any elasticsearch sink that has none.
+          vlogs:
+            type: elasticsearch
+            inputs: [parser, talos_parser]
+            mode: bulk
+            api_version: v8
+            compression: gzip
+            healthcheck:
+              enabled: false
+            # Survive a VictoriaLogs restart or a rolling upgrade without
+            # dropping records. The buffer lives on the node's hostPath data dir,
+            # so it also survives the Vector pod itself restarting.
+            buffer:
+              type: disk
+              max_size: 1073741824
+              when_full: block
+            request:
+              headers:
+                VL-Time-Field: timestamp
+                VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace,node,talos_stream
+                VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+                AccountID: "0"
+                ProjectID: "0"
+
     dashboards:
       enabled: true
       annotations:

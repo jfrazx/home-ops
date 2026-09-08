@@ -59,6 +59,12 @@ spec:
       enabled: false
     loki:
       enabled: false
+    # The chart's bundled Alloy only exists to feed the bundled Loki above, which
+    # is disabled -- so it was tailing every pod on every node and retrying
+    # forever against a `openebs-loki:3100` that has never resolved. Cluster-wide
+    # log collection is handled by Vector (see the victoria-logs HelmRelease).
+    alloy:
+      enabled: false
     engines:
       local:
         lvm:

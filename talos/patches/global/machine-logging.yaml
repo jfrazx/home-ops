@@ -1,0 +1,33 @@
+---
+# Ship Talos logs off-node to VictoriaLogs.
+#
+# Talos emits newline-separated JSON over raw TCP ("json_lines"), not syslog, so
+# it cannot talk to VictoriaLogs' syslog listener directly. The receiver is the
+# Vector DaemonSet deployed by the victoria-logs HelmRelease, which binds
+# hostPort 6514 on every node -- hence 127.0.0.1, which is the same address on
+# every node and keeps this patch global.
+#
+# Vector forwards on to VictoriaLogs continuously, so logs leave the node as
+# they are produced. Note that Talos' forwarder is userspace: a wedge stops
+# delivery, so this captures everything up TO a failure, not the moment of it.
+#
+# `machine.logging.destinations` carries *service* logs -- kubelet, etcd,
+# machined, apid, containerd, and anything a system extension sends to syslog.
+machine:
+  logging:
+    destinations:
+      - endpoint: "tcp://127.0.0.1:6514/"
+        format: json_lines
+---
+# KmsgLogConfig carries the *kernel* ring buffer, which is the half that matters
+# for diagnosing a node wedge: NVMe timeouts, hung tasks, soft lockups and MCEs
+# all land here and nowhere else. Talos keeps kmsg in memory only, so a power
+# cycle destroys it -- which is why the 2026-08-11, 2026-08-13 and 2026-09-06
+# wedges were all undiagnosable.
+#
+# Applied by machine config; unlike the `talos.logging.kernel` kernel argument
+# this does NOT require a Talos upgrade to take effect.
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: victoria-logs
+url: tcp://127.0.0.1:6514/
