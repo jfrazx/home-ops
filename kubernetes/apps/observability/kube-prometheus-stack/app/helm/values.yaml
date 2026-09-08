@@ -55,7 +55,13 @@ alertmanager:
         equal: ["alertname", "cluster", "service"]
 
   alertmanagerSpec:
-    replicas: 1
+    # Two replicas, hard anti-affinity. A StatefulSet pod on an unreachable node
+    # cannot be rescheduled -- the API server will not finalize its deletion
+    # without kubelet confirming -- so a single replica means losing the node it
+    # sits on takes out alerting entirely, and the alert about *that* cannot be
+    # delivered either. On 2026-09-06 this produced a 27h notification blackout.
+    # The replicas gossip and deduplicate, so notifications are not duplicated.
+    replicas: 2
     podAntiAffinity: hard
     storage:
       volumeClaimTemplate:

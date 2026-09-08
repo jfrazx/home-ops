@@ -118,6 +118,7 @@ patches:
   - "@./patches/global/machine-time.yaml"
   - "@./patches/global/machine-kernel-modules.yaml"
   - "@./patches/global/machine-openebs.yaml"
+  - "@./patches/global/machine-logging.yaml"
 
 # Controller patches
 controlPlane:
