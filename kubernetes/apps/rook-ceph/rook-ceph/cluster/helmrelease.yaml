@@ -103,6 +103,31 @@ spec:
           limits:
             memory: 256Mi
 
+      # Ceph v20.2.4 (CVE-2025-30156) added the aes256k cephx key type and made
+      # the old `aes` type a HEALTH_ERR for *service* entities. The version
+      # upgrade itself completed -- all 12 daemons run 20.2.4 -- but daemon keys
+      # were never rotated, so mds/mgr/osd stayed on `aes` and Ceph held
+      # HEALTH_ERR. This Kustomization's healthCheckExprs map HEALTH_ERR to
+      # Failed, which froze every Kustomization in the cluster behind it.
+      #
+      # Rotation is triggered by raising keyGeneration; 2 is the correct first
+      # value for a cluster whose status.cephx carries no generation yet.
+      # keyType is deliberately omitted so Rook selects aes256k itself.
+      security:
+        cephx:
+          daemon:
+            keyRotationPolicy: KeyGeneration
+            keyGeneration: 2
+
+          # Pinned rather than inherited. CSI keys are used by the *kernel* rbd
+          # and cephfs clients, and aes256k requires Linux 7.0+ -- every node
+          # here is on 6.18, so rotating these would break PVC mounts. This
+          # matches the current chart default; stating it explicitly means a
+          # future default flip cannot silently take the mounts down. Revisit
+          # once Talos ships a 7.0+ kernel.
+          csi:
+            keyType: aes
+
       storage:
         useAllNodes: false
         useAllDevices: false
