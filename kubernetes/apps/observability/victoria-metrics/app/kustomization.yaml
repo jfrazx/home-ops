@@ -9,5 +9,4 @@ resources:
   # and its `/healthchecks` path is not read by any live ExternalSecret today, so
   # applying it now would most likely just fail. Add it back at cutover, if the
   # ported receiver still needs it.
-  - ./grafanadashboard.yaml
   - ./helmrelease.yaml
