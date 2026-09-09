@@ -24,15 +24,25 @@ spec:
       # set as a top-level `retentionPeriod: 14d`, which the chart silently
       # ignored -- the server was running the chart default of `1` (one month).
       retentionPeriod: 30d
-      # Second, independent guard: trim oldest data once on-disk usage reaches
-      # this many GiB, so the volume can never fill. Sized below the 50Gi PVC to
-      # leave filesystem headroom.
-      retentionDiskSpaceUsage: 45
+      # Second, independent guard: trim oldest per-day partitions once the
+      # filesystem holding /storage crosses this percentage, so the volume can
+      # never fill. Deliberately a percentage rather than a fixed size: the
+      # previous `retentionDiskSpaceUsage: 45` rendered as `45GiB`, sized for a
+      # 50Gi PVC that never existed, so on the real 20Gi volume it could never
+      # trigger -- the guard was silently inert. A percentage is derived from
+      # the filesystem at runtime and cannot drift when the volume is resized.
+      # Mutually exclusive with `retentionDiskSpaceUsage`; setting both makes
+      # the server refuse to start.
+      retentionMaxDiskUsagePercent: 80
 
       persistentVolume:
         enabled: true
         storageClassName: truenas-iscsi
-        size: 50Gi
+        # Must match the live PVC. `volumeClaimTemplates` is immutable, so
+        # changing this number makes every Helm upgrade fail on the StatefulSet
+        # patch -- resizing means expanding the PVC and recreating the
+        # StatefulSet, not editing this line alone.
+        size: 20Gi
 
       resources:
         requests:
