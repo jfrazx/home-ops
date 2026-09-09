@@ -53,10 +53,33 @@ spec:
               repository: ghcr.io/grimmory-tools/grimmory
               tag: v3.3.3@sha256:fffd0ae0bfccd64ca00441e8fa58a14e286b9115e5df1cb47eecf294ad09e6ff
 
+            # The image ships no USER directive: it expects to start as root so
+            # entrypoint.sh can addgroup/adduser from USER_ID/GROUP_ID, chown
+            # /app/data /bookdrop /books, then su-exec down to that uid. Running
+            # as 1001 makes its very first addgroup fail with
+            # "permission denied (are you root?)" and the container crash-loops.
+            #
+            # Rather than run the container as root and give up the read-only
+            # root filesystem that 48 other apps here keep, invoke the JVM
+            # directly (this is the image's own CMD) and skip the entrypoint.
+            # Nothing it does is still needed: fsGroup 1001 already owns the
+            # config PVC and the emptyDirs, and the NFS export is 1001:1001, so
+            # the chown was a no-op for us -- it even tolerates its own failure
+            # with `|| true`. Supplying command and no args means the image CMD
+            # is ignored, so this must stay in step with the upstream Dockerfile.
+            command:
+              - java
+              - --enable-native-access=ALL-UNNAMED
+              - --enable-preview
+              - -jar
+              - /app/app.jar
+
             env:
               TZ: "${TIMEZONE}"
-              USER_ID: 1001
-              GROUP_ID: 1001
+              # uid 1001 has no /etc/passwd entry now that adduser never runs,
+              # so give the JVM an explicit writable home instead of letting
+              # user.home resolve to "?".
+              HOME: /app/data
               SERVER_PORT: &port 6060
               APP_PATH_CONFIG: /app/data
               APP_BOOKDROP_FOLDER: /bookdrop
