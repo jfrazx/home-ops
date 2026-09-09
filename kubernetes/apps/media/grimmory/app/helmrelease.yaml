@@ -1,0 +1,209 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app grimmory
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    controllers:
+      *app :
+        # Single RWO config volume, and Flyway must never run twice at once.
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        pod:
+          # Flux's dependsOn only orders the *initial* rollout. After a node
+          # reboot both pods are rescheduled together, and Spring Boot exits
+          # rather than retrying if the datasource is unreachable at startup --
+          # which costs a crash-loop backoff of up to 5m for what is usually a
+          # few seconds of MariaDB start time. The gate holds the pod unscheduled
+          # until the server is actually accepting connections.
+          annotations:
+            k8s.ksgate.org/grimmory-mariadb-ready: |
+              {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "name": "grimmory-mariadb",
+                "namespace": "media",
+                "expression": "resource.status.readyReplicas >= 1"
+              }
+          schedulingGates:
+            - name: k8s.ksgate.org/grimmory-mariadb-ready
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/grimmory-tools/grimmory
+              tag: v3.3.3@sha256:fffd0ae0bfccd64ca00441e8fa58a14e286b9115e5df1cb47eecf294ad09e6ff
+
+            env:
+              TZ: "${TIMEZONE}"
+              USER_ID: 1001
+              GROUP_ID: 1001
+              SERVER_PORT: &port 6060
+              APP_PATH_CONFIG: /app/data
+              APP_BOOKDROP_FOLDER: /bookdrop
+              ALLOWED_ORIGINS: "https://grimmory.${SECRET_DOMAIN}"
+              API_DOCS_ENABLED: "false"
+
+              # The library lives on the TrueNAS NFS export, and upstream is
+              # explicit about this (AppProperties.diskType): on NFS/SMB the
+              # move and reorganise paths rely on atomic operations the share
+              # cannot guarantee, "which can cause data corruption or loss".
+              # NETWORK disables those writes and keeps the rest of the app.
+              #
+              # The cost is real -- no file move/reorganise, so MOVE_FILE_PATTERN
+              # and the move/organize permission do nothing. Flip to LOCAL only
+              # if you want those back and accept the risk to the library.
+              DISK_TYPE: NETWORK
+
+              # Required, not optional, for OIDC to work here.
+              #
+              # Grimmory runs an SSRF filter over its own outbound requests and
+              # its default deny list is the RFC1918 space -- 10.0.0.0/8,
+              # 172.16.0.0/12 and 192.168.0.0/16 (see app.outbound.restricted-ranges
+              # upstream). Authentik resolves to a private LoadBalancer address
+              # inside the cluster, so OIDC discovery against
+              # auth.${SECRET_DOMAIN} is refused before a packet leaves the pod.
+              # The failure surfaces as a discovery/connection error that gives
+              # no hint the app blocked itself.
+              OIDC_ALLOW_UNSAFE_HOSTS: "true"
+
+            envFrom:
+              # Created by the grimmory-mariadb kustomization, same namespace.
+              # Carries DATABASE_URL / DATABASE_USERNAME / DATABASE_PASSWORD.
+              - secretRef:
+                  name: grimmory-database-secret
+
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: &health /api/v1/healthcheck
+                    port: *port
+                  initialDelaySeconds: 0
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: *health
+                    port: *port
+                  initialDelaySeconds: 0
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: *health
+                    port: *port
+                  initialDelaySeconds: 15
+                  periodSeconds: 10
+                  timeoutSeconds: 10
+                  # A cold start runs 144 Flyway migrations against an empty
+                  # schema before the listener opens. 5m of headroom.
+                  failureThreshold: 30
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+            resources:
+              requests:
+                cpu: 50m
+                memory: 768Mi
+              limits:
+                memory: 3Gi
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [568]
+        seccompProfile: { type: RuntimeDefault }
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+    persistence:
+      config:
+        existingClaim: grimmory-config
+        globalMounts:
+          - path: /app/data
+
+      books:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media"
+        server: "${SECRET_NFS_SERVER}"
+        globalMounts:
+          - path: /books
+            subPath: ebook
+
+      # BookDrop is a watched folder: drop a file in and Grimmory enriches and
+      # imports it. As an emptyDir only the pod itself can write there, which
+      # makes the feature unreachable from your desktop. Point this at an NFS
+      # subPath once you have decided where that folder should live on the NAS.
+      bookdrop:
+        type: emptyDir
+
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+
+    route:
+      app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Grimmory
+          gethomepage.dev/group: Media
+          # Not a leftover from the rename: dashboard-icons has no grimmory.svg
+          # yet (404 as of this commit), and the fork still ships BookLore's
+          # mark. Swap when upstream adds one.
+          gethomepage.dev/icon: booklore.svg
+          gethomepage.dev/description: >-
+            Ebook & comic library ·
+            {{ if eq (index .Values.route.app.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
+        hostnames:
+          - "grimmory.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port

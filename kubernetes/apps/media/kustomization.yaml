@@ -8,6 +8,7 @@ components:
   - ../../components/flux/alerts
 resources:
   - ./audiobookshelf/ks.yaml
+  - ./grimmory/ks.yaml
   - ./jellyfin/ks.yaml
   - ./navidrome/ks.yaml
   - ./ytptube/ks.yaml

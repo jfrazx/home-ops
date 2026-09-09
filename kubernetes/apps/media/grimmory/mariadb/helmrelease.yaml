@@ -1,0 +1,118 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app grimmory-mariadb
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    controllers:
+      *app :
+        # A database must never run two writers against one RWO datadir.
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: docker.io/library/mariadb
+              tag: 11.4@sha256:611a2fcc5fa7c6ceb8644c6f74b25ede004ff6c3a6b38c8f8c23d3bbf6c26430
+
+            envFrom:
+              - secretRef:
+                  name: grimmory-database-secret
+
+            # Probes are a plain TCP check rather than the image's
+            # healthcheck.sh. That script authenticates over the unix socket as
+            # the *OS* user, and this container runs as uid 1001 (to match the
+            # volsync mover) which has no matching MariaDB grant -- so it would
+            # report unhealthy on a perfectly good server. mariadbd binds the
+            # TCP port only after initialisation finishes and the temporary
+            # socket-only bootstrap server has been shut down, so an open port
+            # is a sound readiness signal here.
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: &port 3306
+                  initialDelaySeconds: 0
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  # First boot initialises the datadir before it ever listens.
+                  failureThreshold: 30
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+            resources:
+              requests:
+                cpu: 50m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+
+    service:
+      app:
+        controller: *app
+        ports:
+          mysql:
+            primary: true
+            port: *port
+
+    persistence:
+      # Claim created by the volsync component from the ks postBuild vars.
+      data:
+        existingClaim: grimmory-mariadb-data
+        globalMounts:
+          - path: /var/lib/mysql
+
+      # readOnlyRootFilesystem: the entrypoint writes the bootstrap socket and
+      # pid to /run/mysqld and uses /tmp for temp tables.
+      run:
+        type: emptyDir
+        globalMounts:
+          - path: /run/mysqld
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
