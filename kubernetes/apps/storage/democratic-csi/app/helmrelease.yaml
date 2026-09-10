@@ -436,6 +436,28 @@ spec:
       allowVolumeExpansion: true
       parameters:
         csi.storage.k8s.io/fstype: ext4
+      # This is the definition that wins -- the live StorageClass carries this
+      # release's Helm annotations. `storage-classes.yaml` also declares
+      # `truenas-iscsi`; keep both in sync until that duplicate is removed.
+      #
+      # Pins an SELinux label on the mount so the volume's files are not
+      # `unlabeled_t`. TrueNAS mkfs's the ext4 filesystem with no
+      # `security.selinux` xattrs; SELinux is permissive here so writes succeed,
+      # but every one emits an AVC denial audit record -- 205,826 of them from
+      # `victoria-logs` in 74 minutes on 2026-09-10, which overflowed the kernel
+      # audit backlog. See docs/incidents/2026-09-10-worker-02-wedge.md.
+      #
+      # `ephemeral_t` is verified against the running Talos policy, not assumed:
+      # Talos' policy has 121 types and **no `container_file_t`**, so the
+      # conventional label would fail the mount. `sesearch` on
+      # `talosctl read /sys/fs/selinux/policy` confirms `pod_p -> ephemeral_t`
+      # is allowed for `dir` and `file` with full write access.
+      #
+      # Applies to NEWLY PROVISIONED volumes only -- a PV copies mountOptions at
+      # provision time, so the 20+ existing iSCSI PVs keep their empty list and
+      # must be patched individually (see the incident writeup for the rollout).
+      mountOptions:
+        - context=system_u:object_r:ephemeral_t:s0
 
       secrets:
         provisioner-secret:

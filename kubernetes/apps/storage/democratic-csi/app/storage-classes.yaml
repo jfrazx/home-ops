@@ -79,6 +79,35 @@ parameters:
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
+# NOTE: `truenas-iscsi` is ALSO defined in helmrelease.yaml under
+# `storageClasses:`, and that is the definition that actually wins -- the live
+# object carries `meta.helm.sh/release-name: democratic-csi-iscsi` and the
+# secret parameters this copy lacks. Keep the two in sync until the duplicate
+# is removed, or a Flux reconcile will flap the object between them.
+mountOptions:
+  # Pin an SELinux label on the mount. democratic-csi hands back a bare ext4
+  # filesystem that TrueNAS mkfs'd with no `security.selinux` xattrs, so every
+  # file and directory on it is `unlabeled_t`. SELinux is permissive here
+  # (`/sys/fs/selinux/enforce` = 0), so writes succeed -- but each one still
+  # emits an AVC denial audit record, and that is not free: on 2026-09-10
+  # `victoria-logs` alone produced 205,826 denials in 74 minutes (~46/s),
+  # overflowing the kernel audit backlog (`audit_lost=60209`). See
+  # docs/incidents/2026-09-10-worker-02-wedge.md.
+  #
+  # `ephemeral_t` is NOT a guess. Talos ships its own SELinux policy with only
+  # 121 types and **`container_file_t` does not exist in it** -- the label
+  # everyone reaches for first would fail the mount outright. Verified against
+  # the running policy (`talosctl read /sys/fs/selinux/policy`, analysed with
+  # `sesearch`): `pod_t` carries the `pod_p` attribute, and the policy allows
+  # `pod_p -> ephemeral_t` for both `dir` and `file` with full read/write/create.
+  # It is also the label Talos gives its own EPHEMERAL partition, which is where
+  # pod data normally lives.
+  #
+  # Unquoted deliberately. The usual `context="..."` form only matters when the
+  # context contains commas (MCS categories); with a bare `s0` there are none,
+  # and the quotes risk being passed literally by a CSI driver that execs
+  # mount(8) without a shell. If categories are ever added, quote it.
+  - context=system_u:object_r:ephemeral_t:s0
 ---
 # SMB Storage Classes
 ---
