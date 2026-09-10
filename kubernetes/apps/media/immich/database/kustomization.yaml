@@ -68,5 +68,11 @@ patches:
             - name: power_tools
               ensure: present
               login: true
+              # Power Tools reads and writes Immich's own tables, and a fresh
+              # role is granted nothing on another role's objects. Membership
+              # in the owner covers tables added by future Immich migrations;
+              # per-table grants would need re-running after each one.
+              inRoles:
+                - immich
               passwordSecret:
                 name: immich-power-tools-db
