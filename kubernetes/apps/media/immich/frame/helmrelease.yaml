@@ -30,14 +30,24 @@ spec:
             image:
               repository: ghcr.io/immichframe/immichframe
               tag: v1.0.37.0@sha256:edae2c0b9ab6e1384634582b2bab6246429e14bc209ff6ecc091fc9eedd4582c
+            # ImmichFrame has no runtime settings UI in this release -- the
+            # admin controller exists only on upstream main. Configuration is
+            # read once at startup from Settings.json/Settings.yml in
+            # IMMICHFRAME_CONFIG_PATH, and failing that from the environment,
+            # where names must match its settings class exactly (unprefixed).
+            # At least two must match or startup aborts with
+            # "No environment variables found".
             env:
               TZ: ${TIMEZONE}
               IMMICHFRAME_CONFIG_PATH: /app/Config
-              IMMICHFRAME_ADMIN_PASSWORD:
+              ImmichServerUrl: http://immich-server.media.svc.cluster.local:2283
+              ApiKey:
                 valueFrom:
                   secretKeyRef:
                     name: immich-frame-secret
-                    key: IMMICHFRAME_ADMIN_PASSWORD
+                    key: ApiKey
+              # Album, people and tag filters are set here too -- e.g.
+              # Albums: "<uuid>,<uuid>" -- since nothing can set them later.
             probes:
               liveness: &probes
                 enabled: true
@@ -80,7 +90,12 @@ spec:
             port: *port
 
     persistence:
-      # Holds the settings database, which is authoritative once initialized.
+      # Empty in this release: nothing writes here, and downloaded images go
+      # to ImageCache under the app root instead. Kept because a Settings.json
+      # placed in this directory would be read in preference to every
+      # environment variable above -- which is how file-based settings arrive
+      # if we ever want them, and how they would silently win if one appeared
+      # by accident.
       config:
         type: persistentVolumeClaim
         existingClaim: immich-frame
