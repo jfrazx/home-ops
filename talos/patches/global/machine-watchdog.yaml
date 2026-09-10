@@ -1,0 +1,48 @@
+---
+# Hardware watchdog -- automatic recovery from a wedged node.
+#
+# `worker-02` has hard-frozen four times in 31 days (2026-08-11, 08-13, 09-06,
+# 09-10) and every occurrence needed a human to physically power cycle it. The
+# 09-06 outage ran 27h52m; 09-10 ran 14m44s only because someone happened to be
+# watching.
+#
+# Nothing in software can recover this class of failure. The 09-10 post mortem
+# established that these are NOT panics: `kernel.panic = 10` and
+# `panic_on_oops = 1` are already set, so a panic or oops would reboot the node
+# in 10s and it would rejoin unattended. The node instead goes silent to ICMP,
+# never panics, and stays down indefinitely -- the CPUs stop executing kernel
+# code without the panic path ever being reached. `/proc/uptime` after each
+# recovery confirms a single boot.
+#
+# A hardware watchdog is the only mitigation that survives that, because the
+# reset is driven by the chipset timer rather than by anything the kernel is
+# still able to do. Talos' runtime pets `/dev/watchdog0` while it is healthy;
+# when it stops, the board resets itself.
+#
+# Present and INACTIVE on all four nodes -- verified 2026-09-10 via
+# `talosctl ls /sys/class/watchdog/` and `read .../watchdog0/identity` (driver
+# `wdat_wdt`, state `inactive`).
+#
+# On `timeout: 5m` -- deliberately conservative rather than the 1m default:
+#   * Talos' minimum is 10s. Too short risks resetting a node that is merely
+#     under heavy load. On 2026-09-10 this node ran at load 67-83 for ~15
+#     minutes and stayed fully responsive (machined's 5s heartbeat never
+#     missed a tick), so a short timeout would have been a false positive on a
+#     node that recovered on its own.
+#   * Kubernetes already tolerates this window: the node is marked unreachable
+#     at ~40s and pods are evicted at +5m (`tolerationSeconds: 300`), so a 5m
+#     reset lands about when eviction begins rather than fighting it.
+#   * Against the actual failures it is a 3-330x improvement: 27h52m -> ~5min,
+#     unattended.
+# Lower it to 2m if a future wedge shows the node dying without a load spike
+# first; that is the only reason to trade away the false-positive margin.
+#
+# Caveat: a watchdog reset destroys the kernel ring buffer, same as a manual
+# power cycle. That cost is already paid for -- the 2026-09-07 log pipeline
+# (see machine-logging.yaml) ships kernel and service logs off-node as they are
+# produced, so the run-up to a wedge survives the reset. Do not enable this on
+# a node whose logs are not leaving it.
+apiVersion: v1alpha1
+kind: WatchdogTimerConfig
+device: /dev/watchdog0
+timeout: 5m
