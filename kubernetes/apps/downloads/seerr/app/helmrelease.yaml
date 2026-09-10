@@ -20,7 +20,7 @@ spec:
           app:
             image:
               repository: ghcr.io/seerr-team/seerr
-              tag: develop@sha256:d303cd1c7bb8bcd4ef46ec0978a4c90e886973f5d02d8a586e5438ea6f66816a
+              tag: develop@sha256:adcd37d46dc02c50a0bad9de87f7917cf04d1c4e5f6a90f0aa3b41bfa18d28f5
 
             env:
               LOG_LEVEL: info
