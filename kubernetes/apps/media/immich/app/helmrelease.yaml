@@ -79,10 +79,10 @@ spec:
           hostnames:
             - "immich.${SECRET_DOMAIN}"
           parentRefs:
-            # Change to `external` to publish. See the spec's "Going external
-            # later" section -- Cloudflare caps request bodies at 100MB and
+            # See the spec's "Going external later" section --
+            # Cloudflare caps request bodies at 100MB and
             # Immich has no chunked upload.
-            - name: internal
+            - name: external
               namespace: kube-system
               sectionName: https
           rules:
