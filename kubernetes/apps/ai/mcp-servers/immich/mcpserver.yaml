@@ -1,0 +1,32 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: immich
+  namespace: ai
+spec:
+  image: ghcr.io/barryw/immichmcp:v3.3.3@sha256:3f3148232c43567df42501957778dde421abeb59cfa9f622ee58af5d39da8577
+  transport: streamable-http
+  proxyPort: 8080
+  mcpPort: 5000
+
+  env:
+    - name: IMMICH_BASE_URL
+      value: http://immich-server.media.svc.cluster.local:2283
+    # Remote clients enable tool categories on demand rather than loading
+    # every tool up front.
+    - name: IMMICH_TOOL_MODE
+      value: gateway
+
+  secrets:
+    - name: immich-mcp-secret
+      key: IMMICH_API_KEY
+      targetEnvName: IMMICH_API_KEY
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi

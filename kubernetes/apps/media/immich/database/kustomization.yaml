@@ -1,0 +1,78 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  - ../../../../components/database/postgres
+resources:
+  - ./database.yaml
+  - ./externalsecret.yaml
+patches:
+  # VectorChord: the extension is supplied as a container image mounted by the
+  # operator (CNPG >= 1.27), rather than by baking a custom postgres image.
+  # pgvector itself comes from the `standard` image flavor -- VectorChord's
+  # types are built on it, so `minimal` will not work here.
+  - patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: ${APP}-postgres
+        namespace: ${NAMESPACE}
+      spec:
+        postgresql:
+          shared_preload_libraries:
+            - vchord.so
+          extensions:
+            - name: vchord
+              image:
+                # renovate: datasource=docker depName=ghcr.io/tensorchord/vchord-scratch
+                reference: ghcr.io/tensorchord/vchord-scratch:pg18-v1.1.1@sha256:bdea43bed2a414e21bbf71767bf6f0739747ac480b267b51772dc214ac28dcb3
+              dynamic_library_path:
+                - /usr/lib/postgresql/18/lib
+              extension_control_path:
+                - /usr/share/postgresql/18/
+  # The `standard` image flavor carries pgvector but NOT the Barman binaries,
+  # so the component's inherited inline barmanObjectStore can never run. Left
+  # in place it enables WAL archiving whose archive_command always fails, and
+  # Postgres then refuses to recycle WAL until the volume fills. Backups
+  # arrive separately via the barman-cloud plugin.
+  - patch: |-
+      - op: remove
+        path: /spec/backup
+    target:
+      kind: Cluster
+      # kustomize compiles `target.name` as a regex, and $/{} in the raw
+      # `${APP}-postgres` break that match (Flux's postBuild substitution
+      # runs after kustomize build, so this literal string is what kustomize
+      # actually sees) -- escape them so the patch actually applies.
+      name: \$\{APP\}-postgres
+  - patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: ScheduledBackup
+      metadata:
+        name: ${APP}-postgres-backup
+        namespace: ${NAMESPACE}
+      spec:
+        immediate: false
+  # Power Tools connects to Immich's database with its own role rather than
+  # the owner. Declared here so a cluster rebuild recreates it.
+  - patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: ${APP}-postgres
+        namespace: ${NAMESPACE}
+      spec:
+        managed:
+          roles:
+            - name: power_tools
+              ensure: present
+              login: true
+              # Power Tools reads and writes Immich's own tables, and a fresh
+              # role is granted nothing on another role's objects. Membership
+              # in the owner covers tables added by future Immich migrations;
+              # per-table grants would need re-running after each one.
+              inRoles:
+                - immich
+              passwordSecret:
+                name: immich-power-tools-db

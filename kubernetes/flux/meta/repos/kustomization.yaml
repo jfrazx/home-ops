@@ -15,6 +15,7 @@ resources:
   - ./external-secrets.yaml
   - ./grafana.yaml
   - ./home-operations.yaml
+  - ./immich.yaml
   - ./influxdb.yaml
   - ./intel-charts.yaml
   - ./k8tz.yaml

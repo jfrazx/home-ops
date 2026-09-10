@@ -1,0 +1,178 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app immich-postgres
+  namespace: flux-system
+spec:
+  targetNamespace: &namespace media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: cnpg-operator
+      namespace: flux-system
+  path: ./kubernetes/apps/media/immich/database
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  wait: true
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  postBuild:
+    substitute:
+      APP: immich
+      NAMESPACE: *namespace
+      # `standard` carries pgvector, which VectorChord's types require.
+      POSTGRES_VERSION: "18.2-standard-trixie@sha256:65837d4877b8529f31a7c7aec009e35f44cd5e90b19c090ed520711194ffb9af"
+      POSTGRES_IMAGE_NAME: "postgresql"
+      POSTGRES_INSTANCES: "2"
+      POSTGRES_STORAGE_SIZE: "20Gi"
+      POSTGRES_SHARED_BUFFERS: "512MB"
+      POSTGRES_EFFECTIVE_CACHE_SIZE: "1536MB"
+      POSTGRES_MEMORY_LIMIT: "4Gi"
+      POSTGRES_BACKUP_SCHEDULE: "0 0 3 * * *"
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app immich
+  namespace: flux-system
+spec:
+  targetNamespace: &namespace media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: immich-postgres
+    - name: openbao
+      namespace: external-secrets
+    - name: democratic-csi
+      namespace: storage
+    - name: intel-device-plugins-gpu
+      namespace: system
+  interval: 1h
+  path: ./kubernetes/apps/media/immich/app
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+    substitute:
+      APP: *app
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  timeout: 15m
+  wait: true
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app immich-frame
+  namespace: flux-system
+spec:
+  targetNamespace: &namespace media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  components:
+    - ../../../../components/volsync
+  dependsOn:
+    - name: immich
+    - name: volsync
+      namespace: system
+  interval: 1h
+  path: ./kubernetes/apps/media/immich/frame
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+    substitute:
+      APP: *app
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_REPOSITORY_NAMESPACE: *namespace
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  timeout: 5m
+  wait: true
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app immich-power-tools
+  namespace: flux-system
+spec:
+  targetNamespace: &namespace media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  components:
+    - ../../../../components/volsync
+  dependsOn:
+    - name: immich
+    - name: volsync
+      namespace: system
+  interval: 1h
+  path: ./kubernetes/apps/media/immich/power-tools
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+    substitute:
+      APP: *app
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_REPOSITORY_NAMESPACE: *namespace
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  timeout: 5m
+  wait: true
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app immich-stack
+  namespace: flux-system
+spec:
+  targetNamespace: media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: immich
+  interval: 1h
+  path: ./kubernetes/apps/media/immich/stack
+  postBuild:
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+    substitute:
+      APP: *app
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  timeout: 5m
+  wait: true
