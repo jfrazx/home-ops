@@ -6,6 +6,7 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./httproute.yaml
+  - ./prometheusrule.yaml
 configMapGenerator:
   - name: kube-prometheus-stack-values
     files:

@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-wedge-rules
+  annotations:
+    # REQUIRED, not defensive. This app's Kustomization declares a postBuild
+    # (see ../ks.yaml), so envsubst runs over every file here. Without this the
+    # `$labels.*` references below are read as shell variables and blanked out,
+    # leaving alerts that fire with empty summaries.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
+spec:
+  groups:
+    - name: node-wedge.rules
+      rules:
+        # Why this exists: kube-prometheus-stack already ships KubeNodeNotReady,
+        # KubeNodeUnreachable and KubeletInstanceUnreachable, and on 2026-09-10
+        # all three sat in *pending* for the entire outage and never fired. Each
+        # carries `for: 15m`; the node was gone for 14m44s. Nothing was
+        # delivered. The three prior wedges were the same shape.
+        #
+        # Enabling the hardware watchdog (talos/patches/global/machine-watchdog.yaml)
+        # makes that permanently worse rather than better: the node now resets
+        # itself at 5m and is back in ~7m, so a 15m `for` can no longer be
+        # reached by any wedge. Without this rule the failure mode becomes
+        # completely silent.
+        #
+        # KubeletDown is not a substitute either -- its expression compares
+        # node count against kubelet count with `unless on (cluster)`, so it
+        # only fires when *every* kubelet in the cluster is down.
+        - alert: NodeWedged
+          annotations:
+            summary: |
+              Node {{ $labels.node }} stopped answering scrapes and is likely
+              hard-locked. The hardware watchdog resets it ~5m after the wedge
+              begins, so expect an automatic recovery shortly; NodeRebooted
+              will confirm it.
+            description: |
+              Four wedges on the same worker in 31 days, none of them panics:
+              `kernel.panic = 10` is set, so a panic or oops would self-reboot
+              in 10s. The node instead goes silent to ICMP and stays down.
+              If the watchdog does not recover it within ~7m, power cycle it.
+              Post mortem: docs/incidents/2026-09-10-worker-02-wedge.md
+          # metrics_path is pinned because the kubelet job is scraped three
+          # times per node (/metrics, /metrics/cadvisor, /metrics/probes).
+          # Without it a single wedge raises three identical alerts.
+          #
+          # Deliberately keyed on kubelet alone rather than AND-ed with
+          # node-exporter being down too. The join would cut false positives
+          # (a kubelet restart during a Talos upgrade can trip this), but it
+          # would also mean a broken node-exporter silently disables the alert.
+          # For a wedge -- where everything on the node stops at once -- a
+          # slightly noisy alert that always fires beats a precise one that can
+          # fail quietly.
+          expr: up{job="kubelet", metrics_path="/metrics"} == 0
+          # Scrape interval is 30s, so `up` flips within ~5s of the node going
+          # silent (measured: node died 18:13:55, up=0 at 18:14:00). 2m puts
+          # delivery ~3 minutes ahead of the watchdog reset, which is enough to
+          # look at the node while it is still wedged if you want the forensics.
+          for: 2m
+          labels:
+            severity: critical
+
+        # The other half: after the watchdog rollout a wedge is self-healing, so
+        # NodeWedged resolves on its own and is easy to miss. This is the
+        # durable record that a node went down and came back -- and the only
+        # signal that the watchdog actually did its job.
+        #
+        # It also fires on ordinary reboots (Talos upgrades, deliberate power
+        # cycles). That is intended: on a four-node cluster an unexplained
+        # reboot is always worth a look, and correlating it with NodeWedged
+        # tells you which kind it was.
+        - alert: NodeRebooted
+          annotations:
+            summary: |
+              Node {{ $labels.instance }} rebooted within the last 10 minutes
+              (uptime is now {{ $value | humanizeDuration }}).
+            description: |
+              If this arrived without a preceding NodeWedged, it was a planned
+              reboot or an upgrade. If it followed one, the hardware watchdog
+              recovered a wedged node -- confirm with
+              `talosctl -n <ip> dmesg | grep -i watchdog` and note it in the
+              incident log. A watchdog reset destroys the kernel ring buffer,
+              so the run-up lives only in VictoriaLogs.
+          # endpoint is pinned for the same reason metrics_path is above: three
+          # of the four nodes are also scraped via a second target labelled
+          # instance="<ip>:9100", which would double every alert.
+          expr: |
+            (time() - node_boot_time_seconds{endpoint="http-metrics"}) < 600
+          for: 0m
+          labels:
+            severity: warning
