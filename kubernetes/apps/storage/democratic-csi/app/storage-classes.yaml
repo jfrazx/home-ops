@@ -85,6 +85,15 @@ allowVolumeExpansion: true
 # secret parameters this copy lacks. Keep the two in sync until the duplicate
 # is removed, or a Flux reconcile will flap the object between them.
 mountOptions:
+  # !! INERT AS SHIPPED -- verified 2026-09-10. democratic-csi runs mount(8)
+  # from inside its node-plugin container, where libselinux reports SELinux
+  # disabled, so libmount strips every `context=`-family option before the
+  # kernel sees it. A mount with a deliberately nonexistent type also succeeds,
+  # which is the proof. The working fix is to relabel the volume root's
+  # `security.selinux` xattr instead -- new files inherit it from the parent
+  # directory. Full evidence and rollout notes are in the matching comment in
+  # helmrelease.yaml. Kept here only to stay in sync with that copy.
+  #
   # Pin an SELinux label on the mount. democratic-csi hands back a bare ext4
   # filesystem that TrueNAS mkfs'd with no `security.selinux` xattrs, so every
   # file and directory on it is `unlabeled_t`. SELinux is permissive here

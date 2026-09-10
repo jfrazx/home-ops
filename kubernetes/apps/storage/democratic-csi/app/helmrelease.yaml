@@ -453,9 +453,39 @@ spec:
       # `talosctl read /sys/fs/selinux/policy` confirms `pod_p -> ephemeral_t`
       # is allowed for `dir` and `file` with full write access.
       #
-      # Applies to NEWLY PROVISIONED volumes only -- a PV copies mountOptions at
-      # provision time, so the 20+ existing iSCSI PVs keep their empty list and
-      # must be patched individually (see the incident writeup for the rollout).
+      # !! INERT AS SHIPPED -- this option is silently discarded today. Verified
+      # 2026-09-10 against a live volume and reproduced in isolation. Keep
+      # reading before spending time on it.
+      #
+      # democratic-csi executes mount(8) from inside its own node-plugin
+      # container. libmount strips `context=`, `fscontext=`, `defcontext=` and
+      # `rootcontext=` from the option string whenever `is_selinux_enabled()`
+      # returns 0 -- and it returns 0 in that container even though selinuxfs is
+      # mounted rw, the policy is loaded (policyvers 35), and the process runs
+      # as `pod_t`. It is a libselinux quirk of the driver image, not of Talos.
+      #
+      # The evidence, so nobody has to re-derive it:
+      #   * The driver logs the correct command:
+      #       mount -t ext4 -o context=system_u:object_r:ephemeral_t:s0 ...
+      #   * /proc/self/mountinfo afterwards shows `rw,seclabel` -- no `context=`.
+      #   * Mounting with a deliberately NONEXISTENT type also succeeds with no
+      #     error, which proves the option never reaches the kernel's parser.
+      #   * The same string passed straight to the mount(2) syscall DOES apply:
+      #     mountinfo shows `context=...` and new files come back `ephemeral_t`.
+      # Talos ships no host `mount` binary, so the driver's USE_HOST_MOUNT_TOOLS
+      # escape hatch (chroot /host) is not available either.
+      #
+      # What actually works: relabel the volume root's `security.selinux` xattr
+      # to `ephemeral_t`. New files, subdirectories and nested files then all
+      # inherit it from the parent directory, with no mount option involved.
+      # That is the rollout to run against the 20+ existing iSCSI PVs.
+      #
+      # Left in place deliberately: it is harmless, it documents the intended
+      # label, and it starts working the day the image's libselinux is fixed.
+      # Note that even then it would apply to NEWLY PROVISIONED volumes only --
+      # a PV copies mountOptions at provision time.
+      #
+      # `ephemeral_t` itself is verified, not assumed -- see the note above.
       mountOptions:
         - context=system_u:object_r:ephemeral_t:s0
 
