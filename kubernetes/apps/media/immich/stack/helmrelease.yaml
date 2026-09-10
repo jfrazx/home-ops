@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app immich-stack
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+
+  values:
+    controllers:
+      immich-stack:
+        type: cronjob
+        annotations:
+          reloader.stakater.com/auto: "true"
+        cronjob:
+          schedule: "0 4 * * *"
+          timeZone: "${TIMEZONE}"
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          # A failed Job object is pinned by this limit and its alert never
+          # self-clears until the Job is deleted -- keep it at 1.
+          failedJobsHistory: 1
+          # ttlSecondsAfterFinished is deliberately absent: a TTL would delete
+          # a failed Job before the kube_job_failed alert (backed by
+          # failedJobsHistory above) has anything to point at.
+          backoffLimit: 0
+          # The first run over a large library is slow, and backoffLimit: 0
+          # means a deadline kill is never retried -- keep this generous.
+          activeDeadlineSeconds: 3600
+        containers:
+          app:
+            image:
+              repository: ghcr.io/majorfi/immich-stack
+              tag: 0.2.43@sha256:52f39f24dc28ea18500455355c898c22ece3547ed2deb4590445d7ab784a4580
+            env:
+              TZ: ${TIMEZONE}
+              # One-shot: Kubernetes owns the schedule, not the container.
+              RUN_MODE: once
+            envFrom:
+              - secretRef:
+                  name: immich-stack-secret
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile: { type: RuntimeDefault }
+
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
