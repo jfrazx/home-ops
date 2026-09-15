@@ -10,7 +10,6 @@ metadata:
     gethomepage.dev/group: Services
     gethomepage.dev/icon: authentik.svg
     gethomepage.dev/description: Identity provider · External
-    external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
     kustomize.toolkit.fluxcd.io/substitute: "true"
 spec:
   hostnames:
