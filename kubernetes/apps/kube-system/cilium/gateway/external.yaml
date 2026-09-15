@@ -5,7 +5,15 @@ kind: Gateway
 metadata:
   name: external
   annotations:
-    external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
+    # Unprefixed `external-dns.kubernetes.io/`, NOT the old
+    # `external-dns.alpha.kubernetes.io/`: external-dns v0.22.0 defaults its
+    # annotation prefix to the unprefixed form and silently ignores the alpha
+    # one. Without this target, the gateway-httproute source falls back to
+    # status.addresses (a private LAN IP) and Cloudflare rejects every proxied
+    # record with code 9003, so new hostnames never get a public record.
+    # The `infrastructure.annotations` hostname below is read by k8s-gateway
+    # (internal DNS), not external-dns, and keeps the alpha prefix.
+    external-dns.kubernetes.io/target: "external.${SECRET_DOMAIN}"
 spec:
   gatewayClassName: cilium
   addresses:
