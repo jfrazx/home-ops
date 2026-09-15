@@ -6,7 +6,7 @@ ARG COMPUTE_RUNTIME_VERSION=26.31.39395.13
 # renovate: datasource=github-releases depName=oneapi-src/level-zero versioning=loose extractVersion=^v(?<version>.+)$
 ARG LEVEL_ZERO_VERSION=1.33.1
 # renovate: datasource=github-releases depName=intel/intel-graphics-compiler versioning=loose extractVersion=^v(?<version>.+)$
-ARG IGC_VERSION=2.40.13
+ARG IGC_VERSION=2.41.5
 # NOTE: IGC_BUILD is the package build suffix, not part of the git tag - it does not
 # auto-update. When Renovate bumps IGC_VERSION, check the matching release's
 # intel-igc-core-2_<version>+<build>_amd64.deb asset name and update this by hand.
