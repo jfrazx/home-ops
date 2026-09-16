@@ -35,6 +35,21 @@ spec:
         # node-exporter series. A second scrape source produces the same metrics
         # labelled instance="<ip>:9100" and covers only part of the cluster;
         # without this matcher every node alerts twice.
+        #
+        # `max by (instance, device)` is what makes the 18h lookback survive a
+        # node-exporter restart, and it is not cosmetic. increase() is evaluated
+        # per series, and node-exporter's series carry a `pod` label, so every
+        # DaemonSet roll retires one series and starts a fresh one for the same
+        # disk. The new series is younger than this window, and until the node's
+        # next 6h fstrim cycle lands it contains no discard at all -- so its own
+        # increase() is 0 while the retired series alongside it still shows the
+        # real trims. Without the aggregation both reach the `== 0`, the zero one
+        # passes the join (`and` does not dedupe), and the alert fires on a
+        # phantom for up to a full cycle after every kube-prometheus-stack bump.
+        # Collapsing `pod` first means the comparison sees one value per disk:
+        # the largest increase any incarnation of that node's exporter observed.
+        # Per-node granularity is unaffected -- instance and device are retained,
+        # and they are the two labels the annotations above interpolate.
         - alert: FstrimSystemDiskNotTrimmed
           annotations:
             summary: |
@@ -49,7 +64,9 @@ spec:
               `readOnly: true` removed in the fstrim HelmRelease.
           expr: |
             (
-              increase(node_disk_discarded_sectors_total{endpoint="http-metrics"}[18h]) == 0
+              max by (instance, device) (
+                increase(node_disk_discarded_sectors_total{endpoint="http-metrics"}[18h])
+              ) == 0
             )
             and on (instance, device) (
               label_replace(
