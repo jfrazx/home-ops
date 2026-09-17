@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/immich-power-tools/immich-power-tools
-              tag: v0.23.0@sha256:7d6002fa8552dfbd1ccc27936e2860858deec927b83f1d7dd12070365be99216
+              tag: v0.24.0@sha256:0bb87c70270ee7a95848a5b8ecbd90cd850e7bdacc0f64b70e33e4524f123fa4
             env:
               TZ: ${TIMEZONE}
               APP_DB_PATH: /app/data/app.db
