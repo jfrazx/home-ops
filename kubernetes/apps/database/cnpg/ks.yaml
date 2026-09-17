@@ -20,6 +20,26 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: &app cnpg-plugin-barman-cloud
+  namespace: &namespace flux-system
+spec:
+  targetNamespace: cnpg-system
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  interval: 10m
+  path: ./kubernetes/apps/database/cnpg/plugin
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: cnpg-operator
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: cnpg-alerts
   namespace: flux-system
 spec:
