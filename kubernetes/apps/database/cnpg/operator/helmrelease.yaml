@@ -36,5 +36,11 @@ spec:
 
     config:
       data:
+        # Upgrading the operator rolls every instance in every cluster: CNPG's
+        # default is a rolling restart, not an in-place instance-manager swap,
+        # and both rollout delays default to 0. Without this, all 10 clusters
+        # (25 pods) restart at once. Instances within a cluster already wait on
+        # each other's readiness, so only the per-cluster stagger is set here.
+        CLUSTERS_ROLLOUT_DELAY: "60"
         INHERITED_ANNOTATIONS: "reloader.stakater.com/auto"
         INHERITED_LABELS: "kustomize.toolkit.fluxcd.io/name,kustomize.toolkit.fluxcd.io/namespace"
