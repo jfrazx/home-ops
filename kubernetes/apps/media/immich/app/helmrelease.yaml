@@ -31,7 +31,7 @@ spec:
               # The chart's default tag lags Immich releases, so this must be
               # pinned and bumped alongside the chart version.
               repository: ghcr.io/immich-app/immich-server
-              tag: v3.1.0@sha256:b434cb9287eea1471c9974845914d4dd328c9c2d652e446ed4930f99944f0ceb
+              tag: v3.2.2@sha256:79cc1623323d5894922686d8743b4780181428f98eecbfb58ce12c41ef02d1ea
             env:
               TZ: ${TIMEZONE}
               REDIS_HOSTNAME: immich-valkey
@@ -103,7 +103,7 @@ spec:
                 repository: ghcr.io/immich-app/immich-machine-learning
                 # The -openvino suffix exists only on this image, not on
                 # immich-server.
-                tag: v3.1.0-openvino@sha256:4b6ef958e7749fc548377bb23ee219c09c74da8decee080d76dc6a388c39b013
+                tag: v3.2.2-openvino@sha256:4013ec28ccf6344d7ae24554743a116d7f61124b98858f5646a401d5c5df12e2
               env:
                 TRANSFORMERS_CACHE: /cache
                 HF_XET_CACHE: /cache/huggingface-xet
