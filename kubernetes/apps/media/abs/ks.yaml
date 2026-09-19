@@ -30,8 +30,15 @@ spec:
       VOLSYNC_CLAIM: abs-config
       VOLSYNC_CAPACITY: "30Gi"
       VOLSYNC_REPOSITORY_NAMESPACE: *namespace
-      VOLSYNC_PUID: "568"
-      VOLSYNC_PGID: "568"
+      # 1001, not Audiobookshelf's usual 568. This one value sets both the
+      # app's securityContext and the volsync mover's, and the mover has no
+      # choice: the kopia repository is a single NFS directory shared by every
+      # app in the cluster, mode 0700 owned by 1001, with no group or world
+      # access. A 568 mover cannot even read /repository/.shards, so the
+      # restore fails and the config PVC never populates. Every other active
+      # ReplicationSource here runs as 1001.
+      VOLSYNC_PUID: "1001"
+      VOLSYNC_PGID: "1001"
     substituteFrom:
       - kind: Secret
         name: cluster-secrets
