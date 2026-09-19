@@ -147,6 +147,17 @@ spec:
         globalMounts:
           - path: /data/media/downloads/torrents
 
+      # The `abs` dataset, so a download category can land inside the same
+      # dataset as the Audiobookshelf library and be hardlinked on import
+      # instead of copied. Anything written under downloads/ lives in a
+      # different ZFS dataset, where link() fails with EXDEV.
+      abs:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media/abs"
+        server: "${SECRET_NFS_SERVER}"
+        globalMounts:
+          - path: /data/media/abs
+
       qbrr:
         type: image
         image: ghcr.io/buroa/qbrr:0.1.6@sha256:50baeb6633f144b7220777c56a8d501ea708d43043e28eb416d93e4e96efe06b

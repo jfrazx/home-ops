@@ -1,0 +1,176 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app abs
+  namespace: &namespace media
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    controllers:
+      abs:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/advplyr/audiobookshelf
+              tag: 2.36.0@sha256:180acad33d69c99ed208676465d8edcb268fa46967735579a7810859885b1a8e
+            env:
+              AUDIOBOOKSHELF_UID: "${VOLSYNC_PUID}"
+              AUDIOBOOKSHELF_GID: "${VOLSYNC_PGID}"
+              ACCESS_TOKEN_EXPIRY: 43200
+              REFRESH_TOKEN_EXPIRY: 604800
+              RATE_LIMIT_AUTH_WINDOW: 600000
+              RATE_LIMIT_AUTH_MAX: 40
+              PORT: &port 80
+              CONFIG_PATH: /config
+              METADATA_PATH: /metadata
+              LOG_LEVEL: debug
+              NODE_ENV: production
+            envFrom:
+              - secretRef:
+                  name: abs-secret
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthcheck
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthcheck
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256M
+              limits:
+                cpu: 4000m
+                memory: 4Gi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+              runAsUser: "${VOLSYNC_PUID}"
+              runAsGroup: "${VOLSYNC_PGID}"
+              runAsNonRoot: true
+
+        pod:
+          securityContext:
+            runAsUser: "${VOLSYNC_PUID}"
+            runAsGroup: "${VOLSYNC_PGID}"
+            supplementalGroups: [568, 1001]
+
+    service:
+      app:
+        primary: true
+        controller: *app
+        ports:
+          http:
+            port: *port
+
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
+
+    persistence:
+      # Provisioned by the volsync component (VOLSYNC_CLAIM), not by the chart.
+      config:
+        existingClaim: abs-config
+        globalMounts:
+          - path: /config
+
+      cache:
+        type: emptyDir
+        globalMounts:
+          - path: /.npm
+
+      # `suffix` is load-bearing: this is the only chart-generated PVC here, and
+      # without it app-template names it after the release instead of the key.
+      metadata:
+        suffix: metadata
+        storageClass: ceph-block
+        accessMode: ReadWriteOnce
+        size: 15Gi
+        globalMounts:
+          - path: /metadata
+
+      # The whole `abs` dataset, mounted at its root. Libraries are configured
+      # in the UI against subdirectories of this path -- adding another one
+      # needs no manifest change, and everything under it can be hardlinked
+      # into from the download landing dir in the same dataset.
+      #
+      # Inline rather than a static PV, matching every other media mount in
+      # this repo (sonarr, radarr, sabnzbd, bookshelf, ...). The inline mount
+      # negotiates NFSv4.2 and defaults to close-to-open consistency; the
+      # hand-written PVs in nfs-volumes pin vers=4.1 and set `nocto`, and six
+      # of the eight there are currently orphaned, Released, or stuck
+      # Terminating.
+      abs:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media/abs"
+        server: "${SECRET_NFS_SERVER}"
+        globalMounts:
+          - path: /mnt/abs
+
+      backups:
+        type: persistentVolumeClaim
+        existingClaim: abs-backups
+        globalMounts:
+          - path: /metadata/backups
+            readOnly: false
+
+      tmp:
+        type: emptyDir
+        sizeLimit: 5Gi
+        globalMounts:
+          - path: /tmp
