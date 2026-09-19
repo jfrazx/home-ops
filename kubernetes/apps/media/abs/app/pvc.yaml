@@ -1,0 +1,18 @@
+---
+# Only the backups claim needs a real PVC. The `abs` dataset itself is mounted
+# inline (`type: nfs`) from the HelmRelease rather than through a static PV:
+# an inline mount negotiates NFSv4.2, while the hand-written PVs in
+# nfs-volumes pin vers=4.1 and leave cluster-scoped objects behind when an app
+# is renamed or removed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: abs-backups
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: truenas-nfs-backups
+  resources:
+    requests:
+      storage: 50Gi

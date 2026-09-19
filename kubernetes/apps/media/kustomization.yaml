@@ -7,6 +7,7 @@ components:
   - ../../components/common
   - ../../components/flux/alerts
 resources:
+  - ./abs/ks.yaml
   - ./audiobookshelf/ks.yaml
   - ./grimmory/ks.yaml
   - ./immich/ks.yaml

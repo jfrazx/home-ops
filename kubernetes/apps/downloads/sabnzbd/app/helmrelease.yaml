@@ -99,6 +99,17 @@ spec:
           - path: /data/media/downloads/usenet
             subPath: downloads/usenet
 
+      # The `abs` dataset, so a download category can land inside the same
+      # dataset as the Audiobookshelf library and be hardlinked on import
+      # instead of copied. Anything written under downloads/ lives in a
+      # different ZFS dataset, where link() fails with EXDEV.
+      abs:
+        type: nfs
+        path: "/mnt/${SECRET_NFS_SHARE}/media/abs"
+        server: "${SECRET_NFS_SERVER}"
+        globalMounts:
+          - path: /data/media/abs
+
       scripts:
         type: configMap
         defaultMode: 0775
