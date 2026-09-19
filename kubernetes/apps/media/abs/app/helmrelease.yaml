@@ -99,6 +99,14 @@ spec:
           securityContext:
             runAsUser: "${VOLSYNC_PUID}"
             runAsGroup: "${VOLSYNC_PGID}"
+            # Without fsGroup a freshly provisioned ceph-block volume arrives
+            # root:root 0755 and a non-root app cannot write to it. The config
+            # PVC escapes this because the volsync mover sets its own fsGroup
+            # while restoring; the metadata PVC is only ever mounted here, so
+            # nothing would fix it. OnRootMismatch keeps the recursive chown
+            # from re-running once the root already matches.
+            fsGroup: "${VOLSYNC_PGID}"
+            fsGroupChangePolicy: OnRootMismatch
             # 568 is Audiobookshelf's conventional UID/GID and still owns
             # some media written before this instance; kept as a supplemental
             # group so those files stay readable now that the app runs as 1001.
