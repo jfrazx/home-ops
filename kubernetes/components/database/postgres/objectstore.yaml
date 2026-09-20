@@ -15,4 +15,10 @@ spec:
       secretAccessKey:
         name: ${APP}-postgres-minio
         key: MINIO_SECRET_KEY
+    wal:
+      compression: ${POSTGRES_BACKUP_WAL_COMPRESSION:=zstd}
+      maxParallel: ${POSTGRES_BACKUP_WAL_MAX_PARALLEL:=2}
+    data:
+      compression: ${POSTGRES_BACKUP_DATA_COMPRESSION:=gzip}
+      jobs: ${POSTGRES_BACKUP_DATA_JOBS:=2}
   retentionPolicy: ${POSTGRES_BACKUP_RETENTION:=20d}
