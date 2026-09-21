@@ -91,13 +91,28 @@ spec:
 
         # Backup Status
         #
-        # These read cnpg_collector_* metrics. Replicas report 0 for the backup
-        # timestamps, so every expression aggregates with max by (namespace, job)
-        # to pick up the primary's real value.
+        # Two metric families report backup state, and both have to be read.
+        # `cnpg_collector_*` comes from the operator, which only ever records
+        # backups taken through the in-tree barmanObjectStore path. Once a
+        # cluster moves to the barman-cloud plugin (#1841) the operator stops
+        # updating them -- and they freeze at the last in-tree value rather than
+        # going absent or stale, so a plugin cluster whose backups are perfectly
+        # healthy reads as hours or days behind. The plugin publishes its own
+        # `barman_cloud_cloudnative_pg_io_*` family on the same instance metrics
+        # endpoint (port 9187, no extra ServiceMonitor), and that one is live.
+        #
+        # Selecting both families by __name__ and taking max means whichever one
+        # is actually being updated wins, so these alerts read correctly before,
+        # during and after the migration with no per-cluster bookkeeping.
+        #
+        # Replicas report 0 for the collector timestamps, so every expression
+        # aggregates with max by (namespace, job) to pick up the primary's real
+        # value. The plugin family reports the same value on every instance,
+        # which max leaves untouched.
         - alert: CNPGBackupFailed
           expr: |
-            max by (namespace, job) (cnpg_collector_last_failed_backup_timestamp)
-              > max by (namespace, job) (cnpg_collector_last_available_backup_timestamp)
+            max by (namespace, job) ({__name__=~"(cnpg_collector|barman_cloud_cloudnative_pg_io)_last_failed_backup_timestamp"})
+              > max by (namespace, job) ({__name__=~"(cnpg_collector|barman_cloud_cloudnative_pg_io)_last_available_backup_timestamp"})
           for: 5m
           annotations:
             summary: "CNPG backup failed on {{ $labels.job }}"
@@ -107,7 +122,7 @@ spec:
 
         - alert: CNPGBackupStale
           expr: |
-            (time() - max by (namespace, job) (cnpg_collector_last_available_backup_timestamp > 0)) > 86400
+            (time() - max by (namespace, job) ({__name__=~"(cnpg_collector|barman_cloud_cloudnative_pg_io)_last_available_backup_timestamp"} > 0)) > 86400
           for: 1h
           annotations:
             summary: "CNPG backup is stale on {{ $labels.job }}"
@@ -123,11 +138,11 @@ spec:
         # catch this because the timestamp is 0 rather than merely old.
         - alert: CNPGBackupNotConfigured
           expr: |
-            max by (namespace, job) (cnpg_collector_last_available_backup_timestamp) == 0
+            max by (namespace, job) ({__name__=~"(cnpg_collector|barman_cloud_cloudnative_pg_io)_last_available_backup_timestamp"}) == 0
           for: 1h
           annotations:
             summary: "CNPG cluster {{ $labels.job }} has never been backed up"
-            description: "No successful backup has ever been recorded. Check that spec.backup.barmanObjectStore and a ScheduledBackup exist."
+            description: "No successful backup has ever been recorded. Check that an ObjectStore plus spec.plugins[barman-cloud] (or, pre-migration, spec.backup.barmanObjectStore) and a ScheduledBackup all exist."
           labels:
             severity: critical
 
