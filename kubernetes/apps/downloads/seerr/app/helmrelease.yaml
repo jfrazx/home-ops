@@ -16,6 +16,36 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
 
+        pod:
+          annotations:
+            k8s.ksgate.org/downloads-postgres-ready: |
+              {
+                "apiVersion": "postgresql.cnpg.io/v1",
+                "kind": "Cluster",
+                "name": "downloads-postgres",
+                "namespace": "downloads",
+                "expression": "resource.status.readyInstances >= 1"
+              }
+          schedulingGates:
+            - name: k8s.ksgate.org/downloads-postgres-ready
+
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6.0@sha256:b6d3af974df781c673d37e49bdddfa14a6f5be28b18d2cb7713f0449bea4057b
+
+            env:
+              INIT_POSTGRES_SUPER_PASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: downloads-postgres-superuser
+                    key: password
+
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+
         containers:
           app:
             image:
@@ -28,27 +58,6 @@ spec:
               TZ: ${TIMEZONE}
 
               DB_TYPE: postgres
-              DB_HOST: seerr-postgres-rw.downloads.svc.cluster.local
-              DB_PORT:
-                valueFrom:
-                  secretKeyRef:
-                    name: seerr-postgres-app
-                    key: port
-              DB_NAME:
-                valueFrom:
-                  secretKeyRef:
-                    name: seerr-postgres-app
-                    key: dbname
-              DB_USER:
-                valueFrom:
-                  secretKeyRef:
-                    name: seerr-postgres-app
-                    key: username
-              DB_PASS:
-                valueFrom:
-                  secretKeyRef:
-                    name: seerr-postgres-app
-                    key: password
 
             envFrom:
               - secretRef:
