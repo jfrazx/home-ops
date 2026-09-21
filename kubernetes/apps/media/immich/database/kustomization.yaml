@@ -34,8 +34,13 @@ patches:
   # The `standard` image flavor carries pgvector but NOT the Barman binaries,
   # so the component's inherited inline barmanObjectStore can never run. Left
   # in place it enables WAL archiving whose archive_command always fails, and
-  # Postgres then refuses to recycle WAL until the volume fills. Backups
-  # arrive separately via the barman-cloud plugin.
+  # Postgres then refuses to recycle WAL until the volume fills.
+  #
+  # That is why this cluster has had no backups at all, and why it is the one
+  # wave-1 member being given coverage rather than migrated. The plugin runs
+  # barman in its own sidecar image (plugin-barman-cloud-sidecar), never in the
+  # postgres container, so the missing binaries stop mattering -- see the
+  # plugin patch below.
   - patch: |-
       - op: remove
         path: /spec/backup
@@ -53,7 +58,31 @@ patches:
         name: ${APP}-postgres-backup
         namespace: ${NAMESPACE}
       spec:
-        immediate: false
+        method: plugin
+        pluginConfiguration:
+          name: barman-cloud.cloudnative-pg.io
+        # `immediate` was false because an in-tree backup could only ever fail
+        # here. The plugin can actually take one, and this cluster has none at
+        # all (s3://postgresql-backups/immich is an empty prefix), so the first
+        # backup should not wait for the 03:00 schedule. ~246 MB.
+        immediate: true
+  # Wave 1 of the barman-cloud plugin migration (#1841). Unlike the other wave
+  # members there is no /spec/backup to remove -- it was already stripped above
+  # -- and no existing catalog to keep writing to, so serverName here only has
+  # to match what every other cluster uses.
+  - patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: ${APP}-postgres
+        namespace: ${NAMESPACE}
+      spec:
+        plugins:
+          - name: barman-cloud.cloudnative-pg.io
+            isWALArchiver: true
+            parameters:
+              barmanObjectName: ${APP}-postgres-backup
+              serverName: ${APP}-postgres
   # Power Tools connects to Immich's database with its own role rather than
   # the owner. Declared here so a cluster rebuild recreates it.
   - patch: |-
