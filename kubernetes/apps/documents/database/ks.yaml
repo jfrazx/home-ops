@@ -38,3 +38,17 @@ spec:
       POSTGRES_ENABLE_SUPERUSER: "true"
       POSTGRES_STORAGE_CLASS: truenas-iscsi
       POSTGRES_BACKUP_SCHEDULE: "0 45 2 * * *"
+      # Raised from the 20 default now that paperless connects through the
+      # pooler. This is a *per-instance* ceiling and there are two pooler
+      # instances, so the real cost against the cluster's max_connections=100
+      # is 2 x 35 = 70, leaving ~30 for CNPG's own internals (replication,
+      # metrics exporter, superuser) plus apps that dial -rw directly.
+      #
+      # The inner quotes are load-bearing, not a typo. The component renders
+      # this as an unquoted `max_db_connections: ${POOLER_MAX_DB_CONNECTIONS
+      # :='20'}`, so Flux substitutes raw text into a field the Pooler CRD
+      # types as string. The default only survives because `'20'` carries its
+      # own quotes; a bare 35 lands as a YAML integer and the CRD rejects it,
+      # which fails the dry-run gate and blocks this whole Kustomization --
+      # Cluster and ObjectStore included, not just the Pooler.
+      POOLER_MAX_DB_CONNECTIONS: "'35'"

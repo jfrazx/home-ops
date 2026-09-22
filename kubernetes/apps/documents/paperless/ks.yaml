@@ -48,7 +48,7 @@ spec:
   components:
     - ../../../../components/volsync
   dependsOn:
-    - name: paperless-postgres
+    - name: documents-postgres
     - name: dragonflydb-cluster
       namespace: flux-system
     - name: openbao
@@ -67,7 +67,7 @@ spec:
   healthChecks:
     - apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
-      name: paperless-postgres
+      name: documents-postgres
       namespace: documents
     - apiVersion: external-secrets.io/v1
       kind: ExternalSecret
