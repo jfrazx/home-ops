@@ -41,11 +41,16 @@ spec:
     remediation:
       retries: 3
   values:
-    watchNamespace: "ai"
-
-    resources:
-      limits:
-        memory: 256Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
+    # The chart nests everything under `operator:`; top-level keys are
+    # silently ignored.
+    operator:
+      resources:
+        limits:
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      # Keep GOMEMLIMIT ~90% of the memory limit. The chart default (110MiB)
+      # assumes its own 128Mi limit and GC-thrashes against it.
+      gc:
+        gomemlimit: 230MiB
