@@ -158,6 +158,51 @@ spec:
           labels:
             severity: warning
 
+        # The three rules below read CNPG's default pg_stat_activity query.
+        # cnpg_backends_max_tx_duration_seconds is the age of the oldest open
+        # *transaction* per (datname, usename, application_name, state) -- for
+        # state="active" that is effectively the longest-running query.
+        # application_name is left out of the grouping on purpose: clients like
+        # seerr put their ip:port in it, so every reconnect would mint a new
+        # alert identity. Replicas are included; max collapses the pod label.
+        # Thresholds sit above the 14-day baseline (2026-09): normal active
+        # peaks stay under 5m, lock waits are rare and brief.
+        - alert: CNPGLongRunningQuery
+          expr: |
+            max by (namespace, job, datname, usename) (
+              cnpg_backends_max_tx_duration_seconds{state="active"}
+            ) > 300
+          for: 5m
+          annotations:
+            summary: "Long-running query on {{ $labels.job }}"
+            description: "A query by {{ $labels.usename }} on database {{ $labels.datname }} has been running for {{ $value | humanizeDuration }}."
+          labels:
+            severity: warning
+
+        # An open transaction doing nothing still holds its locks and pins the
+        # xmin horizon, so autovacuum can't reclaim dead rows behind it.
+        - alert: CNPGIdleInTransaction
+          expr: |
+            max by (namespace, job, datname, usename) (
+              cnpg_backends_max_tx_duration_seconds{state=~"idle in transaction.*"}
+            ) > 600
+          for: 5m
+          annotations:
+            summary: "Transaction left open on {{ $labels.job }}"
+            description: "A connection by {{ $labels.usename }} on database {{ $labels.datname }} has been idle inside an open transaction for {{ $value | humanizeDuration }}. It holds locks and blocks vacuum."
+          labels:
+            severity: warning
+
+        - alert: CNPGBackendsWaitingOnLocks
+          expr: |
+            max by (namespace, job) (cnpg_backends_waiting_total) > 0
+          for: 5m
+          annotations:
+            summary: "Queries blocked on locks on {{ $labels.job }}"
+            description: "{{ $value }} backend(s) have been waiting on a lock for 5+ minutes. Check pg_locks / pg_blocking_pids() for the holder."
+          labels:
+            severity: warning
+
         - alert: CNPGDeadlocks
           expr: |
             rate(cnpg_pg_stat_database_deadlocks[5m]) > 0
