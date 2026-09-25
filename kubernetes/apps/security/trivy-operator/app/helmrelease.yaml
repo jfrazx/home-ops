@@ -83,6 +83,11 @@ spec:
           memory: 1Gi
 
     trivyOperator:
+      # Pods created directly by an operator (CNPG instances) are scanned as
+      # Pods, so their spec already carries the injected k8tz initContainer.
+      # If k8tz also injects into the scan pod, the names collide and the API
+      # server rejects it; no CNPG pod had ever been scanned.
+      scanJobAnnotations: "k8tz.io/inject=false"
       excludeImages: "quay.io/backube/*"
       skipResourceByLabels: "app.kubernetes.io/created-by=volsync"
     # https://github.com/aquasecurity/trivy-operator/issues/2566
