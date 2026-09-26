@@ -1,6 +1,6 @@
 # renovate: datasource=github-releases depName=ollama/ollama versioning=loose extractVersion=^v(?<version>.+)$
 # NOTE: cosmetic only - the build workflow always passes --build-arg OLLAMA_VERSION explicitly
-ARG OLLAMA_VERSION=0.34.3
+ARG OLLAMA_VERSION=0.34.4
 # renovate: datasource=github-releases depName=intel/compute-runtime versioning=loose
 ARG COMPUTE_RUNTIME_VERSION=26.35.39758.10
 # renovate: datasource=github-releases depName=oneapi-src/level-zero versioning=loose extractVersion=^v(?<version>.+)$
