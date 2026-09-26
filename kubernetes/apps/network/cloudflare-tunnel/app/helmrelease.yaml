@@ -37,19 +37,32 @@ spec:
               - secretRef:
                   name: cloudflare-tunnel-secret
             args: ["tunnel", "run"]
+            # /ready fails whenever there is no edge connection, so as a liveness
+            # probe it killed a healthy cloudflared every 30s through an ISP
+            # outage (136 restarts), and CrashLoopBackOff then held the tunnel
+            # down for minutes after the WAN returned. cloudflared reconnects on
+            # its own; liveness only needs to know the process is alive.
             probes:
-              liveness: &probes
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthcheck
+                    port: &port 8080
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 3
+              readiness:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
                     path: /ready
-                    port: &port 8080
-                  initialDelaySeconds: 0
+                    port: *port
                   periodSeconds: 10
                   timeoutSeconds: 1
                   failureThreshold: 3
-              readiness: *probes
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true

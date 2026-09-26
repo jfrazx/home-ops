@@ -36,13 +36,17 @@ spec:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
 
+            # The health server's / returns 500 whenever the VPN is down, so as a
+            # liveness probe it restarted gluetun through every WAN outage (74
+            # restarts). gluetun already restarts the VPN itself on failed health
+            # checks; kubelet only needs to know the process is up, which a TCP
+            # connect to the same listener shows without depending on the tunnel.
             probes:
               liveness:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /
+                  tcpSocket:
                     port: &healthPort 9999
                   timeoutSeconds: 10
                   periodSeconds: 30
@@ -51,8 +55,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /
+                  tcpSocket:
                     port: *healthPort
                   initialDelaySeconds: 10
                   periodSeconds: 10
