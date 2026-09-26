@@ -185,7 +185,7 @@ spec:
             {{ if eq (index .Values.route.vaultwarden.parentRefs 0).name "external" }}External{{ else }}LAN only{{ end }}
         hostnames: ["{{ .Release.Name }}.${SECRET_DOMAIN}"]
         parentRefs:
-          - name: internal
+          - name: external
             namespace: kube-system
             sectionName: https
         rules:

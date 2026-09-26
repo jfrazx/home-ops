@@ -21,9 +21,19 @@ alertmanager:
       repeat_interval: 6h
       receiver: "notify"
       routes:
+        # Dead man's switch. Watchdog always fires, so this pings healthchecks.io
+        # every ~5m; healthchecks.io alerts when the pings stop. That is the only
+        # way to hear about a WAN outage or a whole-cluster failure, since every
+        # other notification path runs through the cluster and out the WAN.
+        - receiver: "heartbeat"
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 5m
+          matchers:
+            - alertname = "Watchdog"
         - receiver: "null"
           matchers:
-            - alertname =~ "InfoInhibitor|Watchdog"
+            - alertname = "InfoInhibitor"
         - receiver: "null"
           matchers:
             - severity = "none"
@@ -32,6 +42,14 @@ alertmanager:
             - severity =~ "warning|critical"
     receivers:
       - name: "null"
+      # url_file rather than url keeps the ping URL out of the rendered config.
+      # prometheus-operator v0.93.1's webhookConfig does accept url_file (unlike
+      # discordConfig's webhook_url_file, below). The path is where
+      # alertmanagerSpec.secrets mounts the secret.
+      - name: "heartbeat"
+        webhook_configs:
+          - url_file: /etc/alertmanager/secrets/alertmanager-heartbeat-secret/url
+            send_resolved: false
       # Discord was removed on 2026-08-23 once Signal was confirmed end to end.
       # It had been dead the whole time regardless: its webhook_url_file is
       # valid upstream Alertmanager config but is not in prometheus-operator's
@@ -63,6 +81,9 @@ alertmanager:
     # The replicas gossip and deduplicate, so notifications are not duplicated.
     replicas: 2
     podAntiAffinity: hard
+    # Mounted at /etc/alertmanager/secrets/<name>/; read by the heartbeat receiver.
+    secrets:
+      - alertmanager-heartbeat-secret
     storage:
       volumeClaimTemplate:
         spec:
