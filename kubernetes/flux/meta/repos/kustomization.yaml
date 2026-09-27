@@ -30,4 +30,3 @@ resources:
   - ./trivy-charts.yaml
   - ./velero.yaml
   - ./victoria-metrics.yaml
-  - ./weave.yaml

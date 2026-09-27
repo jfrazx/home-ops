@@ -1,3 +1,26 @@
 ---
 serviceMonitor:
   create: true
+web:
+  # Login config (OIDC via authentik) is rendered by the flux-operator-web
+  # Kustomization from OpenBao. The operator reads this Secret through the API
+  # rather than mounting it, so flux-operator still starts at bootstrap before
+  # external-secrets exists -- the UI just has no login until it lands.
+  configSecretName: flux-web-config
+  # The chart's policy only admits in-cluster namespaces; Cilium Gateway
+  # traffic arrives as the reserved `ingress` identity and would be dropped.
+  networkPolicy:
+    create: false
+  httpRoute:
+    enabled: true
+    annotations:
+      gethomepage.dev/enabled: "true"
+      gethomepage.dev/name: Flux
+      gethomepage.dev/group: Services
+      gethomepage.dev/icon: flux-cd.svg
+      gethomepage.dev/description: Flux dashboard · LAN only
+    parentRefs:
+      - name: internal
+        namespace: kube-system
+        sectionName: https
+    hostnames: ["gitops.${SECRET_DOMAIN}"]

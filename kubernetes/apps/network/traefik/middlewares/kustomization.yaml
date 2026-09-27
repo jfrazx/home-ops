@@ -4,5 +4,4 @@ resources:
   # - ldap.yaml
   - ratelimit.yaml
   - errors.yaml
-  - auth.yaml
   - agents.yaml
