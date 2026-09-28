@@ -57,8 +57,8 @@ spec:
             # The image ENTRYPOINT already passes --use-ipex --listen and reads
             # SD_DATADIR=/mnt/data and SD_MODELSDIR=/mnt/models from its own
             # env; extra flags must go in args (a CLI_ARGS env is ignored).
-            args:
-              - --no-download
+            # SD.Next's argparse rejects unknown flags and exits 2, so check
+            # `--help` before adding one (--no-download no longer exists).
 
             env:
               TZ: "${TIMEZONE}"
