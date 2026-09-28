@@ -5,6 +5,12 @@ metadata:
   name: &app sdnext
 spec:
   interval: 1h
+  # First start clones SD.Next into /app and installs torch/IPEX (several GB)
+  # into /mnt/python before the port opens. The 5m default timed out, and each
+  # failed install's uninstall remediation deleted the chart-generated PVCs --
+  # that is where the pile of Released sdnext PVs came from. Every volume is
+  # now an existingClaim, so a failed install can no longer touch storage.
+  timeout: 60m
   chartRef:
     kind: OCIRepository
     name: app-template
@@ -25,15 +31,21 @@ spec:
         replicas: 1
         strategy: Recreate
 
-        # Remove the init container - fsGroup will handle permissions
-        # initContainers:
-        #   init-perms:
-        #     image:
-        #       repository: busybox
-        #       tag: latest
-        #     command: ['sh', '-c', 'chmod -R 755 /app']
-        #     securityContext:
-        #       runAsUser: 0
+        # kubelet creates missing subPath dirs as root, which the non-root app
+        # then can't write. Pre-create them as 1001. (Mounting the volume
+        # straight at /app doesn't work either: ext4's lost+found makes the
+        # entrypoint's `git clone .` fail on a non-empty directory.)
+        initContainers:
+          init-dirs:
+            image:
+              repository: docker.io/library/busybox
+              tag: 1.37.0
+            command: ["sh", "-c", "mkdir -p /runtime/app /runtime/python"]
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
 
         containers:
           app:
@@ -42,15 +54,16 @@ spec:
               tag: latest
               pullPolicy: IfNotPresent
 
+            # The image ENTRYPOINT already passes --use-ipex --listen and reads
+            # SD_DATADIR=/mnt/data and SD_MODELSDIR=/mnt/models from its own
+            # env; extra flags must go in args (a CLI_ARGS env is ignored).
+            args:
+              - --no-download
+
             env:
               TZ: "${TIMEZONE}"
-              CLI_ARGS: >-
-                --listen
-                --port 7860
-                --data-dir /mnt/data
-                --models-dir /mnt/models
-                --no-download
-                --use-ipex
+              # Non-root with no home directory in the image.
+              HOME: /tmp
 
             probes:
               liveness:
@@ -59,9 +72,14 @@ spec:
                 enabled: true
               startup:
                 enabled: true
+                custom: true
                 spec:
-                  failureThreshold: 90
-                  periodSeconds: 5
+                  tcpSocket:
+                    port: 7860
+                  # Up to an hour for the first-start dependency install;
+                  # later starts reuse the persisted venv and take seconds.
+                  periodSeconds: 10
+                  failureThreshold: 360
 
             resources:
               requests:
@@ -70,27 +88,26 @@ spec:
                 memory: 4Gi
               limits:
                 gpu.intel.com/i915: "1"
-                memory: 8Gi
+                # The iGPU has no dedicated VRAM; model weights live in
+                # system RAM, so this bounds what models can load.
+                memory: 16Gi
 
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: false
-              runAsNonRoot: true
-              runAsUser: 1000
-              runAsGroup: 1000
               capabilities:
                 drop:
                   - ALL
 
-    defaultPodOptions:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
 
     service:
       app:
@@ -100,32 +117,32 @@ spec:
             port: 7860
 
     persistence:
-      app:
-        enabled: true
-        type: emptyDir
-        globalMounts:
-          - path: /app
-
-      models:
-        enabled: true
-        type: persistentVolumeClaim
-        storageClass: truenas-nfs
-        accessMode: ReadWriteMany
-        size: 200Gi
-        globalMounts:
-          - path: /mnt/models
-
+      # Settings, outputs and user state; backed up by volsync.
       data:
-        enabled: true
-        type: persistentVolumeClaim
-        storageClass: truenas-iscsi
-        accessMode: ReadWriteOnce
-        size: 20Gi
+        existingClaim: sdnext-config
         globalMounts:
           - path: /mnt/data
 
-      cache:
-        enabled: true
+      # Git checkout and venv. Reproducible, so not backed up, but persisted
+      # so restarts don't repeat the multi-GB install.
+      runtime:
+        existingClaim: sdnext-runtime
+        advancedMounts:
+          sdnext:
+            init-dirs:
+              - path: /runtime
+            app:
+              - path: /app
+                subPath: app
+              - path: /mnt/python
+                subPath: python
+
+      models:
+        existingClaim: sdnext-models
+        globalMounts:
+          - path: /mnt/models
+
+      tmp:
         type: emptyDir
         globalMounts:
           - path: /tmp

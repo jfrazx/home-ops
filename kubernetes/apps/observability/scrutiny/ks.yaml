@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://kube-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app scrutiny
+  namespace: &namespace observability
+spec:
+  targetNamespace: *namespace
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  components:
+    - ../../../../components/volsync
+  dependsOn:
+    - name: influxdb
+      namespace: flux-system
+    - name: openbao
+      namespace: external-secrets
+    - name: volsync
+      namespace: system
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  interval: 1h
+  path: ./kubernetes/apps/observability/scrutiny/app
+  postBuild:
+    substitute:
+      APP: *app
+      # SQLite device registry and settings only; SMART history is in InfluxDB.
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_REPOSITORY_NAMESPACE: *namespace
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
+  prune: true
+  retryInterval: 2m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  timeout: 5m
+  wait: false

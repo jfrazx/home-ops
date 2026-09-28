@@ -1,0 +1,159 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app scrutiny
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+
+  values:
+    controllers:
+      # Hub: API + dashboard. Collectors (the DaemonSet below, and the one on
+      # TrueNAS) push SMART data here; history lands in InfluxDB.
+      web:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/analogj/scrutiny
+              tag: v0.9.4-web
+
+            env:
+              # The influxdb2 chart ignores the HelmRelease's service values,
+              # so the Service is the chart's default name on port 80.
+              SCRUTINY_WEB_INFLUXDB_HOST: influxdb-influxdb2.database.svc.cluster.local
+              SCRUTINY_WEB_INFLUXDB_PORT: "80"
+              SCRUTINY_WEB_INFLUXDB_BUCKET: scrutiny
+
+            envFrom:
+              - secretRef:
+                  name: scrutiny-secret
+
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/health
+                    port: &port 8080
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+              readiness: *probe
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+
+      # Spoke: one per node. Talos nodes carry only NVMe/SATA SSDs, which
+      # smartctl-exporter already alerts on; this puts them in the same
+      # dashboard as the TrueNAS HDDs.
+      collector:
+        type: daemonset
+
+        pod:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/analogj/scrutiny
+              tag: v0.9.4-collector
+
+            env:
+              COLLECTOR_API_ENDPOINT: http://scrutiny.observability.svc.cluster.local:8080
+              COLLECTOR_HOST_ID:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              COLLECTOR_CRON_SCHEDULE: "0 */6 * * *"
+              COLLECTOR_RUN_STARTUP: "true"
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+
+            # smartctl needs the raw block devices; NVMe admin commands need
+            # CAP_SYS_ADMIN and SATA passthrough CAP_SYS_RAWIO, and the device
+            # nodes are only visible in a privileged container.
+            securityContext:
+              privileged: true
+
+    service:
+      app:
+        controller: web
+        ports:
+          http:
+            port: *port
+
+    route:
+      app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Scrutiny
+          gethomepage.dev/group: Observability
+          gethomepage.dev/icon: scrutiny.svg
+          gethomepage.dev/description: Disk SMART health · LAN only
+        hostnames: ["scrutiny.${SECRET_DOMAIN}"]
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+
+    persistence:
+      config:
+        existingClaim: *app
+        advancedMounts:
+          web:
+            app:
+              - path: /opt/scrutiny/config
+      udev:
+        type: hostPath
+        hostPath: /run/udev
+        advancedMounts:
+          collector:
+            app:
+              - path: /run/udev
+                readOnly: true

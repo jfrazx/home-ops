@@ -14,4 +14,5 @@ resources:
   - ./ollama/ks.yaml
   - ./open-webui/ks.yaml
   - ./mcp-servers/ks.yaml
+  - ./sdnext/ks.yaml
   - ./searxng/ks.yaml
