@@ -84,7 +84,15 @@ spec:
             path: /health
             port: 8086
 
-    envFromSecret: "influxdb-auth"
+    # The chart has no envFromSecret; it sets DOCKER_INFLUXDB_INIT_* itself
+    # from adminUser. Before this was set it generated its own token into
+    # influxdb-influxdb2-auth, which is what the running instance was seeded
+    # with -- the values in OpenBao were never used.
+    adminUser:
+      organization: influxdata
+      bucket: default
+      user: admin
+      existingSecret: influxdb-auth
 
     securityContext:
       runAsUser: 0
