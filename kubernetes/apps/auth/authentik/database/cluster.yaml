@@ -67,7 +67,13 @@ spec:
       max_wal_senders: "10"
       max_replication_slots: "10"
       wal_keep_size: "1GB"
-      max_slot_wal_keep_size: "2GB"
+      # authentik writes ~4.6 GB of WAL/day despite a ~214 MB database -- session
+      # and token churn, not data volume. At 2GB the primary retained only ~10h
+      # of WAL for a replication slot, so a standby that stalled longer had its
+      # slot invalidated ("wal_removed") and could never resume streaming, while
+      # CNPG still reported the cluster 3/3 healthy. 10GB (~2 days) matches
+      # lldap/mealie/linkwarden and downloads-postgres.
+      max_slot_wal_keep_size: "10GB"
 
   storage:
     size: "30Gi"
