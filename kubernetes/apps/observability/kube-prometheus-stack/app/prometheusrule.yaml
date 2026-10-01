@@ -34,8 +34,8 @@ spec:
             summary: |
               Node {{ $labels.node }} stopped answering scrapes and is likely
               hard-locked. The hardware watchdog resets it ~5m after the wedge
-              begins, so expect an automatic recovery shortly; NodeRebooted
-              will confirm it.
+              begins, so expect an automatic recovery shortly;
+              NodeRebootedUnexpectedly will confirm it.
             description: |
               Four wedges on the same worker in 31 days, none of them panics:
               `kernel.panic = 10` is set, so a panic or oops would self-reboot
@@ -63,31 +63,79 @@ spec:
             severity: critical
 
         # The other half: after the watchdog rollout a wedge is self-healing, so
-        # NodeWedged resolves on its own and is easy to miss. This is the
+        # NodeWedged resolves on its own and is easy to miss. These two are the
         # durable record that a node went down and came back -- and the only
         # signal that the watchdog actually did its job.
         #
-        # It also fires on ordinary reboots (Talos upgrades, deliberate power
-        # cycles). That is intended: on a four-node cluster an unexplained
-        # reboot is always worth a look, and correlating it with NodeWedged
-        # tells you which kind it was.
+        # Every boot raises exactly one of the pair. A boot counts as planned
+        # when, in the 40m before it (30m of run-up plus the 10m the alert stays
+        # live), the node was cordoned or ran a system-upgrade Job. Each wedge
+        # reset 09-11 -> 09-30 fails both tests; the 10-01 BIOS maintenance,
+        # which was drained first, passes. A single `NodeRebooted` used to cover
+        # both cases, so a crash read exactly like maintenance and got buried in
+        # the burst of pod alerts every node bounce sends.
+        #
+        # `talosctl shutdown` and `kubectl drain` cordon first. `talosctl
+        # reboot` does NOT unless given --drain (v1.13), so a bare reboot pages
+        # as unexpected. That is the intended failure direction: a node that is
+        # down without explanation should page; a planned one costs one extra
+        # message. The upgrade half is untested -- no Talos upgrade has run since
+        # this rule was written -- so if an upgrade pages, look here first.
+        #
+        # If kube-state-metrics is down, the `unless` side is empty and every
+        # boot pages as unexpected. Same reasoning: fail loud.
+        #
+        # instance on node_boot_time_seconds is the node name; endpoint is
+        # pinned because three of the four nodes are also scraped via a second
+        # target labelled instance="<ip>:9100", which would double every alert.
+        - alert: NodeRebootedUnexpectedly
+          annotations:
+            summary: |
+              Node {{ $labels.instance }} booted {{ $value | humanizeDuration }}
+              ago without being cordoned or upgraded first -- a crash, a
+              watchdog reset, or a power loss.
+            description: |
+              Check for a CPU fault left over from before the reset:
+              `talosctl -n <ip> dmesg | grep -iE 'machine check|hardware error'`.
+              A warm (watchdog) reset preserves the MCA banks, so the record
+              prints on the next boot; a cold power cycle erases it. The run-up
+              to the reset survives only in VictoriaLogs (query the node's
+              last lines before "Kernel command line"). worker-02 has a known
+              E-core L2 fault; BIOS CRARL579.0032 on 2026-10-01 is the fix
+              under test, so a reset there now is grounds for an RMA.
+          expr: |
+            (time() - node_boot_time_seconds{endpoint="http-metrics"}) < 600
+            unless on (instance)
+            label_replace(
+              max by (node) (max_over_time(kube_node_spec_unschedulable[40m])) == 1
+              or
+              max by (node) (max_over_time(kube_pod_info{namespace="system-upgrade", created_by_kind="Job"}[40m])),
+              "instance", "$1", "node", "(.+)"
+            )
+          for: 0m
+          labels:
+            severity: critical
+
         - alert: NodeRebooted
           annotations:
             summary: |
-              Node {{ $labels.instance }} rebooted within the last 10 minutes
+              Node {{ $labels.instance }} finished a planned reboot
               (uptime is now {{ $value | humanizeDuration }}).
             description: |
-              If this arrived without a preceding NodeWedged, it was a planned
-              reboot or an upgrade. If it followed one, the hardware watchdog
-              recovered a wedged node -- confirm with
-              `talosctl -n <ip> dmesg | grep -i watchdog` and note it in the
-              incident log. A watchdog reset destroys the kernel ring buffer,
-              so the run-up lives only in VictoriaLogs.
-          # endpoint is pinned for the same reason metrics_path is above: three
-          # of the four nodes are also scraped via a second target labelled
-          # instance="<ip>:9100", which would double every alert.
+              The node was cordoned or ran a system-upgrade Job before it went
+              down, so this is maintenance or an upgrade completing. Confirm it
+              was uncordoned and Ceph is back to active+clean.
+          # The exact complement of NodeRebootedUnexpectedly -- keep the two
+          # selectors identical, or a boot can raise both alerts or neither.
           expr: |
             (time() - node_boot_time_seconds{endpoint="http-metrics"}) < 600
+            and on (instance)
+            label_replace(
+              max by (node) (max_over_time(kube_node_spec_unschedulable[40m])) == 1
+              or
+              max by (node) (max_over_time(kube_pod_info{namespace="system-upgrade", created_by_kind="Job"}[40m])),
+              "instance", "$1", "node", "(.+)"
+            )
           for: 0m
           labels:
             severity: warning
