@@ -1,0 +1,150 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrepository-source-v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: descheduler
+  namespace: kube-system # Required for Renovate lookups
+spec:
+  interval: 1h
+  url: https://kubernetes-sigs.github.io/descheduler
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: descheduler
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: descheduler
+      # 0.36.0's --dry-run builds its cluster snapshot empty (every node reads
+      # 0 pods, nothing is ever a candidate), so this policy could not be
+      # previewed against it. 0.35.1 dry-runs correctly. Before taking a bump,
+      # re-run the dry run (see the policy comment below) on the new image.
+      version: 0.35.1
+      sourceRef:
+        kind: HelmRepository
+        name: descheduler
+        namespace: kube-system
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    # Why this exists: the scheduler only places a pod when it starts. Draining
+    # a node for maintenance moves its pods onto the others and nothing ever
+    # moves them back -- after the 2026-10-01 worker-02 BIOS/RAM work it sat
+    # at 27 pods / 8% memory requested while the control nodes were at 80-87%
+    # of the 110-pod cap.
+    kind: CronJob
+    # Hourly through the early morning rather than once: each run is capped
+    # (below), so a full post-drain rebalance takes a few runs, and keeping
+    # them in this window keeps the restarts out of the day.
+    schedule: "0 2-5 * * *"
+    timeZone: ${TIMEZONE}
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 1
+    # A failed Job pins KubeJobFailed until the Job object is gone; let it
+    # page, then clear itself a day later.
+    ttlSecondsAfterFinished: 86400
+    activeDeadlineSeconds: 600
+    deschedulerPolicy:
+      # Preview any change before shipping it -- dry run evicts nothing:
+      #   docker run --rm --platform linux/amd64 --user "$(id -u)" \
+      #     -v "$PWD/kubeconfig:/kc:ro" -v "$PWD/policy.yaml:/policy.yaml:ro" \
+      #     registry.k8s.io/descheduler/descheduler:v0.35.1 /bin/descheduler \
+      #     --kubeconfig /kc --policy-config-file /policy.yaml --dry-run --v=3
+      # with policy.yaml = this block plus
+      # `apiVersion: descheduler/v1alpha2` / `kind: DeschedulerPolicy`.
+      #
+      # Most apps here run a single replica with no PDB, so every eviction is
+      # a short outage of that app. These caps bound how many happen at once.
+      maxNoOfPodsToEvictPerNode: 5
+      maxNoOfPodsToEvictPerNamespace: 3
+      profiles:
+        - name: rebalance
+          pluginConfig:
+            - name: DefaultEvictor
+              args:
+                # Never evict a pod the scheduler has nowhere else to put.
+                nodeFit: true
+                # Don't bounce a pod that only just landed (including one this
+                # descheduler moved an hour ago).
+                minPodAge: 1h
+                # Per-app opt out: annotate the pod template with
+                # descheduler.alpha.kubernetes.io/prefer-no-eviction: "true".
+                noEvictionPolicy: Mandatory
+                podProtections:
+                  # The chart default protects every pod with an emptyDir.
+                  # 272 of 312 pods have one (app-template's /tmp), which
+                  # leaves almost nothing evictable.
+                  defaultDisabled:
+                    - PodsWithLocalStorage
+                  # Pods on ceph-block / iSCSI / NFS PVCs reattach wherever
+                  # they land. openebs-hostpath is pinned to one node's disk,
+                  # so evicting it would only restart it in place.
+                  extraEnabled:
+                    - PodsWithPVC
+                  config:
+                    PodsWithPVC:
+                      protectedStorageClasses:
+                        - name: openebs-hostpath
+                labelSelector:
+                  matchExpressions:
+                    # Job pods (volsync movers, system-upgrade, backups): an
+                    # eviction kills the run, it doesn't move it.
+                    - {key: batch.kubernetes.io/job-name, operator: DoesNotExist}
+                    # CNPG instances: moving a replica buys nothing and a
+                    # primary eviction is a failover. CNPG places them itself.
+                    - {key: cnpg.io/cluster, operator: DoesNotExist}
+                    # victoria-logs is still on a truenas-iscsi PV whose ~130ms
+                    # sync writes inflate load on whichever node hosts it; on
+                    # worker-02 that was NodeSystemSaturation for weeks. Keep it
+                    # where it is until the PV moves to ceph-block.
+                    - {key: app.kubernetes.io/name, operator: NotIn, values: [victoria-logs-single]}
+            - name: LowNodeUtilization
+              args:
+                # Requests, not live usage -- the same numbers the scheduler
+                # places by, so an evicted pod lands where this expects it to.
+                # cpu is omitted (it defaults to 100%, i.e. ignored): requests
+                # top out ~55% and real CPU is ~10%; memory and the pod cap
+                # are what fill up.
+                #
+                # A node is a destination only while under BOTH thresholds and
+                # a source while over EITHER target, and the run does nothing
+                # without at least one of each. That makes it self-limiting:
+                # once the emptied node passes 40% memory or 55 pods there are
+                # no destinations and it stops. Before the drain worker-02 sat
+                # at 30% / 65%, so normal steady state never triggers it.
+                thresholds:
+                  memory: 40
+                  pods: 50
+                targetThresholds:
+                  memory: 65
+                  pods: 70
+                # Infrastructure and controllers. Several are admission
+                # webhooks with failurePolicy Fail (k8tz gates every pod
+                # create) or have their own placement rules; the
+                # 3-per-namespace cap alone could still take all three k8tz
+                # replicas in one run.
+                evictableNamespaces:
+                  exclude:
+                    - cert-manager
+                    - cnpg-system
+                    - database
+                    - external-secrets
+                    - flux-system
+                    - kube-system
+                    - openebs-system
+                    - rook-ceph
+                    - system
+                    - system-upgrade
+          plugins:
+            balance:
+              enabled:
+                - LowNodeUtilization
