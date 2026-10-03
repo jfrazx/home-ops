@@ -1,0 +1,145 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app csi-selinux-relabel
+spec:
+  interval: 1h
+  maxHistory: 2
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+
+  values:
+    controllers:
+      csi-selinux-relabel:
+        # A DaemonSet for the same reason fstrim is one: the work is per-node and
+        # depends on that node's mount table, so a CronJob could only ever fix
+        # whichever node its Pod happened to land on. See resources/relabel.py
+        # for what it does and why the audit records it prevents are expensive.
+        type: daemonset
+
+        annotations:
+          # The pod reads relabel.py once at startup and then loops forever, so
+          # a script change only reaches the nodes if something restarts it.
+          reloader.stakater.com/auto: "true"
+
+        pod:
+          # Every node, control plane included -- all four attach both iSCSI and
+          # RBD volumes. The nodes carry no taints today; these are here so the
+          # DaemonSet does not silently stop covering the control plane if that
+          # ever changes.
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+            - key: node-role.kubernetes.io/master
+              operator: Exists
+              effect: NoSchedule
+
+          securityContext:
+            # Runs as uid 0 with a narrow capability set rather than as a fully
+            # privileged pod. The files being relabelled belong to every uid on
+            # the node (postgres, prometheus, the *arr stack), and many of their
+            # parent directories are 0700, so being root is not on its own enough
+            # -- see the capabilities below.
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            seccompProfile:
+              type: RuntimeDefault
+
+        containers:
+          app:
+            # Stock upstream Python, same image and digest as the
+            # alertmanager-signal-bridge: relabel.py is stdlib-only, so there is
+            # nothing to install and no image to build and keep patched.
+            image:
+              repository: docker.io/library/python
+              tag: 3.14-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df
+
+            command: ["python3", "-u", "/app/relabel.py"]
+
+            env:
+              # No TZ. This Kustomization declares no postBuild, so "${TIMEZONE}"
+              # would arrive unsubstituted; relabel.py logs in UTC instead.
+              PYTHONDONTWRITEBYTECODE: "1"  # the script is on a read-only mount
+              # A ceiling, not a cadence. The loop also wakes on any change to
+              # the mount table, so a newly attached volume is normally labelled
+              # within RELABEL_SETTLE_SECONDS of being mounted; this is only the
+              # backstop for a missed wakeup.
+              RELABEL_INTERVAL_SECONDS: "300"
+              NODE_NAME:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                # The walk is streaming -- os.walk holds one directory at a time,
+                # so peak memory tracks tree depth, not tree size. The largest
+                # volume in the cluster (145k entries) relabelled in 6s.
+                memory: 128Mi
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+                add:
+                  # Writing an xattr in the `security.*` namespace is gated on
+                  # CAP_SYS_ADMIN regardless of who owns the file.
+                  - SYS_ADMIN
+                  # Volume trees are owned by the uids their workloads run as,
+                  # with 0700 directories throughout. DAC_READ_SEARCH to descend
+                  # them, DAC_OVERRIDE to write the xattr once there.
+                  - DAC_READ_SEARCH
+                  - DAC_OVERRIDE
+
+    defaultPodOptions:
+      automountServiceAccountToken: false
+
+    persistence:
+      script:
+        type: configMap
+        name: csi-selinux-relabel-configmap
+        globalMounts:
+          - path: /app/relabel.py
+            subPath: relabel.py
+            readOnly: true
+
+      # Mounted at the identical path it has on the host, deliberately: the
+      # script matches mount points read out of /proc/self/mountinfo against a
+      # /var/lib/kubelet/... prefix, and mountinfo reports paths as they appear
+      # in *this* namespace. Mounting it anywhere else would need a translation
+      # step for no benefit. This is how the CSI node plugins mount it too.
+      #
+      # HostToContainer propagation is the whole regression mechanism. A
+      # container's hostPath is a recursive bind, so volumes already attached
+      # when the pod starts are visible either way -- but without propagation a
+      # volume attached *afterwards* never appears, which is exactly the case
+      # this app exists to catch. Bidirectional would also work and requires a
+      # fully privileged pod; this only ever reads the mount table, so the
+      # weaker one is correct.
+      kubelet:
+        type: hostPath
+        hostPath: /var/lib/kubelet
+        hostPathType: Directory
+        globalMounts:
+          - path: /var/lib/kubelet
+            mountPropagation: HostToContainer

@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./helmrelease.yaml
+configMapGenerator:
+  - name: csi-selinux-relabel-configmap
+    files:
+      - ./resources/relabel.py
+generatorOptions:
+  # Stable name, as everywhere else here. A hash suffix would be the tidier way
+  # to roll the DaemonSet on a script change, but kustomize only rewrites name
+  # references in fields it knows, and a HelmRelease's spec.values is not one --
+  # the generated ConfigMap would be renamed and the mount would point at a name
+  # that no longer exists. The reloader annotation on the controller does the
+  # roll instead, which matters because the pod reads relabel.py once at startup
+  # and then loops forever.
+  disableNameSuffixHash: true
