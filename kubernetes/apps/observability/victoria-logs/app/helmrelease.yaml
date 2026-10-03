@@ -37,12 +37,18 @@ spec:
 
       persistentVolume:
         enabled: true
-        storageClassName: truenas-iscsi
+        # Not truenas-iscsi: VictoriaLogs is fsync-heavy, and TrueNAS small sync
+        # writes take ~130ms each. 100+ threads parked in jbd2_log_wait_commit
+        # inflated load to ~2.7/core with ~1 core of real CPU, so whichever
+        # node hosted it tripped NodeSystemSaturation constantly.
+        storageClassName: ceph-block
         # Must match the live PVC. `volumeClaimTemplates` is immutable, so
         # changing this number makes every Helm upgrade fail on the StatefulSet
         # patch -- resizing means expanding the PVC and recreating the
-        # StatefulSet, not editing this line alone.
-        size: 20Gi
+        # StatefulSet, not editing this line alone. Steady state at 30d
+        # retention is ~9.5GiB; 30Gi leaves room for log spikes and longer
+        # retention without the disk-usage guard silently cutting history.
+        size: 30Gi
 
       resources:
         requests:
