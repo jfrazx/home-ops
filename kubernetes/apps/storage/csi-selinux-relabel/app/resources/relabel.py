@@ -90,6 +90,13 @@ SETTLE = int(os.environ.get("RELABEL_SETTLE_SECONDS", "10"))
 DRY_RUN = os.environ.get("RELABEL_DRY_RUN", "false").lower() in ("1", "true", "yes")
 MOUNTINFO = os.environ.get("RELABEL_MOUNTINFO", "/proc/self/mountinfo")
 NODE = os.environ.get("NODE_NAME", "unknown")
+# Walk every volume on the first sweep after start, ignoring the root marker.
+# The marker can only be trusted if whatever wrote it was correct; a run that
+# labelled roots without being able to label their contents (as the first
+# DaemonSet rollout did, lacking CAP_FOWNER) leaves volumes that look done and
+# are not. Re-verifying on start makes a pod restart the repair. Steady-state
+# cost is a getxattr per inode, with nothing written on a clean volume.
+VERIFY_ON_START = os.environ.get("RELABEL_VERIFY_ON_START", "true").lower() in ("1", "true", "yes")
 
 # getxattr returns a NUL-terminated string, and setxattr is given one, matching
 # what the kernel and setfattr(1) do. A label written without the NUL compares
@@ -194,29 +201,43 @@ def relabel(mountpoint, source):
         for path in descendants(mountpoint, dev):
             apply(path)
 
-    # Root last. See invariant 1 in the module docstring.
-    apply(mountpoint)
+    # Root last, and only if everything under it succeeded -- otherwise the
+    # marker would claim a volume is done when it is not, and every later sweep
+    # would skip it. See invariant 1 in the module docstring.
+    if stats["err"]:
+        log("  root left unlabelled: %d errors under %s" % (stats["err"], mountpoint))
+    else:
+        apply(mountpoint)
 
     return stats["set"] + stats["would"], stats["err"], time.time() - started
 
 
-def sweep():
+def sweep(verify=False):
     volumes = discover()
-    dirty = [(m, s) for m, s in volumes if label_of(m) != GOOD]
+    dirty = volumes if verify else [(m, s) for m, s in volumes if label_of(m) != GOOD]
 
     if not dirty:
         log("clean node=%s volumes=%d" % (NODE, len(volumes)))
         return
 
     log(
-        "start node=%s volumes=%d dirty=%d context=%s%s"
-        % (NODE, len(volumes), len(dirty), CONTEXT, " DRY_RUN" if DRY_RUN else "")
+        "start node=%s volumes=%d %s=%d context=%s%s"
+        % (
+            NODE,
+            len(volumes),
+            "verify" if verify else "dirty",
+            len(dirty),
+            CONTEXT,
+            " DRY_RUN" if DRY_RUN else "",
+        )
     )
     written = errors = 0
     for mountpoint, source in dirty:
         vol_written, vol_errors, seconds = relabel(mountpoint, source)
         written += vol_written
         errors += vol_errors
+        if verify and not (vol_written or vol_errors):
+            continue  # a verify pass over a clean volume is not worth a line
         log(
             "  %s %s written=%d errors=%d %.1fs"
             % (source, mountpoint[len(PREFIX):][:16], vol_written, vol_errors, seconds)
@@ -260,9 +281,11 @@ def main():
         # and kubelet creates this directory on the first one.
         log("note: %s does not exist yet on node=%s" % (PREFIX, NODE))
 
+    verify = VERIFY_ON_START
     while True:
         try:
-            sweep()
+            sweep(verify)
+            verify = False
         except Exception as err:  # keep the DaemonSet alive; the next sweep retries
             log("sweep FAILED: %r" % (err,))
         if INTERVAL <= 0:

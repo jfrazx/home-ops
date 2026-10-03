@@ -110,6 +110,12 @@ spec:
                   # them, DAC_OVERRIDE to write the xattr once there.
                   - DAC_READ_SEARCH
                   - DAC_OVERRIDE
+                  # SELinux's own setxattr hook additionally requires the caller
+                  # to own the file or hold CAP_FOWNER -- DAC_OVERRIDE does not
+                  # satisfy it. Without this every file not owned by root fails
+                  # EPERM. The first rollout missed it because the one-shot runs
+                  # went through the fully privileged rbd node plugin.
+                  - FOWNER
 
     defaultPodOptions:
       automountServiceAccountToken: false
