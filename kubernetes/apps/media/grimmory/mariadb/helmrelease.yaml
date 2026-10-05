@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: docker.io/library/mariadb
-              tag: 11.8@sha256:79d59758afc91b89b120b0a8904d637f5a3b3e1c4900f29b740d6d46c72fef68
+              tag: 13.0@sha256:f1bba652ba57bea3099ca2fe1af692af537c27d96e0bcde39dce29e2ba1ec4f3
 
             envFrom:
               - secretRef:
