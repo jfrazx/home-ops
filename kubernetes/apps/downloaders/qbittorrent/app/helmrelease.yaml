@@ -18,6 +18,21 @@ spec:
           reloader.stakater.com/auto: "true"
 
         pod:
+          # Bulk downloaders saturate whichever node hosts them, so qbittorrent,
+          # sabnzbd and nzbget each take their own node. Required rather than
+          # preferred, since a preference can lose to other scheduler scores (all
+          # three had landed on one node). 3 pods on 4 nodes still tolerates one
+          # node down; with two down, one of them stays Pending until a node
+          # returns.
+          labels:
+            home-ops/traffic: bulk-download
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchLabels:
+                      home-ops/traffic: bulk-download
           securityContext:
             fsGroup: 1001
             supplementalGroups: [568]

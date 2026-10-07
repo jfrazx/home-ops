@@ -10,3 +10,4 @@ components:
 resources:
   - ./nzbget/ks.yaml
   - ./qbittorrent/ks.yaml
+  - ./sabnzbd/ks.yaml

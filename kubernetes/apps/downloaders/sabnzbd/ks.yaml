@@ -17,12 +17,27 @@ spec:
     - name: openebs
       namespace: openebs-system
   interval: 1h
-  path: "./kubernetes/apps/downloads/sabnzbd/app"
+  path: "./kubernetes/apps/downloaders/sabnzbd/app"
+  patches:
+    # Moved here from the downloads namespace. Volsync names a backup after
+    # the namespace it was taken in (sabnzbd@downloads), and a restore
+    # defaults to its own namespace, so without this the first restore here
+    # finds no snapshot and starts sabnzbd on an empty config. New backups are
+    # written as sabnzbd@downloaders; the RD is only created once
+    # (ssa: IfNotPresent), so this can be dropped after the move.
+    # Matched on kind alone: patches run before postBuild substitution, when
+    # the name is still the literal "${APP}-dst".
+    - target:
+        kind: ReplicationDestination
+      patch: |-
+        - op: add
+          path: /spec/kopia/sourceIdentity/sourceNamespace
+          value: downloads
   postBuild:
     substitute:
       APP: *app
       VOLSYNC_CLAIM: sabnzbd-config
-      VOLSYNC_REPOSITORY_NAMESPACE: &namespace downloads
+      VOLSYNC_REPOSITORY_NAMESPACE: &namespace downloaders
     substituteFrom:
       - kind: Secret
         name: cluster-secrets
