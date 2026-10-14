@@ -37,6 +37,23 @@ spec:
     monitoring:
       enabled: true
       createPrometheusRules: true
+      prometheusRuleOverrides:
+        # The three AUTH_INSECURE_* checks are the accepted cost of pinning CSI
+        # keys to `aes` (see security.cephx.csi below): the kernel clients need
+        # Linux 7.0+ for aes256k. They hold the cluster in HEALTH_WARN
+        # permanently, which made the stock `ceph_health_status == 1` page
+        # forever and would hide any real warning behind it. Fire only when
+        # some *other* WARN check is active. Drop this override together with
+        # the csi keyType pin.
+        CephHealthWarning:
+          expr: |-
+            ceph_health_status == 1
+            and on (cluster) count by (cluster) (
+              ceph_health_detail{
+                severity="HEALTH_WARN",
+                name!~"AUTH_INSECURE_CLIENT_KEY_TYPE|AUTH_INSECURE_KEYS_ALLOWED|AUTH_INSECURE_KEYS_CREATABLE"
+              } == 1
+            )
 
     toolbox:
       enabled: true

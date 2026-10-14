@@ -92,7 +92,7 @@ spec:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 40Gi
+              storage: 64Gi
           storageClassName: truenas-iscsi
         resources:
           requests:
