@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app bge-test
+spec:
+  targetNamespace: &namespace household
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  # Board Games Empire test environment: pre-alpha, tracks upstream `edge`,
+  # no volsync. Expected to be nuked and rebuilt; production will be `bge`.
+  dependsOn:
+    - name: household-postgres
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: democratic-csi
+      namespace: storage
+    - name: openbao
+      namespace: external-secrets
+  interval: 1h
+  path: "./kubernetes/apps/household/bge-test/app"
+  postBuild:
+    substitute:
+      APP: *app
+      NAMESPACE: *namespace
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  # A first boot migrates and seeds before the api listens.
+  timeout: 15m
+  wait: true

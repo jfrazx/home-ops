@@ -1,0 +1,456 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app bge-test
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  maxHistory: 2
+  # A first boot applies the whole migration chain and seeds before the api
+  # listens; the default 5m would fail the install mid-migration.
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  uninstall:
+    keepHistory: false
+
+  values:
+    # One image, one role per container (upstream docs/DEPLOYMENT.md). Every
+    # BGE role reads the same database and cache/queue settings.
+    x-bge-env: &bgeEnv
+      NODE_ENV: production
+      LOG_LEVEL: debug
+      TZ: ${TIMEZONE}
+      HOME: /tmp
+      CHECKPOINT_DISABLE: "1"
+      # No OTLP receiver yet; switch these on once one exists.
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_TRACES_EXPORTER: none
+      DATABASE_URL:
+        valueFrom:
+          secretKeyRef: {name: bge-test-secret, key: DATABASE_URL}
+      # Cache (db 0) and queue (db 2) on the dedicated Valkey.
+      REDIS_HOST: &valkeyHost bge-test-valkey
+      REDIS_PORT: &valkeyPort "6379"
+      REDIS_USERNAME: &valkeyUser default
+      REDIS_PASSWORD: &valkeyPass
+        valueFrom:
+          secretKeyRef: {name: bge-test-secret, key: REDIS_PASSWORD}
+      REDIS_DATABASE: "0"
+      REDIS_BULLMQ_HOST: *valkeyHost
+      REDIS_BULLMQ_PORT: *valkeyPort
+      REDIS_BULLMQ_USERNAME: *valkeyUser
+      REDIS_BULLMQ_PASSWORD: *valkeyPass
+      REDIS_BULLMQ_DATABASE: "2"
+
+    x-bge-image: &bgeImage
+      repository: ghcr.io/boardgamesempire/bge
+      tag: edge@sha256:0d126e8e45e1d620efea64484464eda25d59fe0eb052e382d79e5270498b30c9
+
+    x-security-context: &securityContext
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities: {drop: ["ALL"]}
+
+    # The roles that touch Postgres wait for the cluster before scheduling.
+    x-bge-pod: &bgePod
+      annotations:
+        k8s.ksgate.org/household-postgres-ready: |
+          {
+            "apiVersion": "postgresql.cnpg.io/v1",
+            "kind": "Cluster",
+            "name": "household-postgres",
+            "namespace": "household",
+            "expression": "resource.status.readyInstances >= 1"
+          }
+      schedulingGates:
+        - name: k8s.ksgate.org/household-postgres-ready
+
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: {type: RuntimeDefault}
+
+    controllers:
+      # Migrates and seeds on boot, then serves REST, WebSocket and the bundled
+      # web client. The first account to sign up becomes the owner.
+      api:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod: *bgePod
+
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6.0@sha256:b6d3af974df781c673d37e49bdddfa14a6f5be28b18d2cb7713f0449bea4057b
+              pullPolicy: IfNotPresent
+            envFrom:
+              - secretRef:
+                  name: bge-test-secret
+            env:
+              INIT_POSTGRES_SUPER_PASS:
+                valueFrom:
+                  secretKeyRef:
+                    name: household-postgres-superuser
+                    key: password
+
+        containers:
+          main:
+            image: *bgeImage
+            env:
+              <<: *bgeEnv
+              BGE_ROLES: api
+              PORT: "33333"
+              DATABASE_MIGRATION_URL:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: DATABASE_MIGRATION_URL}
+              BETTER_AUTH_SECRET:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: BETTER_AUTH_SECRET}
+              DATA_ENCRYPTION_KEY: &dataEncryptionKey
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: DATA_ENCRYPTION_KEY}
+              USE_EMAIL_PASSWORD_AUTH: "true"
+              BETTER_AUTH_URL: &publicUrl https://bge-test.${SECRET_DOMAIN}
+              TRUSTED_ORIGINS: *publicUrl
+              MEDIA_BASE_URL: https://bge-test.${SECRET_DOMAIN}/api
+              # Envoy is the one proxy in front on the internal gateway.
+              THROTTLE_TRUSTED_PROXY_HOPS: "1"
+              GATEWAY_COORDINATOR_HOST: bge-test-coordinator
+              GATEWAY_COORDINATOR_PORT: &coordinatorPort "50052"
+              # Sockets (db 1); only the api reads these.
+              REDIS_WEBSOCKET_HOST: *valkeyHost
+              REDIS_WEBSOCKET_PORT: *valkeyPort
+              REDIS_WEBSOCKET_USERNAME: *valkeyUser
+              REDIS_WEBSOCKET_PASSWORD: *valkeyPass
+              REDIS_WEBSOCKET_DATABASE: "1"
+            probes:
+              # Nothing listens while a first boot migrates; this gates the
+              # other two for up to 10 minutes.
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: {path: /health/live, port: 33333}
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 60
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: {path: /health/live, port: 33333}
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: {path: /health/ready, port: 33333}
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+
+      # Background jobs: imports, webhook and feedback deliveries, media sweep.
+      # Listens on nothing; `Bootstrap complete` in its log is the signal.
+      worker:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod: *bgePod
+        containers:
+          main:
+            image: *bgeImage
+            env:
+              <<: *bgeEnv
+              BGE_ROLES: worker
+              DATA_ENCRYPTION_KEY: *dataEncryptionKey
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 50m
+                memory: 192Mi
+              limits:
+                memory: 768Mi
+
+      # Fetches games from the DataGateways for imports. No probe, as worker.
+      gateway-fetch:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod: *bgePod
+        containers:
+          main:
+            image: *bgeImage
+            env:
+              <<: *bgeEnv
+              BGE_ROLES: gateway-fetch
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+
+      # Carries the api's DataGateway traffic over gRPC. No grpc.health.v1
+      # service yet (upstream #612), so TCP only; it opens the port after the
+      # api's first migration.
+      coordinator:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod: *bgePod
+        containers:
+          main:
+            image: *bgeImage
+            env:
+              <<: *bgeEnv
+              BGE_ROLES: coordinator
+              COORDINATOR_GRPC_HOST: 0.0.0.0
+              COORDINATOR_GRPC_PORT: *coordinatorPort
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 50052}
+                  periodSeconds: 10
+                  failureThreshold: 60
+              liveness: &coordinatorProbe
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 50052}
+                  periodSeconds: 30
+                  failureThreshold: 3
+              readiness: *coordinatorProbe
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+
+      # DataGateways: no database, open their port at start. Register each
+      # with the api once after the owner signs up (POST /api/data-gateways).
+      igdb:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          main:
+            image:
+              repository: ghcr.io/boardgamesempire/bge-igdb-gateway
+              tag: edge@sha256:1cef6bb0cd9af539fd55383cb3170e097c0862058ba2d2c47788d5c84e6884f0
+            env:
+              NODE_ENV: production
+              LOG_LEVEL: debug
+              HOME: /tmp
+              OTEL_METRICS_EXPORTER: none
+              OTEL_LOGS_EXPORTER: none
+              OTEL_TRACES_EXPORTER: none
+              IGDB_GATEWAY_GRPC_HOST: 0.0.0.0
+              IGDB_GATEWAY_GRPC_PORT: "50054"
+              IGDB_CLIENT_ID:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: IGDB_CLIENT_ID}
+              IGDB_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: IGDB_CLIENT_SECRET}
+            probes:
+              liveness: &igdbProbe
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 50054}
+                  periodSeconds: 30
+                  failureThreshold: 3
+              readiness: *igdbProbe
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+
+      bgg:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          main:
+            image:
+              repository: ghcr.io/boardgamesempire/bge-boardgamegeek-gateway
+              tag: edge@sha256:6a82db4ac45e84c1a0b7a3480fec603bc259b195f4bef5d8ffef55bbccd0a0cb
+            env:
+              NODE_ENV: production
+              LOG_LEVEL: debug
+              HOME: /tmp
+              OTEL_METRICS_EXPORTER: none
+              OTEL_LOGS_EXPORTER: none
+              OTEL_TRACES_EXPORTER: none
+              BOARDGAMEGEEK_GATEWAY_GRPC_HOST: 0.0.0.0
+              BOARDGAMEGEEK_GATEWAY_GRPC_PORT: "50053"
+              BOARDGAMEGEEK_API_KEY:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: BOARDGAMEGEEK_API_KEY}
+            probes:
+              liveness: &bggProbe
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 50053}
+                  periodSeconds: 30
+                  failureThreshold: 3
+              readiness: *bggProbe
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+
+      # Cache, sockets and job queues. Append-only so queued jobs and sign-in
+      # sessions survive a restart; noeviction because BullMQ requires it.
+      valkey:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          main:
+            image:
+              repository: mirror.gcr.io/valkey/valkey
+              # renovate: datasource=docker depName=docker.io/valkey/valkey
+              tag: 9.1.2@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
+            command: ["valkey-server"]
+            args:
+              - --dir
+              - /data
+              - --appendonly
+              - "yes"
+              - --maxmemory-policy
+              - noeviction
+              - --requirepass
+              - $(VALKEY_PASSWORD)
+            env:
+              VALKEY_PASSWORD:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: VALKEY_PASSWORD}
+            probes:
+              liveness: &valkeyProbe
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 6379}
+                  periodSeconds: 10
+                  failureThreshold: 3
+              readiness: *valkeyProbe
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                memory: 512Mi
+
+    service:
+      api:
+        controller: api
+        ports:
+          http:
+            port: 33333
+      coordinator:
+        controller: coordinator
+        ports:
+          grpc:
+            port: 50052
+      igdb:
+        controller: igdb
+        ports:
+          grpc:
+            port: 50054
+      bgg:
+        controller: bgg
+        ports:
+          grpc:
+            port: 50053
+      valkey:
+        controller: valkey
+        ports:
+          redis:
+            port: 6379
+
+    serviceMonitor:
+      api:
+        service:
+          identifier: api
+        endpoints:
+          - port: http
+            scheme: http
+            path: /metrics
+            interval: 1m
+            scrapeTimeout: 10s
+
+    persistence:
+      media:
+        existingClaim: bge-test-media
+        advancedMounts:
+          api:
+            main:
+              - path: /var/lib/bge/media
+                subPath: media
+              - path: /var/lib/bge/plugins
+                subPath: plugins
+          worker:
+            main:
+              - path: /var/lib/bge/media
+                subPath: media
+
+      valkey:
+        existingClaim: bge-test-valkey
+        advancedMounts:
+          valkey:
+            main:
+              - path: /data
+
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+
+    route:
+      app:
+        hostnames:
+          - "bge-test.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: api
+                port: 33333

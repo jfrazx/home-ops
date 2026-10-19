@@ -1,0 +1,26 @@
+---
+# api and worker both read and write media, so it has to be ReadWriteMany.
+# The api's plugins live on the same volume under their own subPath.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bge-test-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: truenas-nfs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bge-test-valkey
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: ceph-block

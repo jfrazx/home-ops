@@ -150,6 +150,22 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
     },
+    {
+      // bge-test is the Board Games Empire testing ground: it follows upstream
+      // `edge` by digest and should land each master build as soon as it is
+      // published. The three images move together because upstream tests them
+      // together. Our own project, so the supply-chain age gate buys nothing.
+      description: "Board Games Empire - edge digests, no age gate, auto-merge",
+      groupName: "Board Games Empire",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/^ghcr\\.io/boardgamesempire//"],
+      minimumReleaseAge: null,
+      automerge: true,
+      automergeType: "pr",
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+    },
 
     //
     // Talos and Kubernetes are never automerged at any update type. These come
