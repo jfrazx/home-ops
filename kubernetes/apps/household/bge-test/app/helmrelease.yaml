@@ -34,10 +34,17 @@ spec:
       TZ: ${TIMEZONE}
       HOME: /tmp
       CHECKPOINT_DISABLE: "1"
-      # No OTLP receiver yet; switch these on once one exists.
+      # Traces only. Setting the endpoint also turns on BGE's OTLP log
+      # transport; the collector drops those, since Vector already ships
+      # stdout (which carries trace_id) to VictoriaLogs. Metrics stay on the
+      # ServiceMonitor scrape.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      # Every role reports service.namespace=bge; this keeps bge-test apart
+      # from the production `bge` once it exists.
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=bge-test
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_TRACES_EXPORTER: none
       DATABASE_URL:
         valueFrom:
           secretKeyRef: {name: bge-test-secret, key: DATABASE_URL}
