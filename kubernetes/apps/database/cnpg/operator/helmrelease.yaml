@@ -36,11 +36,22 @@ spec:
 
     config:
       data:
-        # Upgrading the operator rolls every instance in every cluster: CNPG's
-        # default is a rolling restart, not an in-place instance-manager swap,
-        # and both rollout delays default to 0. Without this, all 10 clusters
-        # (25 pods) restart at once. Instances within a cluster already wait on
-        # each other's readiness, so only the per-cluster stagger is set here.
+        # Swap the instance manager in place on an operator upgrade instead of
+        # rolling every pod. CNPG defaults this to false, so 0.29.0 -> 0.29.1
+        # rolled all 8 clusters over ~19 minutes and fired 12 HealthCheckFailed
+        # alerts across 6 cluster Kustomizations, none of which were real
+        # failures. With this on, an operator bump hot-swaps /controller/manager
+        # and no postgres pod restarts.
+        #
+        # Verify after the next operator bump -- the Deployment image is not
+        # proof the instance manager actually propagated:
+        #   kubectl -n <ns> exec <pod> -c postgres -- /controller/manager version
+        ENABLE_INSTANCE_MANAGER_INPLACE_UPDATES: "true"
+        # Kept as the fallback stagger: an in-place update is not always
+        # possible (image changes, failed hot-swaps), and CNPG then falls back
+        # to a rolling restart with both rollout delays at 0 -- every cluster
+        # at once. Instances within a cluster already wait on each other's
+        # readiness, so only the per-cluster stagger is set here.
         CLUSTERS_ROLLOUT_DELAY: "60"
         INHERITED_ANNOTATIONS: "reloader.stakater.com/auto"
         INHERITED_LABELS: "kustomize.toolkit.fluxcd.io/name,kustomize.toolkit.fluxcd.io/namespace"

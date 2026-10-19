@@ -123,9 +123,11 @@ datasources:
           tracesToLogsV2:
             datasourceUid: victorialogs
             customQuery: true
-            # Escaped twice: Flux postBuild turns `$$$$` into `$$`, then
-            # Grafana's provisioning env expansion turns `$$` into `$`. With
-            # fewer, Grafana reads `${__span` as an env var and mangles it.
+            # The dollar sign is escaped twice: Flux postBuild halves the four
+            # to two, then Grafana's provisioning env expansion halves two to
+            # one. With fewer, Grafana treats __span as an env var and mangles
+            # the query. Flux substitutes over this whole file, comments
+            # included, so never write a dollar-brace in a comment here.
             query: 'log.trace_id:"$$$${__span.traceId}"'
             spanStartTimeShift: -5m
             spanEndTimeShift: 5m
