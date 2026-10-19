@@ -109,6 +109,27 @@ datasources:
         access: proxy
         url: http://victoria-logs-server.observability.svc.cluster.local:9428
 
+      # VictoriaTraces speaks the Jaeger query API, so the built-in Jaeger
+      # datasource reads it with no plugin.
+      - name: VictoriaTraces
+        type: jaeger
+        uid: victoriatraces
+        access: proxy
+        url: http://victoria-traces.observability.svc.cluster.local:10428/select/jaeger
+        jsonData:
+          # "Logs for this span" opens VictoriaLogs on the span's trace ID.
+          # Apps that put `trace_id` in their JSON stdout (BGE does) land
+          # under `log.` because Vector parses each line into `.log`.
+          tracesToLogsV2:
+            datasourceUid: victorialogs
+            customQuery: true
+            # Escaped twice: Flux postBuild turns `$$$$` into `$$`, then
+            # Grafana's provisioning env expansion turns `$$` into `$`. With
+            # fewer, Grafana reads `${__span` as an env var and mangles it.
+            query: 'log.trace_id:"$$$${__span.traceId}"'
+            spanStartTimeShift: -5m
+            spanEndTimeShift: 5m
+
       - name: Alertmanager
         type: alertmanager
         access: proxy

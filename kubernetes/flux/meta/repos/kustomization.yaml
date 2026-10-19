@@ -22,6 +22,7 @@ resources:
   - ./minio-operator.yaml
   - ./node-feature-discovery-charts.yaml
   - ./openbao.yaml
+  - ./opentelemetry.yaml
   - ./piraeus-charts.yaml
   - ./prometheus.yaml
   - ./toolhive.yaml

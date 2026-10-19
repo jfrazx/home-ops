@@ -1,0 +1,46 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-traces
+  namespace: observability
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: victoria-traces
+    namespace: flux-system
+  interval: 30m
+  values:
+    # Trace store behind opentelemetry-collector, the only writer. Grafana reads
+    # it through the Jaeger query API at /select/jaeger.
+    server:
+      # Under `server`, unlike a top-level `fullnameOverride` (which this chart
+      # family silently ignores -- see victoria-logs). Gives a stable Service
+      # name, `victoria-traces`, for the collector and Grafana to point at.
+      fullnameOverride: victoria-traces
+
+      retentionPeriod: 14d
+      extraArgs:
+        # Same independent disk guard as victoria-logs: trim the oldest
+        # partitions before the volume can fill, sized from the live
+        # filesystem so a PVC resize cannot leave it inert.
+        retention.maxDiskUsagePercent: 80
+
+      persistentVolume:
+        enabled: true
+        # Not truenas-iscsi, for the same fsync reason as victoria-logs.
+        storageClassName: ceph-block
+        # `volumeClaimTemplates` is immutable: changing this later fails every
+        # Helm upgrade until the StatefulSet is recreated.
+        size: 10Gi
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 1Gi
+
+      serviceMonitor:
+        enabled: true

@@ -1,0 +1,96 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.bjw-s.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: opentelemetry-collector
+  namespace: observability
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: opentelemetry-collector
+    namespace: flux-system
+  interval: 30m
+  values:
+    # The cluster's OTLP endpoint for apps:
+    #   http://otel-collector.observability.svc.cluster.local:4318 (HTTP)
+    #   otel-collector.observability.svc.cluster.local:4317        (gRPC)
+    fullnameOverride: otel-collector
+    mode: deployment
+
+    # The Kubernetes distribution: everything below (otlphttp, nop,
+    # k8sattributes) without contrib's hundreds of unused components.
+    image:
+      repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+
+    presets:
+      # Stamps k8s.pod.name / k8s.namespace.name / k8s.deployment.name onto
+      # every span, matched by the sending pod's IP. Adds the ClusterRole and
+      # the `k8sattributes` processor to each pipeline.
+      kubernetesAttributes:
+        enabled: true
+
+    # The chart deep-merges this over its defaults, so receivers and
+    # exporters we don't want have to be nulled out explicitly.
+    config:
+      receivers:
+        jaeger: null
+        zipkin: null
+        prometheus: null
+      exporters:
+        debug: null
+        otlphttp/victoriatraces:
+          traces_endpoint: http://victoria-traces.observability.svc.cluster.local:10428/insert/opentelemetry/v1/traces
+        nop: {}
+      service:
+        pipelines:
+          traces:
+            receivers: [otlp]
+            processors: [memory_limiter, batch]
+            exporters: [otlphttp/victoriatraces]
+          # Vector is the one writer of pod logs into VictoriaLogs, and it
+          # already collects these apps' stdout. Some SDKs (BGE's pino
+          # transport) export OTLP logs whenever an endpoint is set, with no
+          # traces-only switch, so accept and drop them here rather than store
+          # every line twice.
+          logs:
+            receivers: [otlp]
+            processors: [memory_limiter]
+            exporters: [nop]
+          # No metrics pipeline yet: apps are scraped via ServiceMonitors.
+          metrics: null
+
+    ports:
+      jaeger-compact:
+        enabled: false
+      jaeger-thrift:
+        enabled: false
+      jaeger-grpc:
+        enabled: false
+      zipkin:
+        enabled: false
+      metrics:
+        enabled: true
+
+    serviceMonitor:
+      enabled: true
+
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      runAsGroup: 10001
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+
+    # memory_limiter's percentages are taken from this limit.
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
