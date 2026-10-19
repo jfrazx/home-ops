@@ -3,3 +3,53 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 components:
   - ../../../../components/database/cluster
+patches:
+  # Wave 2 of the barman-cloud plugin migration (#1841). In-tree
+  # barmanObjectStore and the plugin cannot both drive WAL archiving, so the
+  # inherited /spec/backup is removed in the same change that adds the plugin.
+  #
+  # Behaviour change: this cluster had no `spec.backup.retentionPolicy`, so its
+  # catalog grew without bound. Retention now comes from the ObjectStore, which
+  # the component sets to 20d -- the first enforcement pass after cutover will
+  # delete base backups older than that and move firstRecoverabilityPoint
+  # forward. Set POSTGRES_BACKUP_RETENTION in ks.yaml to change it.
+  - patch: |-
+      - op: remove
+        path: /spec/backup
+    target:
+      kind: Cluster
+      # kustomize compiles `target.name` as a regex, and $/{} in the raw
+      # `${APP}-postgres` break that match (Flux's postBuild substitution
+      # runs after kustomize build, so this literal string is what kustomize
+      # actually sees) -- escape them so the patch actually applies.
+      name: \$\{APP\}-postgres
+  - patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: ${APP}-postgres
+        namespace: ${NAMESPACE}
+      spec:
+        plugins:
+          - name: barman-cloud.cloudnative-pg.io
+            isWALArchiver: true
+            parameters:
+              barmanObjectName: ${APP}-postgres-backup
+              # serverName is the directory under the ObjectStore's
+              # destinationPath, and the in-tree path has been writing to
+              # `${APP}-postgres` (confirmed against Backup.status.serverName).
+              # The ObjectStore is named `${APP}-postgres-backup`, a different
+              # string, so this is set explicitly rather than relying on a
+              # default -- getting it wrong starts a new catalog in a new
+              # prefix and silently orphans every existing backup.
+              serverName: ${APP}-postgres
+  - patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: ScheduledBackup
+      metadata:
+        name: ${APP}-postgres-backup
+        namespace: ${NAMESPACE}
+      spec:
+        method: plugin
+        pluginConfiguration:
+          name: barman-cloud.cloudnative-pg.io
