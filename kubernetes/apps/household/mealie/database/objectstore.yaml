@@ -1,0 +1,33 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: mealie-postgres-backup
+  namespace: household
+spec:
+  configuration:
+    destinationPath: s3://postgresql-backups/mealie
+    endpointURL: http://minio.storage.svc.cluster.local:9000
+    s3Credentials:
+      accessKeyId:
+        name: mealie-postgres-minio
+        key: MINIO_ACCESS_KEY
+      secretAccessKey:
+        name: mealie-postgres-minio
+        key: MINIO_SECRET_KEY
+    wal:
+      # zstd rather than the in-tree gzip. archive_timeout forces near-empty
+      # 16 MiB segments on an idle cluster, where zstd measured ~32x smaller
+      # than gzip on the same segment. Mixing compressions inside one catalog
+      # is safe -- every segment carries its own extension and barman picks the
+      # decompressor per file, which the seerr canary proved with a restore.
+      compression: zstd
+      maxParallel: 2
+    data:
+      # No zstd here: the ObjectStore CRD's data.compression enum is
+      # bzip2/gzip/lz4/snappy only, unlike wal.compression.
+      compression: gzip
+      jobs: 2
+  # Was spec.backup.retentionPolicy on the Cluster, which the plugin does not
+  # read -- retention belongs to the ObjectStore now. Unchanged at 30d.
+  retentionPolicy: 30d

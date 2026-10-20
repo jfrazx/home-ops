@@ -33,5 +33,7 @@ spec:
   backupOwnerReference: self
   cluster:
     name: mealie-postgres
-  method: barmanObjectStore
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
   immediate: true

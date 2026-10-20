@@ -25,25 +25,23 @@ spec:
       localeCType: "en_US.UTF-8"
       localeCollate: "en_US.UTF-8"
 
-  backup:
-    target: prefer-standby
-    retentionPolicy: "30d"
-    barmanObjectStore:
-      destinationPath: s3://postgresql-backups/mealie
-      endpointURL: http://minio.storage.svc.cluster.local:9000
-      s3Credentials:
-        accessKeyId:
-          name: mealie-postgres-minio
-          key: MINIO_ACCESS_KEY
-        secretAccessKey:
-          name: mealie-postgres-minio
-          key: MINIO_SECRET_KEY
-      wal:
-        compression: gzip
-        maxParallel: 2
-      data:
-        compression: gzip
-        jobs: 2
+  # Wave 3 of the barman-cloud plugin migration (#1841). The in-tree
+  # object-store stanza that stood here now lives in ./objectstore.yaml.
+  # `target: prefer-standby` is dropped because that is already CNPG's default,
+  # and retentionPolicy moves onto the ObjectStore.
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: mealie-postgres-backup
+        # serverName is the directory under the object store's destination
+        # path, and the in-tree config has been writing to `mealie-postgres`
+        # (confirmed against Backup.status.serverName). The ObjectStore is
+        # named `mealie-postgres-backup`, a different string, so this is set
+        # explicitly rather than relying on a default -- getting it wrong
+        # starts a new catalog in a new prefix and silently orphans every
+        # existing backup.
+        serverName: mealie-postgres
 
   postgresql:
     parameters:

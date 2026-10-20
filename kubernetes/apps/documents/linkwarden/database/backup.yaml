@@ -33,5 +33,7 @@ spec:
   backupOwnerReference: self
   cluster:
     name: linkwarden-postgres
-  method: barmanObjectStore
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
   immediate: true
