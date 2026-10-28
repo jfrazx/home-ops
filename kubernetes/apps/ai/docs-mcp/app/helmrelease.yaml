@@ -46,6 +46,11 @@ spec:
               - 0.0.0.0
               - --port
               - "8080"
+              # Since 3.3 the server refuses any dotted Host header it does not
+              # know (DNS-rebinding guard) -- including the cluster FQDN its
+              # clients use. Single-label names and IPs still pass.
+              - --public-url
+              - http://docs-mcp-worker.ai.svc.cluster.local:8080
               - --no-logo
 
             env: &env
@@ -105,6 +110,10 @@ spec:
               - "6281"
               - --server-url
               - &serverUrl http://docs-mcp-worker.ai.svc.cluster.local:8080/api
+              # Browsers arrive through the gateway under this name; see the
+              # worker's --public-url.
+              - --public-url
+              - https://docs-mcp.${SECRET_DOMAIN}
               - --no-logo
 
             probes:
