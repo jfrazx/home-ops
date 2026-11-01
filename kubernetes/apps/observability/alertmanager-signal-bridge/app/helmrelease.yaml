@@ -282,7 +282,7 @@ spec:
             # nothing to install and no image to build and keep patched.
             image:
               repository: docker.io/library/python
-              tag: 3.15-alpine@sha256:2699b90f4d562a22e2dd076c82f964032f64814204bff36d271a54ba4cc2c7e2
+              tag: 3.15-alpine@sha256:20a82dbc2783112ddb91d1534603f802d222a3e63e593cd002eb2ac534e70211
 
             command: ["python3", "-u", "/app/bridge.py"]
 
