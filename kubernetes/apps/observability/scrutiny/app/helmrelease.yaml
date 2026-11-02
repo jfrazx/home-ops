@@ -43,7 +43,7 @@ spec:
           app:
             image:
               repository: ghcr.io/analogj/scrutiny
-              tag: v0.9.4-web
+              tag: v0.9.5-web
 
             env:
               # The influxdb2 chart ignores the HelmRelease's service values,
@@ -99,7 +99,7 @@ spec:
           app:
             image:
               repository: ghcr.io/analogj/scrutiny
-              tag: v0.9.4-collector
+              tag: v0.9.5-collector
 
             env:
               COLLECTOR_API_ENDPOINT: http://scrutiny.observability.svc.cluster.local:8080
