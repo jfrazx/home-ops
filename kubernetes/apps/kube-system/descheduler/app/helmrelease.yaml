@@ -23,7 +23,7 @@ spec:
       # 0 pods, nothing is ever a candidate), so this policy could not be
       # previewed against it. 0.35.1 dry-runs correctly. Before taking a bump,
       # re-run the dry run (see the policy comment below) on the new image.
-      version: 0.35.1
+      version: 0.37.0
       sourceRef:
         kind: HelmRepository
         name: descheduler
