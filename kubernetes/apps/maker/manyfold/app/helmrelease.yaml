@@ -52,7 +52,7 @@ spec:
           main:
             image:
               repository: ghcr.io/bjw-s-labs/manyfold
-              tag: 0.149.0@sha256:8f80633eff8e2668e70194938723d07f536e04765f7ab5742ccd26f1a886885f
+              tag: 0.153.0@sha256:7c057dd44889eb03d701c1480752e9de49c0af14114c6ba78e14888fa236adc7
             env:
               DATABASE_ADAPTER: postgresql
               DATABASE_URL:
