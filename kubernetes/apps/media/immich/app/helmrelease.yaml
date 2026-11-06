@@ -103,7 +103,7 @@ spec:
                 repository: ghcr.io/immich-app/immich-machine-learning
                 # The -openvino suffix exists only on this image, not on
                 # immich-server.
-                tag: v3.2.2-openvino@sha256:4013ec28ccf6344d7ae24554743a116d7f61124b98858f5646a401d5c5df12e2
+                tag: v3.3.6-openvino@sha256:035c30de002da9d4d4ae3872107bb9d8e195ead1c1f9fd470a2b0149ed37aec1
               env:
                 TRANSFORMERS_CACHE: /cache
                 HF_XET_CACHE: /cache/huggingface-xet
