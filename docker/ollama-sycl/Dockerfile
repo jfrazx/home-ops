@@ -2,7 +2,7 @@
 # NOTE: cosmetic only - the build workflow always passes --build-arg OLLAMA_VERSION explicitly
 ARG OLLAMA_VERSION=0.40.13
 # renovate: datasource=github-releases depName=intel/compute-runtime versioning=loose
-ARG COMPUTE_RUNTIME_VERSION=26.35.39758.10
+ARG COMPUTE_RUNTIME_VERSION=26.40.40196.8
 # renovate: datasource=github-releases depName=oneapi-src/level-zero versioning=loose extractVersion=^v(?<version>.+)$
 ARG LEVEL_ZERO_VERSION=1.35.0
 # renovate: datasource=github-releases depName=intel/intel-graphics-compiler versioning=loose extractVersion=^v(?<version>.+)$
