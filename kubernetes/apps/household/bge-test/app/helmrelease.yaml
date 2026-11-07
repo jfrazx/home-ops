@@ -134,6 +134,19 @@ spec:
               DATA_ENCRYPTION_KEY: &dataEncryptionKey
                 valueFrom:
                   secretKeyRef: {name: bge-test-secret, key: DATA_ENCRYPTION_KEY}
+              # Authentik sign-in. The provider's redirect URI is
+              # <BETTER_AUTH_URL>/api/auth/callback/authentik. A first sign-in
+              # needs email_verified true, which authentik's default email
+              # mapping no longer sends; the provider uses the custom one.
+              OIDC_PROVIDERS: authentik
+              OIDC_AUTHENTIK_DISPLAY_NAME: Authentik
+              OIDC_AUTHENTIK_DISCOVERY_URL: https://auth.${SECRET_DOMAIN}/application/o/bge-test/.well-known/openid-configuration
+              OIDC_AUTHENTIK_CLIENT_ID:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: OIDC_AUTHENTIK_CLIENT_ID}
+              OIDC_AUTHENTIK_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef: {name: bge-test-secret, key: OIDC_AUTHENTIK_CLIENT_SECRET}
               USE_EMAIL_PASSWORD_AUTH: "true"
               BETTER_AUTH_URL: &publicUrl https://bge-test.${SECRET_DOMAIN}
               TRUSTED_ORIGINS: *publicUrl
