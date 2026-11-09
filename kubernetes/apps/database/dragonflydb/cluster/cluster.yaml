@@ -18,12 +18,6 @@ spec:
 
   replicas: 3
 
-  # The operator's auto-generated NetworkPolicy only allows same-namespace
-  # ingress on the client port (6379), which blocks every app outside the
-  # `database` namespace (vikunja, paperless, linkwarden, etc). Disable it
-  # since we don't have a supplemental policy allowing those namespaces.
-  networkPolicyEnabled: false
-
   topologySpreadConstraints:
     - maxSkew: 1
       topologyKey: kubernetes.io/hostname
