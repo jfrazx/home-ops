@@ -38,7 +38,6 @@ spec:
             env:
               SMTP_RELAY_METRICS_PORT: &metricsPort 8080
               SMTP_RELAY_SMTP_PORT: &smtpPort 25
-              SMTP_RELAY_SERVER_PORT: &serverPort 587
               SMTP_RELAY_HOSTNAME: smtp.${SECRET_DOMAIN}
               SMTP_DOMAIN: ${SECRET_DOMAIN}
               TZ: ${TIMEZONE}
@@ -87,8 +86,6 @@ spec:
             port: *metricsPort
           smtp:
             port: *smtpPort
-          submission:
-            port: *serverPort
 
     serviceMonitor:
       app:
