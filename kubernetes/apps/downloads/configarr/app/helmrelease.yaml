@@ -55,7 +55,7 @@ spec:
           app:
             image:
               repository: ghcr.io/raydak-labs/configarr
-              tag: 1.36.0@sha256:0d15c74cf74cd980bb2f9e9dd0cfdde1655a8f928e481c3258d7ccd4cde9dcbc
+              tag: 1.39.1@sha256:e61e12c776f33d2e14a8d7ded4b27fc7253181df9b8fd3a6c7e510f323cf8f46
 
             env:
               TZ: "${TIMEZONE}"
