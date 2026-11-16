@@ -64,7 +64,7 @@ spec:
 
     x-bge-image: &bgeImage
       repository: ghcr.io/boardgamesempire/bge
-      tag: edge@sha256:8a0284fc9e24cc4788bdd97ca223b144bd9583a723cf36edc12c8d3abbf7f3b8
+      tag: edge@sha256:35df6c2b02835d7f347ab1ded55523308357b471695b66ffecaf0b47abedd4f8
 
     x-security-context: &securityContext
       allowPrivilegeEscalation: false
@@ -284,7 +284,7 @@ spec:
           main:
             image:
               repository: ghcr.io/boardgamesempire/bge-igdb-gateway
-              tag: edge@sha256:845734173353fd498775be636435567790933e436deda5fe57fc09407c05e940
+              tag: edge@sha256:6ee290a26485fd2c3d2f748b4017dadeb7d9626701b2c1f2013d897f66d32e1c
             env:
               NODE_ENV: production
               LOG_LEVEL: debug
@@ -324,7 +324,7 @@ spec:
           main:
             image:
               repository: ghcr.io/boardgamesempire/bge-boardgamegeek-gateway
-              tag: edge@sha256:198083b043624b7380ef1b8f94f445e3faaa82e8ab466178c10e0c15a38f22a3
+              tag: edge@sha256:9c74f1a7275245b82ca84efb6af7f25748ce227fdb3cc117e97ee0c3e31dc0ec
             env:
               NODE_ENV: production
               LOG_LEVEL: debug
