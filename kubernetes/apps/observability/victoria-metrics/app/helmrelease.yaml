@@ -219,9 +219,9 @@ spec:
         resources:
           requests:
             cpu: 500m
-            memory: 256Mi
-          limits:
             memory: 512Mi
+          limits:
+            memory: 1Gi
 
     grafana:
       enabled: false

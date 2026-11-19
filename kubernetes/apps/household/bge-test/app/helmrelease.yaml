@@ -308,7 +308,13 @@ spec:
                   tcpSocket: {port: 50054}
                   periodSeconds: 30
                   failureThreshold: 3
-              readiness: *igdbProbe
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 50054}
+                  periodSeconds: 3
+                  failureThreshold: 3
             securityContext: *securityContext
             resources:
               requests:
@@ -345,7 +351,15 @@ spec:
                   tcpSocket: {port: 50053}
                   periodSeconds: 30
                   failureThreshold: 3
-              readiness: *bggProbe
+              # Fast readiness so the Service has an endpoint within seconds of
+              # a rollout; clients only retry bootstrap for ~15s and never again.
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: {port: 50053}
+                  periodSeconds: 3
+                  failureThreshold: 3
             securityContext: *securityContext
             resources:
               requests:
