@@ -151,6 +151,24 @@
       },
     },
     {
+      // 2.7.0 removed the gcpckms seal from the binary ("no longer built-in"), so
+      // the pod crash-loops with `unknown wrapper: gcpckms` and the HelmRelease
+      // rolls back. Lifting this needs the seal moved to an external plugin first.
+      description: "OpenBao image - hold below 2.7 until gcpckms is migrated to a plugin",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["/openbao\\/openbao$/"],
+      allowedVersions: "<2.7.0",
+    },
+    {
+      // The cluster's Alert and Provider CRDs serve only v1beta2/v1beta3; v1 does not
+      // exist for them, and applying it fails the dry-run for all of cluster-apps.
+      // (Receiver v1 is real and is not covered here.)
+      description: "Flux Alert/Provider apiVersion - v1 is not served, stay on v1beta3",
+      matchDatasources: ["kubernetes-api"],
+      matchPackageNames: ["alert", "provider"],
+      enabled: false,
+    },
+    {
       // bge-test is the Board Games Empire testing ground: it follows upstream
       // `edge` by digest and should land each master build as soon as it is
       // published. The three images move together because upstream tests them
