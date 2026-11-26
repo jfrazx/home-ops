@@ -149,7 +149,9 @@ spec:
                   secretKeyRef: {name: bge-test-secret, key: OIDC_AUTHENTIK_CLIENT_SECRET}
               USE_EMAIL_PASSWORD_AUTH: "true"
               BETTER_AUTH_URL: &publicUrl https://bge-test.${SECRET_DOMAIN}
-              TRUSTED_ORIGINS: *publicUrl
+              # The bare docs name only passes the Host check (upstream
+              # #977) for the internal docs route; it is not a sign-in origin.
+              TRUSTED_ORIGINS: https://bge-test.${SECRET_DOMAIN},bge-test-docs.${SECRET_DOMAIN}
               MEDIA_BASE_URL: https://bge-test.${SECRET_DOMAIN}/api
               # Envoy is the one proxy in front on the internal gateway.
               THROTTLE_TRUSTED_PROXY_HOPS: "1"
@@ -493,3 +495,18 @@ spec:
           - backendRefs:
               - identifier: api
                 port: 33333
+      # API document, LAN only. Envoy's pod IP passes OPERATIONAL_SOURCES, so
+      # the match keeps /metrics and the full /health report off this route.
+      docs:
+        hostnames:
+          - "bge-test-docs.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: kube-system
+            sectionName: https
+        rules:
+          - matches:
+              - path: {type: PathPrefix, value: /docs}
+            backendRefs:
+              - identifier: api
+                port: 33334
