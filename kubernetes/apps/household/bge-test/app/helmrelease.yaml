@@ -417,6 +417,11 @@ spec:
         ports:
           http:
             port: 33333
+          # Operational port (upstream #1511): /metrics, /health and /docs
+          # answer here only, and 404 on the public port. Kept off the route;
+          # OPERATIONAL_SOURCES' default (private ranges) admits pod IPs.
+          operational:
+            port: 33334
       coordinator:
         controller: coordinator
         ports:
@@ -443,7 +448,7 @@ spec:
         service:
           identifier: api
         endpoints:
-          - port: http
+          - port: operational
             scheme: http
             path: /metrics
             interval: 1m
